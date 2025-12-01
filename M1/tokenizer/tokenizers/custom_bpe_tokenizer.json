@@ -1,0 +1,8410 @@
+{
+  "version": "1.0",
+  "truncation": null,
+  "padding": null,
+  "added_tokens": [
+    {
+      "id": 0,
+      "content": "[UNK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 1,
+      "content": "[CLS]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 2,
+      "content": "[SEP]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 3,
+      "content": "[PAD]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 4,
+      "content": "[MASK]",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  ],
+  "normalizer": null,
+  "pre_tokenizer": {
+    "type": "Whitespace"
+  },
+  "post_processor": null,
+  "decoder": null,
+  "model": {
+    "type": "BPE",
+    "dropout": null,
+    "unk_token": "[UNK]",
+    "continuing_subword_prefix": null,
+    "end_of_word_suffix": null,
+    "fuse_unk": false,
+    "byte_fallback": false,
+    "ignore_merges": false,
+    "vocab": {
+      "[UNK]": 0,
+      "[CLS]": 1,
+      "[SEP]": 2,
+      "[PAD]": 3,
+      "[MASK]": 4,
+      "!": 5,
+      "'": 6,
+      "(": 7,
+      ")": 8,
+      ",": 9,
+      "-": 10,
+      ".": 11,
+      ":": 12,
+      ";": 13,
+      "?": 14,
+      "A": 15,
+      "B": 16,
+      "C": 17,
+      "D": 18,
+      "E": 19,
+      "F": 20,
+      "G": 21,
+      "H": 22,
+      "I": 23,
+      "J": 24,
+      "K": 25,
+      "L": 26,
+      "M": 27,
+      "N": 28,
+      "O": 29,
+      "P": 30,
+      "R": 31,
+      "S": 32,
+      "T": 33,
+      "U": 34,
+      "W": 35,
+      "Y": 36,
+      "Z": 37,
+      "a": 38,
+      "b": 39,
+      "c": 40,
+      "d": 41,
+      "e": 42,
+      "f": 43,
+      "g": 44,
+      "h": 45,
+      "i": 46,
+      "j": 47,
+      "k": 48,
+      "l": 49,
+      "m": 50,
+      "n": 51,
+      "o": 52,
+      "p": 53,
+      "q": 54,
+      "r": 55,
+      "s": 56,
+      "t": 57,
+      "u": 58,
+      "v": 59,
+      "w": 60,
+      "x": 61,
+      "y": 62,
+      "z": 63,
+      "«": 64,
+      "»": 65,
+      "ó": 66,
+      "ą": 67,
+      "ć": 68,
+      "ę": 69,
+      "Ł": 70,
+      "ł": 71,
+      "ń": 72,
+      "Ś": 73,
+      "ś": 74,
+      "ź": 75,
+      "Ż": 76,
+      "ż": 77,
+      "–": 78,
+      "—": 79,
+      "”": 80,
+      "„": 81,
+      "…": 82,
+      "ie": 83,
+      "cz": 84,
+      "na": 85,
+      "rz": 86,
+      "ał": 87,
+      "ch": 88,
+      "st": 89,
+      "sz": 90,
+      "po": 91,
+      "ni": 92,
+      "nie": 93,
+      "ię": 94,
+      "dz": 95,
+      "wi": 96,
+      "go": 97,
+      "ra": 98,
+      "się": 99,
+      "ta": 100,
+      "je": 101,
+      "ko": 102,
+      "wie": 103,
+      "ka": 104,
+      "ro": 105,
+      "ło": 106,
+      "do": 107,
+      "ci": 108,
+      "ki": 109,
+      "ym": 110,
+      "rze": 111,
+      "la": 112,
+      "wa": 113,
+      "le": 114,
+      "wy": 115,
+      "za": 116,
+      "no": 117,
+      "ła": 118,
+      "ja": 119,
+      "li": 120,
+      "by": 121,
+      "ne": 122,
+      "wo": 123,
+      "ny": 124,
+      "cie": 125,
+      "mi": 126,
+      "te": 127,
+      "to": 128,
+      "że": 129,
+      "dzi": 130,
+      "rzy": 131,
+      "ty": 132,
+      "sta": 133,
+      "da": 134,
+      "re": 135,
+      "ły": 136,
+      "kie": 137,
+      "ce": 138,
+      "ry": 139,
+      "ży": 140,
+      "pa": 141,
+      "dzie": 142,
+      "prze": 143,
+      "czy": 144,
+      "cza": 145,
+      "em": 146,
+      "ją": 147,
+      "ów": 148,
+      "mo": 149,
+      "dy": 150,
+      "ku": 151,
+      "ści": 152,
+      "cze": 153,
+      "ma": 154,
+      "co": 155,
+      "wał": 156,
+      "mu": 157,
+      "rni": 158,
+      "we": 159,
+      "jak": 160,
+      "kt": 161,
+      "ną": 162,
+      "od": 163,
+      "sa": 164,
+      "tarni": 165,
+      "ró": 166,
+      "któ": 167,
+      "bi": 168,
+      "mie": 169,
+      "raz": 170,
+      "ba": 171,
+      "pi": 172,
+      "szy": 173,
+      "ru": 174,
+      "latarni": 175,
+      "wia": 176,
+      "jego": 177,
+      "bie": 178,
+      "lu": 179,
+      "sze": 180,
+      "roz": 181,
+      "ju": 182,
+      "przy": 183,
+      "nych": 184,
+      "czas": 185,
+      "pra": 186,
+      "si": 187,
+      "spo": 188,
+      "łu": 189,
+      "jest": 190,
+      "tu": 191,
+      "lko": 192,
+      "pie": 193,
+      "sk": 194,
+      "ść": 195,
+      "ały": 196,
+      "bo": 197,
+      "ski": 198,
+      "ście": 199,
+      "nia": 200,
+      "ale": 201,
+      "gło": 202,
+      "ska": 203,
+      "tym": 204,
+      "cho": 205,
+      "tak": 206,
+      "jed": 207,
+      "bu": 208,
+      "ca": 209,
+      "so": 210,
+      "ze": 211,
+      "pod": 212,
+      "gdy": 213,
+      "my": 214,
+      "nym": 215,
+      "czę": 216,
+      "Po": 217,
+      "rę": 218,
+      "se": 219,
+      "sto": 220,
+      "ga": 221,
+      "mię": 222,
+      "ała": 223,
+      "ało": 224,
+      "szcze": 225,
+      "tylko": 226,
+      "kiem": 227,
+      "Ska": 228,
+      "pe": 229,
+      "swo": 230,
+      "zna": 231,
+      "nad": 232,
+      "sza": 233,
+      "dob": 234,
+      "ności": 235,
+      "już": 236,
+      "be": 237,
+      "og": 238,
+      "pu": 239,
+      "wszy": 240,
+      "wiń": 241,
+      "nej": 242,
+      "resz": 243,
+      "Skawiń": 244,
+      "Na": 245,
+      "cy": 246,
+      "gi": 247,
+      "lo": 248,
+      "wię": 249,
+      "nego": 250,
+      "du": 251,
+      "gł": 252,
+      "świa": 253,
+      "czą": 254,
+      "ałe": 255,
+      "podob": 256,
+      "nio": 257,
+      "wal": 258,
+      "było": 259,
+      "tych": 260,
+      "sam": 261,
+      "które": 262,
+      "śli": 263,
+      "czo": 264,
+      "rzym": 265,
+      "jeszcze": 266,
+      "wiel": 267,
+      "cu": 268,
+      "de": 269,
+      "dla": 270,
+      "pły": 271,
+      "rą": 272,
+      "su": 273,
+      "sy": 274,
+      "skie": 275,
+      "tę": 276,
+      "stał": 277,
+      "niej": 278,
+      "ród": 279,
+      "dę": 280,
+      "dro": 281,
+      "dru": 282,
+      "nę": 283,
+      "on": 284,
+      "pó": 285,
+      "pro": 286,
+      "ża": 287,
+      "czu": 288,
+      "cha": 289,
+      "ste": 290,
+      "szczę": 291,
+      "zapa": 292,
+      "miał": 293,
+      "jąc": 294,
+      "pia": 295,
+      "wszyst": 296,
+      "Skawiński": 297,
+      "Cz": 298,
+      "Je": 299,
+      "Sta": 300,
+      "dnie": 301,
+      "nwal": 302,
+      "ol": 303,
+      "sło": 304,
+      "spi": 305,
+      "trze": 306,
+      "śród": 307,
+      "rza": 308,
+      "rzu": 309,
+      "wio": 310,
+      "widzi": 311,
+      "wieży": 312,
+      "kich": 313,
+      "zaś": 314,
+      "był": 315,
+      "jakby": 316,
+      "sią": 317,
+      "spoko": 318,
+      "peł": 319,
+      "spinwal": 320,
+      "Nie": 321,
+      "Pa": 322,
+      "al": 323,
+      "brzym": 324,
+      "dł": 325,
+      "gie": 326,
+      "ich": 327,
+      "ję": 328,
+      "nu": 329,
+      "tą": 330,
+      "tał": 331,
+      "wz": 332,
+      "wśród": 333,
+      "żo": 334,
+      "czym": 335,
+      "stra": 336,
+      "nim": 337,
+      "niu": 338,
+      "niem": 339,
+      "ność": 340,
+      "jakie": 341,
+      "tem": 342,
+      "tego": 343,
+      "pier": 344,
+      "jedna": 345,
+      "międz": 346,
+      "olbrzym": 347,
+      "Aspinwal": 348,
+      "br": 349,
+      "gu": 350,
+      "ksią": 351,
+      "lka": 352,
+      "me": 353,
+      "mó": 354,
+      "mni": 355,
+      "oczy": 356,
+      "py": 357,
+      "rym": 358,
+      "sły": 359,
+      "wła": 360,
+      "wsze": 361,
+      "śl": 362,
+      "czło": 363,
+      "cią": 364,
+      "kim": 365,
+      "kilka": 366,
+      "wać": 367,
+      "teraz": 368,
+      "stary": 369,
+      "cej": 370,
+      "bar": 371,
+      "czasem": 372,
+      "myśl": 373,
+      "bez": 374,
+      "świat": 375,
+      "człowie": 376,
+      "To": 377,
+      "bra": 378,
+      "id": 379,
+      "rca": 380,
+      "sie": 381,
+      "swe": 382,
+      "słu": 383,
+      "twa": 384,
+      "wu": 385,
+      "zo": 386,
+      "zu": 387,
+      "świe": 388,
+      "rzą": 389,
+      "powie": 390,
+      "dze": 391,
+      "las": 392,
+      "wych": 393,
+      "wyse": 394,
+      "noc": 395,
+      "była": 396,
+      "ciem": 397,
+      "mia": 398,
+      "kiego": 399,
+      "żył": 400,
+      "nął": 401,
+      "który": 402,
+      "którym": 403,
+      "praw": 404,
+      "chodzi": 405,
+      "reszcie": 406,
+      "wysep": 407,
+      "Przy": 408,
+      "an": 409,
+      "gro": 410,
+      "im": 411,
+      "kę": 412,
+      "ków": 413,
+      "ok": 414,
+      "sko": 415,
+      "two": 416,
+      "tów": 417,
+      "wym": 418,
+      "zie": 419,
+      "cznie": 420,
+      "naj": 421,
+      "nast": 422,
+      "chwi": 423,
+      "szą": 424,
+      "szał": 425,
+      "nię": 426,
+      "dzo": 427,
+      "wią": 428,
+      "godzi": 429,
+      "być": 430,
+      "tej": 431,
+      "dach": 432,
+      "swoją": 433,
+      "spokoj": 434,
+      "między": 435,
+      "Aspinwall": 436,
+      "książ": 437,
+      "Ale": 438,
+      "Co": 439,
+      "La": 440,
+      "Ta": 441,
+      "Za": 442,
+      "cał": 443,
+      "całe": 444,
+      "dem": 445,
+      "en": 446,
+      "fa": 447,
+      "ge": 448,
+      "gó": 449,
+      "gle": 450,
+      "in": 451,
+      "ką": 452,
+      "krzy": 453,
+      "ob": 454,
+      "or": 455,
+      "tki": 456,
+      "wą": 457,
+      "wów": 458,
+      "zwy": 459,
+      "ód": 460,
+      "ęp": 461,
+      "rzał": 462,
+      "rzch": 463,
+      "chy": 464,
+      "stro": 465,
+      "szcza": 466,
+      "poczy": 467,
+      "nich": 468,
+      "niego": 469,
+      "cił": 470,
+      "jako": 471,
+      "jaka": 472,
+      "też": 473,
+      "przed": 474,
+      "przez": 475,
+      "mor": 476,
+      "coraz": 477,
+      "wała": 478,
+      "wało": 479,
+      "wet": 480,
+      "samo": 481,
+      "prawie": 482,
+      "głos": 483,
+      "sobie": 484,
+      "pół": 485,
+      "Stary": 486,
+      "mógł": 487,
+      "człowiek": 488,
+      "By": 489,
+      "Fal": 490,
+      "Ja": 491,
+      "aż": 492,
+      "ach": 493,
+      "ani": 494,
+      "bą": 495,
+      "ew": 496,
+      "ego": 497,
+      "kł": 498,
+      "kał": 499,
+      "kło": 500,
+      "lą": 501,
+      "nbr": 502,
+      "oz": 503,
+      "ona": 504,
+      "opa": 505,
+      "rce": 506,
+      "sła": 507,
+      "sku": 508,
+      "tr": 509,
+      "tra": 510,
+      "ur": 511,
+      "wę": 512,
+      "wró": 513,
+      "zi": 514,
+      "zda": 515,
+      "zmie": 516,
+      "śmie": 517,
+      "nawet": 518,
+      "stym": 519,
+      "szu": 520,
+      "szło": 521,
+      "szczy": 522,
+      "por": 523,
+      "połu": 524,
+      "nią": 525,
+      "wido": 526,
+      "tam": 527,
+      "jemni": 528,
+      "kar": 529,
+      "ciu": 530,
+      "war": 531,
+      "nocy": 532,
+      "ławi": 533,
+      "liście": 534,
+      "wod": 535,
+      "ten": 536,
+      "stare": 537,
+      "starca": 538,
+      "dali": 539,
+      "żyw": 540,
+      "dzień": 541,
+      "czaj": 542,
+      "jące": 543,
+      "coś": 544,
+      "conbr": 545,
+      "wego": 546,
+      "róż": 547,
+      "biła": 548,
+      "razy": 549,
+      "ludzie": 550,
+      "szedł": 551,
+      "czasie": 552,
+      "tuła": 553,
+      "znał": 554,
+      "resztą": 555,
+      "więc": 556,
+      "szczęście": 557,
+      "wszystko": 558,
+      "widział": 559,
+      "pełnie": 560,
+      "Pana": 561,
+      "jednak": 562,
+      "idge": 563,
+      "zupełnie": 564,
+      "Latarni": 565,
+      "wówczas": 566,
+      "samot": 567,
+      "Falconbr": 568,
+      "Falconbridge": 569,
+      "He": 570,
+      "No": 571,
+      "Oto": 572,
+      "Prze": 573,
+      "ar": 574,
+      "bę": 575,
+      "dał": 576,
+      "drze": 577,
+      "dnia": 578,
+      "fale": 579,
+      "gą": 580,
+      "js": 581,
+      "ksz": 582,
+      "opu": 583,
+      "pli": 584,
+      "są": 585,
+      "sch": 586,
+      "snu": 587,
+      "trzy": 588,
+      "tru": 589,
+      "zy": 590,
+      "zł": 591,
+      "zno": 592,
+      "ój": 593,
+      "ący": 594,
+      "łą": 595,
+      "świ": 596,
+      "żni": 597,
+      "”.": 598,
+      "czte": 599,
+      "nach": 600,
+      "chło": 601,
+      "strze": 602,
+      "szę": 603,
+      "powo": 604,
+      "począ": 605,
+      "niko": 606,
+      "tajemni": 607,
+      "koły": 608,
+      "kocha": 609,
+      "ciszy": 610,
+      "leż": 611,
+      "wyso": 612,
+      "jaki": 613,
+      "były": 614,
+      "dziw": 615,
+      "dział": 616,
+      "dale": 617,
+      "może": 618,
+      "czej": 619,
+      "wały": 620,
+      "nąć": 621,
+      "balko": 622,
+      "latarnika": 623,
+      "skał": 624,
+      "skrzy": 625,
+      "także": 626,
+      "częły": 627,
+      "Potem": 628,
+      "serce": 629,
+      "pew": 630,
+      "Skawińskie": 631,
+      "więcej": 632,
+      "drugi": 633,
+      "drugie": 634,
+      "Czy": 635,
+      "słoń": 636,
+      "trzeba": 637,
+      "strażni": 638,
+      "jakieś": 639,
+      "słyszał": 640,
+      "włas": 641,
+      "bardzo": 642,
+      "swej": 643,
+      "służ": 644,
+      "ciemności": 645,
+      "wysepki": 646,
+      "poczyna": 647,
+      "jakaś": 648,
+      "Latarnik": 649,
+      "Bó": 650,
+      "Ch": 651,
+      "Gdy": 652,
+      "Jo": 653,
+      "Mo": 654,
+      "New": 655,
+      "Pró": 656,
+      "Wie": 657,
+      "Wreszcie": 658,
+      "Yor": 659,
+      "brze": 660,
+      "bla": 661,
+      "bli": 662,
+      "cała": 663,
+      "ctwa": 664,
+      "di": 665,
+      "dne": 666,
+      "gra": 667,
+      "hn": 668,
+      "hu": 669,
+      "ią": 670,
+      "kle": 671,
+      "mą": 672,
+      "nów": 673,
+      "nku": 674,
+      "nnym": 675,
+      "ot": 676,
+      "oce": 677,
+      "sp": 678,
+      "skiem": 679,
+      "trz": 680,
+      "ucz": 681,
+      "wreszcie": 682,
+      "zło": 683,
+      "zdro": 684,
+      "zresztą": 685,
+      "ół": 686,
+      "ąc": 687,
+      "łnie": 688,
+      "łód": 689,
+      "ńcu": 690,
+      "śni": 691,
+      "śnie": 692,
+      "cznych": 693,
+      "nadz": 694,
+      "chał": 695,
+      "chmu": 696,
+      "stu": 697,
+      "pol": 698,
+      "podz": 699,
+      "posa": 700,
+      "powia": 701,
+      "potem": 702,
+      "wiał": 703,
+      "wida": 704,
+      "godnie": 705,
+      "rach": 706,
+      "taka": 707,
+      "jedy": 708,
+      "kon": 709,
+      "wier": 710,
+      "kami": 711,
+      "rot": 712,
+      "roni": 713,
+      "rodzi": 714,
+      "dostał": 715,
+      "cić": 716,
+      "ymi": 717,
+      "lata": 718,
+      "lasy": 719,
+      "waż": 720,
+      "wany": 721,
+      "lek": 722,
+      "wyczaj": 723,
+      "zawsze": 724,
+      "nowe": 725,
+      "nosi": 726,
+      "lił": 727,
+      "woda": 728,
+      "wodę": 729,
+      "dzia": 730,
+      "dziwie": 731,
+      "życie": 732,
+      "życiu": 733,
+      "pacz": 734,
+      "dziec": 735,
+      "dziej": 736,
+      "czywi": 737,
+      "czytał": 738,
+      "moc": 739,
+      "ścią": 740,
+      "odpły": 741,
+      "którą": 742,
+      "bił": 743,
+      "białe": 744,
+      "miejs": 745,
+      "miennym": 746,
+      "latarnia": 747,
+      "latarnik": 748,
+      "wiatr": 749,
+      "lub": 750,
+      "ludz": 751,
+      "ludzi": 752,
+      "szere": 753,
+      "czasu": 754,
+      "skich": 755,
+      "skali": 756,
+      "chorą": 757,
+      "jedno": 758,
+      "burzy": 759,
+      "sobą": 760,
+      "swoje": 761,
+      "swoim": 762,
+      "ogni": 763,
+      "pun": 764,
+      "lonych": 765,
+      "duszę": 766,
+      "podobne": 767,
+      "podobny": 768,
+      "której": 769,
+      "wielkiego": 770,
+      "cudem": 771,
+      "nęła": 772,
+      "szczęśli": 773,
+      "wszystkich": 774,
+      "Czę": 775,
+      "Jest": 776,
+      "spokoju": 777,
+      "żołnie": 778,
+      "piersi": 779,
+      "olbrzymich": 780,
+      "wszel": 781,
+      "ciąg": 782,
+      "bardziej": 783,
+      "światło": 784,
+      "siebie": 785,
+      "których": 786,
+      "okrę": 787,
+      "następ": 788,
+      "niętym": 789,
+      "rzchu": 790,
+      "Był": 791,
+      "śmier": 792,
+      "połud": 793,
+      "widocznie": 794,
+      "ławice": 795,
+      "starego": 796,
+      "żywności": 797,
+      "Noc": 798,
+      "kształ": 799,
+      "znowu": 800,
+      "świta": 801,
+      "jakiś": 802,
+      "Bóg": 803,
+      "John": 804,
+      "Yorku": 805,
+      "uczci": 806,
+      "nadzwyczaj": 807,
+      "widać": 808,
+      "rodzin": 809,
+      "Al": 810,
+      "II": 811,
+      "In": 812,
+      "Ni": 813,
+      "On": 814,
+      "Roz": 815,
+      "Si": 816,
+      "Spo": 817,
+      "We": 818,
+      "Wi": 819,
+      "Wszy": 820,
+      "bó": 821,
+      "bły": 822,
+      "blas": 823,
+      "cę": 824,
+      "cię": 825,
+      "ców": 826,
+      "dna": 827,
+      "dni": 828,
+      "dło": 829,
+      "dno": 830,
+      "ek": 831,
+      "fi": 832,
+      "fal": 833,
+      "gę": 834,
+      "gla": 835,
+      "gła": 836,
+      "gdzie": 837,
+      "gru": 838,
+      "gnąć": 839,
+      "har": 840,
+      "isz": 841,
+      "jdzie": 842,
+      "jrzał": 843,
+      "kra": 844,
+      "księ": 845,
+      "kci": 846,
+      "kła": 847,
+      "kre": 848,
+      "kry": 849,
+      "kró": 850,
+      "kój": 851,
+      "lę": 852,
+      "mle": 853,
+      "om": 854,
+      "ony": 855,
+      "owe": 856,
+      "oba": 857,
+      "oczym": 858,
+      "pł": 859,
+      "pię": 860,
+      "pła": 861,
+      "pró": 862,
+      "rał": 863,
+      "rka": 864,
+      "rwo": 865,
+      "rpli": 866,
+      "sł": 867,
+      "spa": 868,
+      "sem": 869,
+      "tch": 870,
+      "tro": 871,
+      "tle": 872,
+      "tku": 873,
+      "tłu": 874,
+      "uł": 875,
+      "uro": 876,
+      "ubie": 877,
+      "wra": 878,
+      "wrot": 879,
+      "zwie": 880,
+      "zła": 881,
+      "zała": 882,
+      "óle": 883,
+      "ęki": 884,
+      "ńczo": 885,
+      "żu": 886,
+      "żą": 887,
+      "czna": 888,
+      "czał": 889,
+      "czne": 890,
+      "nał": 891,
+      "nami": 892,
+      "nagle": 893,
+      "sty": 894,
+      "szły": 895,
+      "poło": 896,
+      "potę": 897,
+      "powró": 898,
+      "poczęły": 899,
+      "nic": 900,
+      "nik": 901,
+      "nił": 902,
+      "nika": 903,
+      "nicze": 904,
+      "nigdy": 905,
+      "nienie": 906,
+      "niedzie": 907,
+      "niebie": 908,
+      "niesko": 909,
+      "niepowo": 910,
+      "nieważ": 911,
+      "wić": 912,
+      "wide": 913,
+      "widze": 914,
+      "ral": 915,
+      "rami": 916,
+      "tać": 917,
+      "tacz": 918,
+      "jeśli": 919,
+      "konie": 920,
+      "kości": 921,
+      "wieczo": 922,
+      "wierzchu": 923,
+      "kać": 924,
+      "rom": 925,
+      "roku": 926,
+      "dosta": 927,
+      "domy": 928,
+      "cia": 929,
+      "cicho": 930,
+      "ymo": 931,
+      "rzec": 932,
+      "rzeczywi": 933,
+      "was": 934,
+      "warzy": 935,
+      "leci": 936,
+      "wyra": 937,
+      "wypa": 938,
+      "wyciąg": 939,
+      "zam": 940,
+      "zapo": 941,
+      "zale": 942,
+      "zami": 943,
+      "zaraz": 944,
+      "zawod": 945,
+      "łatwo": 946,
+      "jas": 947,
+      "woj": 948,
+      "woła": 949,
+      "wodach": 950,
+      "tek": 951,
+      "dził": 952,
+      "dziwa": 953,
+      "tygodnie": 954,
+      "stawał": 955,
+      "dal": 956,
+      "daw": 957,
+      "daje": 958,
+      "rem": 959,
+      "rezy": 960,
+      "cem": 961,
+      "ryki": 962,
+      "rywał": 963,
+      "żyje": 964,
+      "dzieć": 965,
+      "dziestym": 966,
+      "przeszło": 967,
+      "czyty": 968,
+      "czar": 969,
+      "emu": 970,
+      "jącej": 971,
+      "morze": 972,
+      "mowa": 973,
+      "morza": 974,
+      "mar": 975,
+      "masz": 976,
+      "musi": 977,
+      "odu": 978,
+      "sany": 979,
+      "bić": 980,
+      "razu": 981,
+      "ruch": 982,
+      "latarnię": 983,
+      "bierał": 984,
+      "rozu": 985,
+      "rozle": 986,
+      "rozma": 987,
+      "przywo": 988,
+      "prag": 989,
+      "prawi": 990,
+      "sił": 991,
+      "spokój": 992,
+      "jeste": 993,
+      "ską": 994,
+      "bował": 995,
+      "skale": 996,
+      "burza": 997,
+      "buję": 998,
+      "zesta": 999,
+      "podróż": 1000,
+      "Pola": 1001,
+      "serca": 1002,
+      "stoi": 1003,
+      "gar": 1004,
+      "nością": 1005,
+      "ogóle": 1006,
+      "Nad": 1007,
+      "gia": 1008,
+      "więk": 1009,
+      "głę": 1010,
+      "podobna": 1011,
+      "nione": 1012,
+      "samego": 1013,
+      "wielki": 1014,
+      "sula": 1015,
+      "tęsk": 1016,
+      "drugą": 1017,
+      "promie": 1018,
+      "prostu": 1019,
+      "czuł": 1020,
+      "stej": 1021,
+      "szczęści": 1022,
+      "piasku": 1023,
+      "piaszczy": 1024,
+      "trzebuję": 1025,
+      "rzuci": 1026,
+      "wiony": 1027,
+      "wzią": 1028,
+      "pierwszy": 1029,
+      "międzymo": 1030,
+      "olbrzymi": 1031,
+      "olbrzymie": 1032,
+      "mew": 1033,
+      "mniał": 1034,
+      "pyta": 1035,
+      "myślał": 1036,
+      "światła": 1037,
+      "Towarzy": 1038,
+      "brakło": 1039,
+      "swego": 1040,
+      "został": 1041,
+      "miast": 1042,
+      "prawdziwie": 1043,
+      "chodził": 1044,
+      "chodziła": 1045,
+      "wysepce": 1046,
+      "zielonych": 1047,
+      "chwila": 1048,
+      "chwili": 1049,
+      "książki": 1050,
+      "książkę": 1051,
+      "Tak": 1052,
+      "fala": 1053,
+      "zwykle": 1054,
+      "Jak": 1055,
+      "opar": 1056,
+      "urwi": 1057,
+      "szumi": 1058,
+      "szczęściem": 1059,
+      "Panamy": 1060,
+      "będzie": 1061,
+      "drzew": 1062,
+      "schod": 1063,
+      "kołys": 1064,
+      "leżał": 1065,
+      "dziwnego": 1066,
+      "dalej": 1067,
+      "balkonie": 1068,
+      "Skawińskiemu": 1069,
+      "drugiej": 1070,
+      "Chwi": 1071,
+      "podzwrot": 1072,
+      "posadę": 1073,
+      "powiadał": 1074,
+      "konsula": 1075,
+      "skalistej": 1076,
+      "punkci": 1077,
+      "Jestem": 1078,
+      "śmierci": 1079,
+      "południo": 1080,
+      "kształt": 1081,
+      "Indi": 1082,
+      "Nic": 1083,
+      "Wszyst": 1084,
+      "falą": 1085,
+      "iszpa": 1086,
+      "księży": 1087,
+      "oczyma": 1088,
+      "pięk": 1089,
+      "nieskończo": 1090,
+      "niepowodze": 1091,
+      "wypad": 1092,
+      "zawodów": 1093,
+      "piaszczyste": 1094,
+      "wziął": 1095,
+      "Towarzyst": 1096,
+      "podzwrotniko": 1097,
+      "!”": 1098,
+      "!…": 1099,
+      "Ama": 1100,
+      "Ame": 1101,
+      "Bie": 1102,
+      "Ci": 1103,
+      "Cza": 1104,
+      "Cze": 1105,
+      "Do": 1106,
+      "Hm": 1107,
+      "Kto": 1108,
+      "Kre": 1109,
+      "Li": 1110,
+      "Mi": 1111,
+      "Mło": 1112,
+      "Ob": 1113,
+      "Oj": 1114,
+      "Pew": 1115,
+      "Rze": 1116,
+      "Tym": 1117,
+      "Twa": 1118,
+      "Ten": 1119,
+      "Wę": 1120,
+      "Ze": 1121,
+      "Zresztą": 1122,
+      "Zjedno": 1123,
+      "au": 1124,
+      "ać": 1125,
+      "awa": 1126,
+      "ano": 1127,
+      "aspinwal": 1128,
+      "bł": 1129,
+      "brz": 1130,
+      "bni": 1131,
+      "bko": 1132,
+      "ble": 1133,
+      "broni": 1134,
+      "cą": 1135,
+      "cymi": 1136,
+      "dr": 1137,
+      "dą": 1138,
+      "dra": 1139,
+      "dym": 1140,
+      "dwa": 1141,
+      "dła": 1142,
+      "dną": 1143,
+      "dłu": 1144,
+      "dały": 1145,
+      "dało": 1146,
+      "dwu": 1147,
+      "ej": 1148,
+      "fności": 1149,
+      "fur": 1150,
+      "gh": 1151,
+      "gna": 1152,
+      "grze": 1153,
+      "gne": 1154,
+      "gły": 1155,
+      "glą": 1156,
+      "ha": 1157,
+      "hiszpa": 1158,
+      "iz": 1159,
+      "iż": 1160,
+      "ile": 1161,
+      "iły": 1162,
+      "igh": 1163,
+      "ji": 1164,
+      "jś": 1165,
+      "jcie": 1166,
+      "jmu": 1167,
+      "jały": 1168,
+      "jniej": 1169,
+      "kla": 1170,
+      "kto": 1171,
+      "krą": 1172,
+      "knął": 1173,
+      "kniętym": 1174,
+      "lm": 1175,
+      "lne": 1176,
+      "lskie": 1177,
+      "lgia": 1178,
+      "mę": 1179,
+      "mły": 1180,
+      "mru": 1181,
+      "małe": 1182,
+      "mgła": 1183,
+      "nne": 1184,
+      "ndy": 1185,
+      "oj": 1186,
+      "owi": 1187,
+      "ora": 1188,
+      "oko": 1189,
+      "oka": 1190,
+      "odo": 1191,
+      "ono": 1192,
+      "one": 1193,
+      "oto": 1194,
+      "obe": 1195,
+      "oczu": 1196,
+      "obra": 1197,
+      "oświe": 1198,
+      "ostro": 1199,
+      "otacz": 1200,
+      "pch": 1201,
+      "pta": 1202,
+      "pło": 1203,
+      "ple": 1204,
+      "rdo": 1205,
+      "rne": 1206,
+      "rków": 1207,
+      "rwała": 1208,
+      "righ": 1209,
+      "sno": 1210,
+      "sów": 1211,
+      "spie": 1212,
+      "tk": 1213,
+      "tnie": 1214,
+      "tce": 1215,
+      "tały": 1216,
+      "twą": 1217,
+      "twier": 1218,
+      "up": 1219,
+      "uka": 1220,
+      "uła": 1221,
+      "ufności": 1222,
+      "wka": 1223,
+      "wki": 1224,
+      "wny": 1225,
+      "wsta": 1226,
+      "wspo": 1227,
+      "wska": 1228,
+      "zwi": 1229,
+      "zbu": 1230,
+      "zon": 1231,
+      "zwła": 1232,
+      "zżył": 1233,
+      "zmą": 1234,
+      "ór": 1235,
+      "ące": 1236,
+      "ępu": 1237,
+      "ędził": 1238,
+      "Łód": 1239,
+      "łko": 1240,
+      "łka": 1241,
+      "łało": 1242,
+      "ńst": 1243,
+      "śla": 1244,
+      "śmiał": 1245,
+      "źnie": 1246,
+      "źniej": 1247,
+      "żę": 1248,
+      "żna": 1249,
+      "żący": 1250,
+      "czki": 1251,
+      "czny": 1252,
+      "czem": 1253,
+      "czór": 1254,
+      "nale": 1255,
+      "nato": 1256,
+      "nadzie": 1257,
+      "natu": 1258,
+      "natych": 1259,
+      "nasy": 1260,
+      "nazwi": 1261,
+      "ałym": 1262,
+      "ałem": 1263,
+      "chę": 1264,
+      "chwy": 1265,
+      "stało": 1266,
+      "stałe": 1267,
+      "stęp": 1268,
+      "szo": 1269,
+      "szla": 1270,
+      "szła": 1271,
+      "szli": 1272,
+      "szto": 1273,
+      "szczał": 1274,
+      "pot": 1275,
+      "pogo": 1276,
+      "poza": 1277,
+      "poży": 1278,
+      "poru": 1279,
+      "pochy": 1280,
+      "ponieważ": 1281,
+      "niż": 1282,
+      "nikt": 1283,
+      "niczym": 1284,
+      "niedo": 1285,
+      "niewy": 1286,
+      "niecie": 1287,
+      "nieprze": 1288,
+      "niema": 1289,
+      "nieba": 1290,
+      "niespo": 1291,
+      "niebo": 1292,
+      "nieszczęści": 1293,
+      "dzą": 1294,
+      "wili": 1295,
+      "winął": 1296,
+      "ran": 1297,
+      "rana": 1298,
+      "rado": 1299,
+      "rabi": 1300,
+      "tach": 1301,
+      "taniem": 1302,
+      "koło": 1303,
+      "końcu": 1304,
+      "wiem": 1305,
+      "wiesza": 1306,
+      "wielo": 1307,
+      "wieża": 1308,
+      "wiednie": 1309,
+      "wieżo": 1310,
+      "wieżę": 1311,
+      "wieczór": 1312,
+      "kandy": 1313,
+      "roda": 1314,
+      "rośli": 1315,
+      "łodzie": 1316,
+      "łosy": 1317,
+      "dowi": 1318,
+      "dowie": 1319,
+      "dobie": 1320,
+      "dołu": 1321,
+      "doznał": 1322,
+      "cisz": 1323,
+      "cicha": 1324,
+      "rzekł": 1325,
+      "lat": 1326,
+      "lada": 1327,
+      "lają": 1328,
+      "wali": 1329,
+      "wają": 1330,
+      "wanych": 1331,
+      "wapli": 1332,
+      "lep": 1333,
+      "leś": 1334,
+      "leni": 1335,
+      "lepie": 1336,
+      "wyj": 1337,
+      "wyże": 1338,
+      "wypi": 1339,
+      "wydę": 1340,
+      "zacie": 1341,
+      "zadu": 1342,
+      "nosta": 1343,
+      "noszą": 1344,
+      "jask": 1345,
+      "lii": 1346,
+      "lite": 1347,
+      "liły": 1348,
+      "bywa": 1349,
+      "bywać": 1350,
+      "nem": 1351,
+      "woli": 1352,
+      "wody": 1353,
+      "wość": 1354,
+      "miała": 1355,
+      "mijały": 1356,
+      "tedy": 1357,
+      "tonął": 1358,
+      "żek": 1359,
+      "żegla": 1360,
+      "tyk": 1361,
+      "tytu": 1362,
+      "tykał": 1363,
+      "stada": 1364,
+      "stawia": 1365,
+      "statki": 1366,
+      "stawała": 1367,
+      "statku": 1368,
+      "starzec": 1369,
+      "dawało": 1370,
+      "rych": 1371,
+      "rybni": 1372,
+      "życia": 1373,
+      "paro": 1374,
+      "papier": 1375,
+      "patrzy": 1376,
+      "palm": 1377,
+      "przeko": 1378,
+      "przeci": 1379,
+      "przesu": 1380,
+      "przeszedł": 1381,
+      "czył": 1382,
+      "mogły": 1383,
+      "dynym": 1384,
+      "kuli": 1385,
+      "kując": 1386,
+      "ścił": 1387,
+      "ściach": 1388,
+      "czego": 1389,
+      "czerwo": 1390,
+      "czekać": 1391,
+      "czeńst": 1392,
+      "mat": 1393,
+      "macie": 1394,
+      "mania": 1395,
+      "matki": 1396,
+      "cona": 1397,
+      "cowi": 1398,
+      "cone": 1399,
+      "wej": 1400,
+      "jaką": 1401,
+      "odda": 1402,
+      "odrę": 1403,
+      "odpoczy": 1404,
+      "sami": 1405,
+      "różo": 1406,
+      "biły": 1407,
+      "mieć": 1408,
+      "miesz": 1409,
+      "mieście": 1410,
+      "bagne": 1411,
+      "pią": 1412,
+      "szybko": 1413,
+      "latarnikiem": 1414,
+      "lubi": 1415,
+      "szej": 1416,
+      "szego": 1417,
+      "rozko": 1418,
+      "rozbiła": 1419,
+      "przypły": 1420,
+      "przysła": 1421,
+      "prawo": 1422,
+      "spotykał": 1423,
+      "łudnia": 1424,
+      "jestem": 1425,
+      "tuż": 1426,
+      "pieczeńst": 1427,
+      "skwapli": 1428,
+      "bowiem": 1429,
+      "niach": 1430,
+      "głoś": 1431,
+      "głowie": 1432,
+      "głowa": 1433,
+      "głosy": 1434,
+      "głowę": 1435,
+      "skach": 1436,
+      "tymczasem": 1437,
+      "chowy": 1438,
+      "jedne": 1439,
+      "jedną": 1440,
+      "jeden": 1441,
+      "cać": 1442,
+      "cami": 1443,
+      "zega": 1444,
+      "zeszedł": 1445,
+      "podnosi": 1446,
+      "gdyś": 1447,
+      "myśli": 1448,
+      "nymi": 1449,
+      "Potrzebuję": 1450,
+      "Południa": 1451,
+      "ręka": 1452,
+      "ręki": 1453,
+      "ręce": 1454,
+      "set": 1455,
+      "stochowy": 1456,
+      "gam": 1457,
+      "gaze": 1458,
+      "mięta": 1459,
+      "miętał": 1460,
+      "ałożył": 1461,
+      "szczegó": 1462,
+      "znala": 1463,
+      "znale": 1464,
+      "nade": 1465,
+      "szana": 1466,
+      "bełko": 1467,
+      "ogrom": 1468,
+      "puszcza": 1469,
+      "Nagle": 1470,
+      "loną": 1471,
+      "dują": 1472,
+      "dusza": 1473,
+      "głym": 1474,
+      "świata": 1475,
+      "świade": 1476,
+      "podobnych": 1477,
+      "podobniej": 1478,
+      "niom": 1479,
+      "samemu": 1480,
+      "którego": 1481,
+      "śliczna": 1482,
+      "czonych": 1483,
+      "czonym": 1484,
+      "wielka": 1485,
+      "wielkich": 1486,
+      "wielkim": 1487,
+      "den": 1488,
+      "deł": 1489,
+      "dlatego": 1490,
+      "pływały": 1491,
+      "sumiennym": 1492,
+      "skiego": 1493,
+      "tęczo": 1494,
+      "drob": 1495,
+      "droga": 1496,
+      "drogi": 1497,
+      "pól": 1498,
+      "później": 1499,
+      "proste": 1500,
+      "żag": 1501,
+      "żagle": 1502,
+      "czuje": 1503,
+      "czucie": 1504,
+      "chać": 1505,
+      "chaty": 1506,
+      "zapala": 1507,
+      "zapasy": 1508,
+      "zapalił": 1509,
+      "zapamiętał": 1510,
+      "jącą": 1511,
+      "jącym": 1512,
+      "pianą": 1513,
+      "piaski": 1514,
+      "Czuł": 1515,
+      "Jedynym": 1516,
+      "Stanów": 1517,
+      "rzucała": 1518,
+      "wione": 1519,
+      "pełni": 1520,
+      "pełen": 1521,
+      "tąd": 1522,
+      "wzru": 1523,
+      "żony": 1524,
+      "stracił": 1525,
+      "jakiejś": 1526,
+      "pierwsze": 1527,
+      "Aspinwallu": 1528,
+      "brał": 1529,
+      "książek": 1530,
+      "mewy": 1531,
+      "mówili": 1532,
+      "słyszy": 1533,
+      "właśnie": 1534,
+      "ciągu": 1535,
+      "ciągłym": 1536,
+      "myślą": 1537,
+      "bezwiednie": 1538,
+      "bezpieczeńst": 1539,
+      "człowieka": 1540,
+      "sied": 1541,
+      "siedział": 1542,
+      "świetle": 1543,
+      "rząd": 1544,
+      "rządo": 1545,
+      "powiew": 1546,
+      "powiedzieć": 1547,
+      "lasem": 1548,
+      "nocą": 1549,
+      "miasta": 1550,
+      "którymi": 1551,
+      "prawda": 1552,
+      "prawdę": 1553,
+      "chodzić": 1554,
+      "nastu": 1555,
+      "godzin": 1556,
+      "godzina": 1557,
+      "godziny": 1558,
+      "spokojna": 1559,
+      "spokojnie": 1560,
+      "książka": 1561,
+      "całą": 1562,
+      "całej": 1563,
+      "fali": 1564,
+      "inwali": 1565,
+      "krzyż": 1566,
+      "zwykł": 1567,
+      "zwyczaj": 1568,
+      "jakoś": 1569,
+      "morska": 1570,
+      "morską": 1571,
+      "głosem": 1572,
+      "półkuli": 1573,
+      "lądach": 1574,
+      "onami": 1575,
+      "opano": 1576,
+      "tracił": 1577,
+      "tracić": 1578,
+      "zdarzy": 1579,
+      "zdawało": 1580,
+      "port": 1581,
+      "portu": 1582,
+      "południe": 1583,
+      "warty": 1584,
+      "żywność": 1585,
+      "jącego": 1586,
+      "tułacz": 1587,
+      "tułactwa": 1588,
+      "Panamie": 1589,
+      "Hej": 1590,
+      "Heral": 1591,
+      "drzewa": 1592,
+      "opuszcza": 1593,
+      "trzydziestym": 1594,
+      "ących": 1595,
+      "łąk": 1596,
+      "łąki": 1597,
+      "czter": 1598,
+      "cztery": 1599,
+      "strzel": 1600,
+      "powodu": 1601,
+      "począć": 1602,
+      "począł": 1603,
+      "nikogo": 1604,
+      "tajemnicza": 1605,
+      "kochana": 1606,
+      "kochanym": 1607,
+      "wysokości": 1608,
+      "balkonu": 1609,
+      "skałę": 1610,
+      "skrzydeł": 1611,
+      "Skawińskiego": 1612,
+      "drugimi": 1613,
+      "drugiemu": 1614,
+      "słońce": 1615,
+      "słońca": 1616,
+      "strażniczą": 1617,
+      "własnego": 1618,
+      "służby": 1619,
+      "poczynała": 1620,
+      "Prócz": 1621,
+      "Wiedział": 1622,
+      "bliska": 1623,
+      "otrzym": 1624,
+      "ocean": 1625,
+      "złote": 1626,
+      "łódź": 1627,
+      "łódki": 1628,
+      "chałup": 1629,
+      "chmur": 1630,
+      "polska": 1631,
+      "jedyna": 1632,
+      "paczka": 1633,
+      "dziecka": 1634,
+      "mocno": 1635,
+      "miejscu": 1636,
+      "szereg": 1637,
+      "chorąg": 1638,
+      "chorągie": 1639,
+      "swojej": 1640,
+      "ognisk": 1641,
+      "ognisko": 1642,
+      "szczęśliwy": 1643,
+      "Częstochowy": 1644,
+      "żołnierz": 1645,
+      "piersiach": 1646,
+      "wszelkim": 1647,
+      "następca": 1648,
+      "następcę": 1649,
+      "Johns": 1650,
+      "uczciwy": 1651,
+      "rodzinnej": 1652,
+      "All": 1653,
+      "Sir": 1654,
+      "blasku": 1655,
+      "harto": 1656,
+      "kraju": 1657,
+      "krótce": 1658,
+      "płó": 1659,
+      "próbował": 1660,
+      "rpliwość": 1661,
+      "trochę": 1662,
+      "uroczy": 1663,
+      "wracał": 1664,
+      "niedzielę": 1665,
+      "widecie": 1666,
+      "widzeń": 1667,
+      "koniec": 1668,
+      "wieczorem": 1669,
+      "rzeczywisto": 1670,
+      "wyciągnął": 1671,
+      "zamkniętym": 1672,
+      "zapomniał": 1673,
+      "jasnej": 1674,
+      "rezygna": 1675,
+      "czytywał": 1676,
+      "morzach": 1677,
+      "masztów": 1678,
+      "musiał": 1679,
+      "rozumieć": 1680,
+      "rozmai": 1681,
+      "jesteście": 1682,
+      "zestarzał": 1683,
+      "większą": 1684,
+      "międzymorze": 1685,
+      "Chwila": 1686,
+      "punkciki": 1687,
+      "Wszystko": 1688,
+      "księżyca": 1689,
+      "piękność": 1690,
+      "nieskończoność": 1691,
+      "Amazon": 1692,
+      "Ameryki": 1693,
+      "Miał": 1694,
+      "Obrazy": 1695,
+      "Pewnego": 1696,
+      "Tymczasem": 1697,
+      "Twarz": 1698,
+      "Węgrze": 1699,
+      "Zjednoczonych": 1700,
+      "błęki": 1701,
+      "brzmi": 1702,
+      "dwunastu": 1703,
+      "furko": 1704,
+      "gląda": 1705,
+      "hiszpań": 1706,
+      "klaszto": 1707,
+      "krąg": 1708,
+      "młyn": 1709,
+      "pchnię": 1710,
+      "right": 1711,
+      "ukazy": 1712,
+      "zwłaszcza": 1713,
+      "zmąco": 1714,
+      "Łódź": 1715,
+      "natychmiast": 1716,
+      "niemal": 1717,
+      "niespodzia": 1718,
+      "wielorybni": 1719,
+      "kandyda": 1720,
+      "roślin": 1721,
+      "wyżej": 1722,
+      "wypisany": 1723,
+      "nostalgia": 1724,
+      "odręb": 1725,
+      "bełkotały": 1726,
+      "świadectwa": 1727,
+      "pierwszej": 1728,
+      "rezygnac": 1729,
+      "Amazonce": 1730,
+      "Węgrzech": 1731,
+      "klasztorne": 1732,
+      "wielorybniku": 1733
+    },
+    "merges": [
+      [
+        "i",
+        "e"
+      ],
+      [
+        "c",
+        "z"
+      ],
+      [
+        "n",
+        "a"
+      ],
+      [
+        "r",
+        "z"
+      ],
+      [
+        "a",
+        "ł"
+      ],
+      [
+        "c",
+        "h"
+      ],
+      [
+        "s",
+        "t"
+      ],
+      [
+        "s",
+        "z"
+      ],
+      [
+        "p",
+        "o"
+      ],
+      [
+        "n",
+        "i"
+      ],
+      [
+        "n",
+        "ie"
+      ],
+      [
+        "i",
+        "ę"
+      ],
+      [
+        "d",
+        "z"
+      ],
+      [
+        "w",
+        "i"
+      ],
+      [
+        "g",
+        "o"
+      ],
+      [
+        "r",
+        "a"
+      ],
+      [
+        "s",
+        "ię"
+      ],
+      [
+        "t",
+        "a"
+      ],
+      [
+        "j",
+        "e"
+      ],
+      [
+        "k",
+        "o"
+      ],
+      [
+        "w",
+        "ie"
+      ],
+      [
+        "k",
+        "a"
+      ],
+      [
+        "r",
+        "o"
+      ],
+      [
+        "ł",
+        "o"
+      ],
+      [
+        "d",
+        "o"
+      ],
+      [
+        "c",
+        "i"
+      ],
+      [
+        "k",
+        "i"
+      ],
+      [
+        "y",
+        "m"
+      ],
+      [
+        "rz",
+        "e"
+      ],
+      [
+        "l",
+        "a"
+      ],
+      [
+        "w",
+        "a"
+      ],
+      [
+        "l",
+        "e"
+      ],
+      [
+        "w",
+        "y"
+      ],
+      [
+        "z",
+        "a"
+      ],
+      [
+        "n",
+        "o"
+      ],
+      [
+        "ł",
+        "a"
+      ],
+      [
+        "j",
+        "a"
+      ],
+      [
+        "l",
+        "i"
+      ],
+      [
+        "b",
+        "y"
+      ],
+      [
+        "n",
+        "e"
+      ],
+      [
+        "w",
+        "o"
+      ],
+      [
+        "n",
+        "y"
+      ],
+      [
+        "c",
+        "ie"
+      ],
+      [
+        "m",
+        "i"
+      ],
+      [
+        "t",
+        "e"
+      ],
+      [
+        "t",
+        "o"
+      ],
+      [
+        "ż",
+        "e"
+      ],
+      [
+        "dz",
+        "i"
+      ],
+      [
+        "rz",
+        "y"
+      ],
+      [
+        "t",
+        "y"
+      ],
+      [
+        "st",
+        "a"
+      ],
+      [
+        "d",
+        "a"
+      ],
+      [
+        "r",
+        "e"
+      ],
+      [
+        "ł",
+        "y"
+      ],
+      [
+        "k",
+        "ie"
+      ],
+      [
+        "c",
+        "e"
+      ],
+      [
+        "r",
+        "y"
+      ],
+      [
+        "ż",
+        "y"
+      ],
+      [
+        "p",
+        "a"
+      ],
+      [
+        "dz",
+        "ie"
+      ],
+      [
+        "p",
+        "rze"
+      ],
+      [
+        "cz",
+        "y"
+      ],
+      [
+        "cz",
+        "a"
+      ],
+      [
+        "e",
+        "m"
+      ],
+      [
+        "j",
+        "ą"
+      ],
+      [
+        "ó",
+        "w"
+      ],
+      [
+        "m",
+        "o"
+      ],
+      [
+        "d",
+        "y"
+      ],
+      [
+        "k",
+        "u"
+      ],
+      [
+        "ś",
+        "ci"
+      ],
+      [
+        "cz",
+        "e"
+      ],
+      [
+        "m",
+        "a"
+      ],
+      [
+        "c",
+        "o"
+      ],
+      [
+        "w",
+        "ał"
+      ],
+      [
+        "m",
+        "u"
+      ],
+      [
+        "r",
+        "ni"
+      ],
+      [
+        "w",
+        "e"
+      ],
+      [
+        "ja",
+        "k"
+      ],
+      [
+        "k",
+        "t"
+      ],
+      [
+        "n",
+        "ą"
+      ],
+      [
+        "o",
+        "d"
+      ],
+      [
+        "s",
+        "a"
+      ],
+      [
+        "ta",
+        "rni"
+      ],
+      [
+        "r",
+        "ó"
+      ],
+      [
+        "kt",
+        "ó"
+      ],
+      [
+        "b",
+        "i"
+      ],
+      [
+        "m",
+        "ie"
+      ],
+      [
+        "ra",
+        "z"
+      ],
+      [
+        "b",
+        "a"
+      ],
+      [
+        "p",
+        "i"
+      ],
+      [
+        "sz",
+        "y"
+      ],
+      [
+        "r",
+        "u"
+      ],
+      [
+        "la",
+        "tarni"
+      ],
+      [
+        "wi",
+        "a"
+      ],
+      [
+        "je",
+        "go"
+      ],
+      [
+        "b",
+        "ie"
+      ],
+      [
+        "l",
+        "u"
+      ],
+      [
+        "sz",
+        "e"
+      ],
+      [
+        "ro",
+        "z"
+      ],
+      [
+        "j",
+        "u"
+      ],
+      [
+        "p",
+        "rzy"
+      ],
+      [
+        "ny",
+        "ch"
+      ],
+      [
+        "cza",
+        "s"
+      ],
+      [
+        "p",
+        "ra"
+      ],
+      [
+        "s",
+        "i"
+      ],
+      [
+        "s",
+        "po"
+      ],
+      [
+        "ł",
+        "u"
+      ],
+      [
+        "je",
+        "st"
+      ],
+      [
+        "t",
+        "u"
+      ],
+      [
+        "l",
+        "ko"
+      ],
+      [
+        "p",
+        "ie"
+      ],
+      [
+        "s",
+        "k"
+      ],
+      [
+        "ś",
+        "ć"
+      ],
+      [
+        "ał",
+        "y"
+      ],
+      [
+        "b",
+        "o"
+      ],
+      [
+        "s",
+        "ki"
+      ],
+      [
+        "ś",
+        "cie"
+      ],
+      [
+        "ni",
+        "a"
+      ],
+      [
+        "a",
+        "le"
+      ],
+      [
+        "g",
+        "ło"
+      ],
+      [
+        "s",
+        "ka"
+      ],
+      [
+        "t",
+        "ym"
+      ],
+      [
+        "ch",
+        "o"
+      ],
+      [
+        "ta",
+        "k"
+      ],
+      [
+        "je",
+        "d"
+      ],
+      [
+        "b",
+        "u"
+      ],
+      [
+        "c",
+        "a"
+      ],
+      [
+        "s",
+        "o"
+      ],
+      [
+        "z",
+        "e"
+      ],
+      [
+        "po",
+        "d"
+      ],
+      [
+        "g",
+        "dy"
+      ],
+      [
+        "m",
+        "y"
+      ],
+      [
+        "n",
+        "ym"
+      ],
+      [
+        "cz",
+        "ę"
+      ],
+      [
+        "P",
+        "o"
+      ],
+      [
+        "r",
+        "ę"
+      ],
+      [
+        "s",
+        "e"
+      ],
+      [
+        "st",
+        "o"
+      ],
+      [
+        "g",
+        "a"
+      ],
+      [
+        "m",
+        "ię"
+      ],
+      [
+        "ał",
+        "a"
+      ],
+      [
+        "ał",
+        "o"
+      ],
+      [
+        "sz",
+        "cze"
+      ],
+      [
+        "ty",
+        "lko"
+      ],
+      [
+        "kie",
+        "m"
+      ],
+      [
+        "S",
+        "ka"
+      ],
+      [
+        "p",
+        "e"
+      ],
+      [
+        "s",
+        "wo"
+      ],
+      [
+        "z",
+        "na"
+      ],
+      [
+        "na",
+        "d"
+      ],
+      [
+        "sz",
+        "a"
+      ],
+      [
+        "do",
+        "b"
+      ],
+      [
+        "no",
+        "ści"
+      ],
+      [
+        "ju",
+        "ż"
+      ],
+      [
+        "b",
+        "e"
+      ],
+      [
+        "o",
+        "g"
+      ],
+      [
+        "p",
+        "u"
+      ],
+      [
+        "w",
+        "szy"
+      ],
+      [
+        "wi",
+        "ń"
+      ],
+      [
+        "ne",
+        "j"
+      ],
+      [
+        "re",
+        "sz"
+      ],
+      [
+        "Ska",
+        "wiń"
+      ],
+      [
+        "N",
+        "a"
+      ],
+      [
+        "c",
+        "y"
+      ],
+      [
+        "g",
+        "i"
+      ],
+      [
+        "l",
+        "o"
+      ],
+      [
+        "w",
+        "ię"
+      ],
+      [
+        "ne",
+        "go"
+      ],
+      [
+        "d",
+        "u"
+      ],
+      [
+        "g",
+        "ł"
+      ],
+      [
+        "ś",
+        "wia"
+      ],
+      [
+        "cz",
+        "ą"
+      ],
+      [
+        "ał",
+        "e"
+      ],
+      [
+        "po",
+        "dob"
+      ],
+      [
+        "ni",
+        "o"
+      ],
+      [
+        "wa",
+        "l"
+      ],
+      [
+        "by",
+        "ło"
+      ],
+      [
+        "ty",
+        "ch"
+      ],
+      [
+        "sa",
+        "m"
+      ],
+      [
+        "któ",
+        "re"
+      ],
+      [
+        "ś",
+        "li"
+      ],
+      [
+        "cz",
+        "o"
+      ],
+      [
+        "rz",
+        "ym"
+      ],
+      [
+        "je",
+        "szcze"
+      ],
+      [
+        "wie",
+        "l"
+      ],
+      [
+        "c",
+        "u"
+      ],
+      [
+        "d",
+        "e"
+      ],
+      [
+        "d",
+        "la"
+      ],
+      [
+        "p",
+        "ły"
+      ],
+      [
+        "r",
+        "ą"
+      ],
+      [
+        "s",
+        "u"
+      ],
+      [
+        "s",
+        "y"
+      ],
+      [
+        "s",
+        "kie"
+      ],
+      [
+        "t",
+        "ę"
+      ],
+      [
+        "st",
+        "ał"
+      ],
+      [
+        "nie",
+        "j"
+      ],
+      [
+        "ró",
+        "d"
+      ],
+      [
+        "d",
+        "ę"
+      ],
+      [
+        "d",
+        "ro"
+      ],
+      [
+        "d",
+        "ru"
+      ],
+      [
+        "n",
+        "ę"
+      ],
+      [
+        "o",
+        "n"
+      ],
+      [
+        "p",
+        "ó"
+      ],
+      [
+        "p",
+        "ro"
+      ],
+      [
+        "ż",
+        "a"
+      ],
+      [
+        "cz",
+        "u"
+      ],
+      [
+        "ch",
+        "a"
+      ],
+      [
+        "st",
+        "e"
+      ],
+      [
+        "sz",
+        "czę"
+      ],
+      [
+        "za",
+        "pa"
+      ],
+      [
+        "mi",
+        "ał"
+      ],
+      [
+        "ją",
+        "c"
+      ],
+      [
+        "pi",
+        "a"
+      ],
+      [
+        "wszy",
+        "st"
+      ],
+      [
+        "Skawiń",
+        "ski"
+      ],
+      [
+        "C",
+        "z"
+      ],
+      [
+        "J",
+        "e"
+      ],
+      [
+        "S",
+        "ta"
+      ],
+      [
+        "d",
+        "nie"
+      ],
+      [
+        "n",
+        "wal"
+      ],
+      [
+        "o",
+        "l"
+      ],
+      [
+        "s",
+        "ło"
+      ],
+      [
+        "s",
+        "pi"
+      ],
+      [
+        "t",
+        "rze"
+      ],
+      [
+        "ś",
+        "ród"
+      ],
+      [
+        "rz",
+        "a"
+      ],
+      [
+        "rz",
+        "u"
+      ],
+      [
+        "wi",
+        "o"
+      ],
+      [
+        "wi",
+        "dzi"
+      ],
+      [
+        "wie",
+        "ży"
+      ],
+      [
+        "ki",
+        "ch"
+      ],
+      [
+        "za",
+        "ś"
+      ],
+      [
+        "by",
+        "ł"
+      ],
+      [
+        "jak",
+        "by"
+      ],
+      [
+        "si",
+        "ą"
+      ],
+      [
+        "spo",
+        "ko"
+      ],
+      [
+        "pe",
+        "ł"
+      ],
+      [
+        "spi",
+        "nwal"
+      ],
+      [
+        "N",
+        "ie"
+      ],
+      [
+        "P",
+        "a"
+      ],
+      [
+        "a",
+        "l"
+      ],
+      [
+        "b",
+        "rzym"
+      ],
+      [
+        "d",
+        "ł"
+      ],
+      [
+        "g",
+        "ie"
+      ],
+      [
+        "i",
+        "ch"
+      ],
+      [
+        "j",
+        "ę"
+      ],
+      [
+        "n",
+        "u"
+      ],
+      [
+        "t",
+        "ą"
+      ],
+      [
+        "t",
+        "ał"
+      ],
+      [
+        "w",
+        "z"
+      ],
+      [
+        "w",
+        "śród"
+      ],
+      [
+        "ż",
+        "o"
+      ],
+      [
+        "cz",
+        "ym"
+      ],
+      [
+        "st",
+        "ra"
+      ],
+      [
+        "ni",
+        "m"
+      ],
+      [
+        "ni",
+        "u"
+      ],
+      [
+        "nie",
+        "m"
+      ],
+      [
+        "no",
+        "ść"
+      ],
+      [
+        "ja",
+        "kie"
+      ],
+      [
+        "te",
+        "m"
+      ],
+      [
+        "te",
+        "go"
+      ],
+      [
+        "pie",
+        "r"
+      ],
+      [
+        "jed",
+        "na"
+      ],
+      [
+        "mię",
+        "dz"
+      ],
+      [
+        "ol",
+        "brzym"
+      ],
+      [
+        "A",
+        "spinwal"
+      ],
+      [
+        "b",
+        "r"
+      ],
+      [
+        "g",
+        "u"
+      ],
+      [
+        "k",
+        "sią"
+      ],
+      [
+        "l",
+        "ka"
+      ],
+      [
+        "m",
+        "e"
+      ],
+      [
+        "m",
+        "ó"
+      ],
+      [
+        "m",
+        "ni"
+      ],
+      [
+        "o",
+        "czy"
+      ],
+      [
+        "p",
+        "y"
+      ],
+      [
+        "r",
+        "ym"
+      ],
+      [
+        "s",
+        "ły"
+      ],
+      [
+        "w",
+        "ła"
+      ],
+      [
+        "w",
+        "sze"
+      ],
+      [
+        "ś",
+        "l"
+      ],
+      [
+        "cz",
+        "ło"
+      ],
+      [
+        "ci",
+        "ą"
+      ],
+      [
+        "ki",
+        "m"
+      ],
+      [
+        "ki",
+        "lka"
+      ],
+      [
+        "wa",
+        "ć"
+      ],
+      [
+        "te",
+        "raz"
+      ],
+      [
+        "sta",
+        "ry"
+      ],
+      [
+        "ce",
+        "j"
+      ],
+      [
+        "ba",
+        "r"
+      ],
+      [
+        "czas",
+        "em"
+      ],
+      [
+        "my",
+        "śl"
+      ],
+      [
+        "be",
+        "z"
+      ],
+      [
+        "świa",
+        "t"
+      ],
+      [
+        "czło",
+        "wie"
+      ],
+      [
+        "T",
+        "o"
+      ],
+      [
+        "b",
+        "ra"
+      ],
+      [
+        "i",
+        "d"
+      ],
+      [
+        "r",
+        "ca"
+      ],
+      [
+        "s",
+        "ie"
+      ],
+      [
+        "s",
+        "we"
+      ],
+      [
+        "s",
+        "łu"
+      ],
+      [
+        "t",
+        "wa"
+      ],
+      [
+        "w",
+        "u"
+      ],
+      [
+        "z",
+        "o"
+      ],
+      [
+        "z",
+        "u"
+      ],
+      [
+        "ś",
+        "wie"
+      ],
+      [
+        "rz",
+        "ą"
+      ],
+      [
+        "po",
+        "wie"
+      ],
+      [
+        "dz",
+        "e"
+      ],
+      [
+        "la",
+        "s"
+      ],
+      [
+        "wy",
+        "ch"
+      ],
+      [
+        "wy",
+        "se"
+      ],
+      [
+        "no",
+        "c"
+      ],
+      [
+        "by",
+        "ła"
+      ],
+      [
+        "cie",
+        "m"
+      ],
+      [
+        "mi",
+        "a"
+      ],
+      [
+        "kie",
+        "go"
+      ],
+      [
+        "ży",
+        "ł"
+      ],
+      [
+        "ną",
+        "ł"
+      ],
+      [
+        "któ",
+        "ry"
+      ],
+      [
+        "któ",
+        "rym"
+      ],
+      [
+        "pra",
+        "w"
+      ],
+      [
+        "cho",
+        "dzi"
+      ],
+      [
+        "resz",
+        "cie"
+      ],
+      [
+        "wyse",
+        "p"
+      ],
+      [
+        "P",
+        "rzy"
+      ],
+      [
+        "a",
+        "n"
+      ],
+      [
+        "g",
+        "ro"
+      ],
+      [
+        "i",
+        "m"
+      ],
+      [
+        "k",
+        "ę"
+      ],
+      [
+        "k",
+        "ów"
+      ],
+      [
+        "o",
+        "k"
+      ],
+      [
+        "s",
+        "ko"
+      ],
+      [
+        "t",
+        "wo"
+      ],
+      [
+        "t",
+        "ów"
+      ],
+      [
+        "w",
+        "ym"
+      ],
+      [
+        "z",
+        "ie"
+      ],
+      [
+        "cz",
+        "nie"
+      ],
+      [
+        "na",
+        "j"
+      ],
+      [
+        "na",
+        "st"
+      ],
+      [
+        "ch",
+        "wi"
+      ],
+      [
+        "sz",
+        "ą"
+      ],
+      [
+        "sz",
+        "ał"
+      ],
+      [
+        "ni",
+        "ę"
+      ],
+      [
+        "dz",
+        "o"
+      ],
+      [
+        "wi",
+        "ą"
+      ],
+      [
+        "go",
+        "dzi"
+      ],
+      [
+        "by",
+        "ć"
+      ],
+      [
+        "te",
+        "j"
+      ],
+      [
+        "da",
+        "ch"
+      ],
+      [
+        "swo",
+        "ją"
+      ],
+      [
+        "spoko",
+        "j"
+      ],
+      [
+        "międz",
+        "y"
+      ],
+      [
+        "Aspinwal",
+        "l"
+      ],
+      [
+        "ksią",
+        "ż"
+      ],
+      [
+        "A",
+        "le"
+      ],
+      [
+        "C",
+        "o"
+      ],
+      [
+        "L",
+        "a"
+      ],
+      [
+        "T",
+        "a"
+      ],
+      [
+        "Z",
+        "a"
+      ],
+      [
+        "c",
+        "ał"
+      ],
+      [
+        "c",
+        "ałe"
+      ],
+      [
+        "d",
+        "em"
+      ],
+      [
+        "e",
+        "n"
+      ],
+      [
+        "f",
+        "a"
+      ],
+      [
+        "g",
+        "e"
+      ],
+      [
+        "g",
+        "ó"
+      ],
+      [
+        "g",
+        "le"
+      ],
+      [
+        "i",
+        "n"
+      ],
+      [
+        "k",
+        "ą"
+      ],
+      [
+        "k",
+        "rzy"
+      ],
+      [
+        "o",
+        "b"
+      ],
+      [
+        "o",
+        "r"
+      ],
+      [
+        "t",
+        "ki"
+      ],
+      [
+        "w",
+        "ą"
+      ],
+      [
+        "w",
+        "ów"
+      ],
+      [
+        "z",
+        "wy"
+      ],
+      [
+        "ó",
+        "d"
+      ],
+      [
+        "ę",
+        "p"
+      ],
+      [
+        "rz",
+        "ał"
+      ],
+      [
+        "rz",
+        "ch"
+      ],
+      [
+        "ch",
+        "y"
+      ],
+      [
+        "st",
+        "ro"
+      ],
+      [
+        "sz",
+        "cza"
+      ],
+      [
+        "po",
+        "czy"
+      ],
+      [
+        "ni",
+        "ch"
+      ],
+      [
+        "nie",
+        "go"
+      ],
+      [
+        "ci",
+        "ł"
+      ],
+      [
+        "ja",
+        "ko"
+      ],
+      [
+        "ja",
+        "ka"
+      ],
+      [
+        "te",
+        "ż"
+      ],
+      [
+        "prze",
+        "d"
+      ],
+      [
+        "prze",
+        "z"
+      ],
+      [
+        "mo",
+        "r"
+      ],
+      [
+        "co",
+        "raz"
+      ],
+      [
+        "wał",
+        "a"
+      ],
+      [
+        "wał",
+        "o"
+      ],
+      [
+        "we",
+        "t"
+      ],
+      [
+        "sa",
+        "mo"
+      ],
+      [
+        "pra",
+        "wie"
+      ],
+      [
+        "gło",
+        "s"
+      ],
+      [
+        "so",
+        "bie"
+      ],
+      [
+        "pó",
+        "ł"
+      ],
+      [
+        "Sta",
+        "ry"
+      ],
+      [
+        "mó",
+        "gł"
+      ],
+      [
+        "człowie",
+        "k"
+      ],
+      [
+        "B",
+        "y"
+      ],
+      [
+        "F",
+        "al"
+      ],
+      [
+        "J",
+        "a"
+      ],
+      [
+        "a",
+        "ż"
+      ],
+      [
+        "a",
+        "ch"
+      ],
+      [
+        "a",
+        "ni"
+      ],
+      [
+        "b",
+        "ą"
+      ],
+      [
+        "e",
+        "w"
+      ],
+      [
+        "e",
+        "go"
+      ],
+      [
+        "k",
+        "ł"
+      ],
+      [
+        "k",
+        "ał"
+      ],
+      [
+        "k",
+        "ło"
+      ],
+      [
+        "l",
+        "ą"
+      ],
+      [
+        "n",
+        "br"
+      ],
+      [
+        "o",
+        "z"
+      ],
+      [
+        "o",
+        "na"
+      ],
+      [
+        "o",
+        "pa"
+      ],
+      [
+        "r",
+        "ce"
+      ],
+      [
+        "s",
+        "ła"
+      ],
+      [
+        "s",
+        "ku"
+      ],
+      [
+        "t",
+        "r"
+      ],
+      [
+        "t",
+        "ra"
+      ],
+      [
+        "u",
+        "r"
+      ],
+      [
+        "w",
+        "ę"
+      ],
+      [
+        "w",
+        "ró"
+      ],
+      [
+        "z",
+        "i"
+      ],
+      [
+        "z",
+        "da"
+      ],
+      [
+        "z",
+        "mie"
+      ],
+      [
+        "ś",
+        "mie"
+      ],
+      [
+        "na",
+        "wet"
+      ],
+      [
+        "st",
+        "ym"
+      ],
+      [
+        "sz",
+        "u"
+      ],
+      [
+        "sz",
+        "ło"
+      ],
+      [
+        "sz",
+        "czy"
+      ],
+      [
+        "po",
+        "r"
+      ],
+      [
+        "po",
+        "łu"
+      ],
+      [
+        "ni",
+        "ą"
+      ],
+      [
+        "wi",
+        "do"
+      ],
+      [
+        "ta",
+        "m"
+      ],
+      [
+        "je",
+        "mni"
+      ],
+      [
+        "ka",
+        "r"
+      ],
+      [
+        "ci",
+        "u"
+      ],
+      [
+        "wa",
+        "r"
+      ],
+      [
+        "no",
+        "cy"
+      ],
+      [
+        "ła",
+        "wi"
+      ],
+      [
+        "li",
+        "ście"
+      ],
+      [
+        "wo",
+        "d"
+      ],
+      [
+        "te",
+        "n"
+      ],
+      [
+        "sta",
+        "re"
+      ],
+      [
+        "sta",
+        "rca"
+      ],
+      [
+        "da",
+        "li"
+      ],
+      [
+        "ży",
+        "w"
+      ],
+      [
+        "dzie",
+        "ń"
+      ],
+      [
+        "cza",
+        "j"
+      ],
+      [
+        "ją",
+        "ce"
+      ],
+      [
+        "co",
+        "ś"
+      ],
+      [
+        "co",
+        "nbr"
+      ],
+      [
+        "we",
+        "go"
+      ],
+      [
+        "ró",
+        "ż"
+      ],
+      [
+        "bi",
+        "ła"
+      ],
+      [
+        "raz",
+        "y"
+      ],
+      [
+        "lu",
+        "dzie"
+      ],
+      [
+        "sze",
+        "dł"
+      ],
+      [
+        "czas",
+        "ie"
+      ],
+      [
+        "tu",
+        "ła"
+      ],
+      [
+        "zna",
+        "ł"
+      ],
+      [
+        "resz",
+        "tą"
+      ],
+      [
+        "wię",
+        "c"
+      ],
+      [
+        "szczę",
+        "ście"
+      ],
+      [
+        "wszyst",
+        "ko"
+      ],
+      [
+        "widzi",
+        "ał"
+      ],
+      [
+        "peł",
+        "nie"
+      ],
+      [
+        "Pa",
+        "na"
+      ],
+      [
+        "jedna",
+        "k"
+      ],
+      [
+        "id",
+        "ge"
+      ],
+      [
+        "zu",
+        "pełnie"
+      ],
+      [
+        "La",
+        "tarni"
+      ],
+      [
+        "wów",
+        "czas"
+      ],
+      [
+        "samo",
+        "t"
+      ],
+      [
+        "Fal",
+        "conbr"
+      ],
+      [
+        "Falconbr",
+        "idge"
+      ],
+      [
+        "H",
+        "e"
+      ],
+      [
+        "N",
+        "o"
+      ],
+      [
+        "O",
+        "to"
+      ],
+      [
+        "P",
+        "rze"
+      ],
+      [
+        "a",
+        "r"
+      ],
+      [
+        "b",
+        "ę"
+      ],
+      [
+        "d",
+        "ał"
+      ],
+      [
+        "d",
+        "rze"
+      ],
+      [
+        "d",
+        "nia"
+      ],
+      [
+        "f",
+        "ale"
+      ],
+      [
+        "g",
+        "ą"
+      ],
+      [
+        "j",
+        "s"
+      ],
+      [
+        "k",
+        "sz"
+      ],
+      [
+        "o",
+        "pu"
+      ],
+      [
+        "p",
+        "li"
+      ],
+      [
+        "s",
+        "ą"
+      ],
+      [
+        "s",
+        "ch"
+      ],
+      [
+        "s",
+        "nu"
+      ],
+      [
+        "t",
+        "rzy"
+      ],
+      [
+        "t",
+        "ru"
+      ],
+      [
+        "z",
+        "y"
+      ],
+      [
+        "z",
+        "ł"
+      ],
+      [
+        "z",
+        "no"
+      ],
+      [
+        "ó",
+        "j"
+      ],
+      [
+        "ą",
+        "cy"
+      ],
+      [
+        "ł",
+        "ą"
+      ],
+      [
+        "ś",
+        "wi"
+      ],
+      [
+        "ż",
+        "ni"
+      ],
+      [
+        "”",
+        "."
+      ],
+      [
+        "cz",
+        "te"
+      ],
+      [
+        "na",
+        "ch"
+      ],
+      [
+        "ch",
+        "ło"
+      ],
+      [
+        "st",
+        "rze"
+      ],
+      [
+        "sz",
+        "ę"
+      ],
+      [
+        "po",
+        "wo"
+      ],
+      [
+        "po",
+        "czą"
+      ],
+      [
+        "ni",
+        "ko"
+      ],
+      [
+        "ta",
+        "jemni"
+      ],
+      [
+        "ko",
+        "ły"
+      ],
+      [
+        "ko",
+        "cha"
+      ],
+      [
+        "ci",
+        "szy"
+      ],
+      [
+        "le",
+        "ż"
+      ],
+      [
+        "wy",
+        "so"
+      ],
+      [
+        "ja",
+        "ki"
+      ],
+      [
+        "by",
+        "ły"
+      ],
+      [
+        "dzi",
+        "w"
+      ],
+      [
+        "dzi",
+        "ał"
+      ],
+      [
+        "da",
+        "le"
+      ],
+      [
+        "mo",
+        "że"
+      ],
+      [
+        "cze",
+        "j"
+      ],
+      [
+        "wał",
+        "y"
+      ],
+      [
+        "ną",
+        "ć"
+      ],
+      [
+        "ba",
+        "lko"
+      ],
+      [
+        "latarni",
+        "ka"
+      ],
+      [
+        "sk",
+        "ał"
+      ],
+      [
+        "sk",
+        "rzy"
+      ],
+      [
+        "tak",
+        "że"
+      ],
+      [
+        "czę",
+        "ły"
+      ],
+      [
+        "Po",
+        "tem"
+      ],
+      [
+        "se",
+        "rce"
+      ],
+      [
+        "pe",
+        "w"
+      ],
+      [
+        "Skawiń",
+        "skie"
+      ],
+      [
+        "wię",
+        "cej"
+      ],
+      [
+        "dru",
+        "gi"
+      ],
+      [
+        "dru",
+        "gie"
+      ],
+      [
+        "Cz",
+        "y"
+      ],
+      [
+        "sło",
+        "ń"
+      ],
+      [
+        "trze",
+        "ba"
+      ],
+      [
+        "stra",
+        "żni"
+      ],
+      [
+        "jakie",
+        "ś"
+      ],
+      [
+        "sły",
+        "szał"
+      ],
+      [
+        "wła",
+        "s"
+      ],
+      [
+        "bar",
+        "dzo"
+      ],
+      [
+        "swe",
+        "j"
+      ],
+      [
+        "słu",
+        "ż"
+      ],
+      [
+        "ciem",
+        "ności"
+      ],
+      [
+        "wysep",
+        "ki"
+      ],
+      [
+        "poczy",
+        "na"
+      ],
+      [
+        "jaka",
+        "ś"
+      ],
+      [
+        "Latarni",
+        "k"
+      ],
+      [
+        "B",
+        "ó"
+      ],
+      [
+        "C",
+        "h"
+      ],
+      [
+        "G",
+        "dy"
+      ],
+      [
+        "J",
+        "o"
+      ],
+      [
+        "M",
+        "o"
+      ],
+      [
+        "N",
+        "ew"
+      ],
+      [
+        "P",
+        "ró"
+      ],
+      [
+        "W",
+        "ie"
+      ],
+      [
+        "W",
+        "reszcie"
+      ],
+      [
+        "Y",
+        "or"
+      ],
+      [
+        "b",
+        "rze"
+      ],
+      [
+        "b",
+        "la"
+      ],
+      [
+        "b",
+        "li"
+      ],
+      [
+        "c",
+        "ała"
+      ],
+      [
+        "c",
+        "twa"
+      ],
+      [
+        "d",
+        "i"
+      ],
+      [
+        "d",
+        "ne"
+      ],
+      [
+        "g",
+        "ra"
+      ],
+      [
+        "h",
+        "n"
+      ],
+      [
+        "h",
+        "u"
+      ],
+      [
+        "i",
+        "ą"
+      ],
+      [
+        "k",
+        "le"
+      ],
+      [
+        "m",
+        "ą"
+      ],
+      [
+        "n",
+        "ów"
+      ],
+      [
+        "n",
+        "ku"
+      ],
+      [
+        "n",
+        "nym"
+      ],
+      [
+        "o",
+        "t"
+      ],
+      [
+        "o",
+        "ce"
+      ],
+      [
+        "s",
+        "p"
+      ],
+      [
+        "s",
+        "kiem"
+      ],
+      [
+        "t",
+        "rz"
+      ],
+      [
+        "u",
+        "cz"
+      ],
+      [
+        "w",
+        "reszcie"
+      ],
+      [
+        "z",
+        "ło"
+      ],
+      [
+        "z",
+        "dro"
+      ],
+      [
+        "z",
+        "resztą"
+      ],
+      [
+        "ó",
+        "ł"
+      ],
+      [
+        "ą",
+        "c"
+      ],
+      [
+        "ł",
+        "nie"
+      ],
+      [
+        "ł",
+        "ód"
+      ],
+      [
+        "ń",
+        "cu"
+      ],
+      [
+        "ś",
+        "ni"
+      ],
+      [
+        "ś",
+        "nie"
+      ],
+      [
+        "cz",
+        "nych"
+      ],
+      [
+        "na",
+        "dz"
+      ],
+      [
+        "ch",
+        "ał"
+      ],
+      [
+        "ch",
+        "mu"
+      ],
+      [
+        "st",
+        "u"
+      ],
+      [
+        "po",
+        "l"
+      ],
+      [
+        "po",
+        "dz"
+      ],
+      [
+        "po",
+        "sa"
+      ],
+      [
+        "po",
+        "wia"
+      ],
+      [
+        "po",
+        "tem"
+      ],
+      [
+        "wi",
+        "ał"
+      ],
+      [
+        "wi",
+        "da"
+      ],
+      [
+        "go",
+        "dnie"
+      ],
+      [
+        "ra",
+        "ch"
+      ],
+      [
+        "ta",
+        "ka"
+      ],
+      [
+        "je",
+        "dy"
+      ],
+      [
+        "ko",
+        "n"
+      ],
+      [
+        "wie",
+        "r"
+      ],
+      [
+        "ka",
+        "mi"
+      ],
+      [
+        "ro",
+        "t"
+      ],
+      [
+        "ro",
+        "ni"
+      ],
+      [
+        "ro",
+        "dzi"
+      ],
+      [
+        "do",
+        "stał"
+      ],
+      [
+        "ci",
+        "ć"
+      ],
+      [
+        "ym",
+        "i"
+      ],
+      [
+        "la",
+        "ta"
+      ],
+      [
+        "la",
+        "sy"
+      ],
+      [
+        "wa",
+        "ż"
+      ],
+      [
+        "wa",
+        "ny"
+      ],
+      [
+        "le",
+        "k"
+      ],
+      [
+        "wy",
+        "czaj"
+      ],
+      [
+        "za",
+        "wsze"
+      ],
+      [
+        "no",
+        "we"
+      ],
+      [
+        "no",
+        "si"
+      ],
+      [
+        "li",
+        "ł"
+      ],
+      [
+        "wo",
+        "da"
+      ],
+      [
+        "wo",
+        "dę"
+      ],
+      [
+        "dzi",
+        "a"
+      ],
+      [
+        "dzi",
+        "wie"
+      ],
+      [
+        "ży",
+        "cie"
+      ],
+      [
+        "ży",
+        "ciu"
+      ],
+      [
+        "pa",
+        "cz"
+      ],
+      [
+        "dzie",
+        "c"
+      ],
+      [
+        "dzie",
+        "j"
+      ],
+      [
+        "czy",
+        "wi"
+      ],
+      [
+        "czy",
+        "tał"
+      ],
+      [
+        "mo",
+        "c"
+      ],
+      [
+        "ści",
+        "ą"
+      ],
+      [
+        "od",
+        "pły"
+      ],
+      [
+        "któ",
+        "rą"
+      ],
+      [
+        "bi",
+        "ł"
+      ],
+      [
+        "bi",
+        "ałe"
+      ],
+      [
+        "mie",
+        "js"
+      ],
+      [
+        "mie",
+        "nnym"
+      ],
+      [
+        "latarni",
+        "a"
+      ],
+      [
+        "latarni",
+        "k"
+      ],
+      [
+        "wia",
+        "tr"
+      ],
+      [
+        "lu",
+        "b"
+      ],
+      [
+        "lu",
+        "dz"
+      ],
+      [
+        "lu",
+        "dzi"
+      ],
+      [
+        "sze",
+        "re"
+      ],
+      [
+        "czas",
+        "u"
+      ],
+      [
+        "ski",
+        "ch"
+      ],
+      [
+        "ska",
+        "li"
+      ],
+      [
+        "cho",
+        "rą"
+      ],
+      [
+        "jed",
+        "no"
+      ],
+      [
+        "bu",
+        "rzy"
+      ],
+      [
+        "so",
+        "bą"
+      ],
+      [
+        "swo",
+        "je"
+      ],
+      [
+        "swo",
+        "im"
+      ],
+      [
+        "og",
+        "ni"
+      ],
+      [
+        "pu",
+        "n"
+      ],
+      [
+        "lo",
+        "nych"
+      ],
+      [
+        "du",
+        "szę"
+      ],
+      [
+        "podob",
+        "ne"
+      ],
+      [
+        "podob",
+        "ny"
+      ],
+      [
+        "które",
+        "j"
+      ],
+      [
+        "wiel",
+        "kiego"
+      ],
+      [
+        "cu",
+        "dem"
+      ],
+      [
+        "nę",
+        "ła"
+      ],
+      [
+        "szczę",
+        "śli"
+      ],
+      [
+        "wszyst",
+        "kich"
+      ],
+      [
+        "Cz",
+        "ę"
+      ],
+      [
+        "Je",
+        "st"
+      ],
+      [
+        "spoko",
+        "ju"
+      ],
+      [
+        "żo",
+        "łnie"
+      ],
+      [
+        "pier",
+        "si"
+      ],
+      [
+        "olbrzym",
+        "ich"
+      ],
+      [
+        "wsze",
+        "l"
+      ],
+      [
+        "cią",
+        "g"
+      ],
+      [
+        "bar",
+        "dziej"
+      ],
+      [
+        "świat",
+        "ło"
+      ],
+      [
+        "sie",
+        "bie"
+      ],
+      [
+        "który",
+        "ch"
+      ],
+      [
+        "ok",
+        "rę"
+      ],
+      [
+        "nast",
+        "ęp"
+      ],
+      [
+        "nię",
+        "tym"
+      ],
+      [
+        "rzch",
+        "u"
+      ],
+      [
+        "By",
+        "ł"
+      ],
+      [
+        "śmie",
+        "r"
+      ],
+      [
+        "połu",
+        "d"
+      ],
+      [
+        "wido",
+        "cznie"
+      ],
+      [
+        "ławi",
+        "ce"
+      ],
+      [
+        "stare",
+        "go"
+      ],
+      [
+        "żyw",
+        "ności"
+      ],
+      [
+        "No",
+        "c"
+      ],
+      [
+        "ksz",
+        "tał"
+      ],
+      [
+        "zno",
+        "wu"
+      ],
+      [
+        "świ",
+        "ta"
+      ],
+      [
+        "jaki",
+        "ś"
+      ],
+      [
+        "Bó",
+        "g"
+      ],
+      [
+        "Jo",
+        "hn"
+      ],
+      [
+        "Yor",
+        "ku"
+      ],
+      [
+        "ucz",
+        "ci"
+      ],
+      [
+        "nadz",
+        "wyczaj"
+      ],
+      [
+        "wida",
+        "ć"
+      ],
+      [
+        "rodzi",
+        "n"
+      ],
+      [
+        "A",
+        "l"
+      ],
+      [
+        "I",
+        "I"
+      ],
+      [
+        "I",
+        "n"
+      ],
+      [
+        "N",
+        "i"
+      ],
+      [
+        "O",
+        "n"
+      ],
+      [
+        "R",
+        "oz"
+      ],
+      [
+        "S",
+        "i"
+      ],
+      [
+        "S",
+        "po"
+      ],
+      [
+        "W",
+        "e"
+      ],
+      [
+        "W",
+        "i"
+      ],
+      [
+        "W",
+        "szy"
+      ],
+      [
+        "b",
+        "ó"
+      ],
+      [
+        "b",
+        "ły"
+      ],
+      [
+        "b",
+        "las"
+      ],
+      [
+        "c",
+        "ę"
+      ],
+      [
+        "c",
+        "ię"
+      ],
+      [
+        "c",
+        "ów"
+      ],
+      [
+        "d",
+        "na"
+      ],
+      [
+        "d",
+        "ni"
+      ],
+      [
+        "d",
+        "ło"
+      ],
+      [
+        "d",
+        "no"
+      ],
+      [
+        "e",
+        "k"
+      ],
+      [
+        "f",
+        "i"
+      ],
+      [
+        "f",
+        "al"
+      ],
+      [
+        "g",
+        "ę"
+      ],
+      [
+        "g",
+        "la"
+      ],
+      [
+        "g",
+        "ła"
+      ],
+      [
+        "g",
+        "dzie"
+      ],
+      [
+        "g",
+        "ru"
+      ],
+      [
+        "g",
+        "nąć"
+      ],
+      [
+        "h",
+        "ar"
+      ],
+      [
+        "i",
+        "sz"
+      ],
+      [
+        "j",
+        "dzie"
+      ],
+      [
+        "j",
+        "rzał"
+      ],
+      [
+        "k",
+        "ra"
+      ],
+      [
+        "k",
+        "się"
+      ],
+      [
+        "k",
+        "ci"
+      ],
+      [
+        "k",
+        "ła"
+      ],
+      [
+        "k",
+        "re"
+      ],
+      [
+        "k",
+        "ry"
+      ],
+      [
+        "k",
+        "ró"
+      ],
+      [
+        "k",
+        "ój"
+      ],
+      [
+        "l",
+        "ę"
+      ],
+      [
+        "m",
+        "le"
+      ],
+      [
+        "o",
+        "m"
+      ],
+      [
+        "o",
+        "ny"
+      ],
+      [
+        "o",
+        "we"
+      ],
+      [
+        "o",
+        "ba"
+      ],
+      [
+        "o",
+        "czym"
+      ],
+      [
+        "p",
+        "ł"
+      ],
+      [
+        "p",
+        "ię"
+      ],
+      [
+        "p",
+        "ła"
+      ],
+      [
+        "p",
+        "ró"
+      ],
+      [
+        "r",
+        "ał"
+      ],
+      [
+        "r",
+        "ka"
+      ],
+      [
+        "r",
+        "wo"
+      ],
+      [
+        "r",
+        "pli"
+      ],
+      [
+        "s",
+        "ł"
+      ],
+      [
+        "s",
+        "pa"
+      ],
+      [
+        "s",
+        "em"
+      ],
+      [
+        "t",
+        "ch"
+      ],
+      [
+        "t",
+        "ro"
+      ],
+      [
+        "t",
+        "le"
+      ],
+      [
+        "t",
+        "ku"
+      ],
+      [
+        "t",
+        "łu"
+      ],
+      [
+        "u",
+        "ł"
+      ],
+      [
+        "u",
+        "ro"
+      ],
+      [
+        "u",
+        "bie"
+      ],
+      [
+        "w",
+        "ra"
+      ],
+      [
+        "w",
+        "rot"
+      ],
+      [
+        "z",
+        "wie"
+      ],
+      [
+        "z",
+        "ła"
+      ],
+      [
+        "z",
+        "ała"
+      ],
+      [
+        "ó",
+        "le"
+      ],
+      [
+        "ę",
+        "ki"
+      ],
+      [
+        "ń",
+        "czo"
+      ],
+      [
+        "ż",
+        "u"
+      ],
+      [
+        "ż",
+        "ą"
+      ],
+      [
+        "cz",
+        "na"
+      ],
+      [
+        "cz",
+        "ał"
+      ],
+      [
+        "cz",
+        "ne"
+      ],
+      [
+        "na",
+        "ł"
+      ],
+      [
+        "na",
+        "mi"
+      ],
+      [
+        "na",
+        "gle"
+      ],
+      [
+        "st",
+        "y"
+      ],
+      [
+        "sz",
+        "ły"
+      ],
+      [
+        "po",
+        "ło"
+      ],
+      [
+        "po",
+        "tę"
+      ],
+      [
+        "po",
+        "wró"
+      ],
+      [
+        "po",
+        "częły"
+      ],
+      [
+        "ni",
+        "c"
+      ],
+      [
+        "ni",
+        "k"
+      ],
+      [
+        "ni",
+        "ł"
+      ],
+      [
+        "ni",
+        "ka"
+      ],
+      [
+        "ni",
+        "cze"
+      ],
+      [
+        "ni",
+        "gdy"
+      ],
+      [
+        "nie",
+        "nie"
+      ],
+      [
+        "nie",
+        "dzie"
+      ],
+      [
+        "nie",
+        "bie"
+      ],
+      [
+        "nie",
+        "sko"
+      ],
+      [
+        "nie",
+        "powo"
+      ],
+      [
+        "nie",
+        "waż"
+      ],
+      [
+        "wi",
+        "ć"
+      ],
+      [
+        "wi",
+        "de"
+      ],
+      [
+        "wi",
+        "dze"
+      ],
+      [
+        "ra",
+        "l"
+      ],
+      [
+        "ra",
+        "mi"
+      ],
+      [
+        "ta",
+        "ć"
+      ],
+      [
+        "ta",
+        "cz"
+      ],
+      [
+        "je",
+        "śli"
+      ],
+      [
+        "ko",
+        "nie"
+      ],
+      [
+        "ko",
+        "ści"
+      ],
+      [
+        "wie",
+        "czo"
+      ],
+      [
+        "wie",
+        "rzchu"
+      ],
+      [
+        "ka",
+        "ć"
+      ],
+      [
+        "ro",
+        "m"
+      ],
+      [
+        "ro",
+        "ku"
+      ],
+      [
+        "do",
+        "sta"
+      ],
+      [
+        "do",
+        "my"
+      ],
+      [
+        "ci",
+        "a"
+      ],
+      [
+        "ci",
+        "cho"
+      ],
+      [
+        "ym",
+        "o"
+      ],
+      [
+        "rze",
+        "c"
+      ],
+      [
+        "rze",
+        "czywi"
+      ],
+      [
+        "wa",
+        "s"
+      ],
+      [
+        "wa",
+        "rzy"
+      ],
+      [
+        "le",
+        "ci"
+      ],
+      [
+        "wy",
+        "ra"
+      ],
+      [
+        "wy",
+        "pa"
+      ],
+      [
+        "wy",
+        "ciąg"
+      ],
+      [
+        "za",
+        "m"
+      ],
+      [
+        "za",
+        "po"
+      ],
+      [
+        "za",
+        "le"
+      ],
+      [
+        "za",
+        "mi"
+      ],
+      [
+        "za",
+        "raz"
+      ],
+      [
+        "za",
+        "wod"
+      ],
+      [
+        "ła",
+        "two"
+      ],
+      [
+        "ja",
+        "s"
+      ],
+      [
+        "wo",
+        "j"
+      ],
+      [
+        "wo",
+        "ła"
+      ],
+      [
+        "wo",
+        "dach"
+      ],
+      [
+        "te",
+        "k"
+      ],
+      [
+        "dzi",
+        "ł"
+      ],
+      [
+        "dzi",
+        "wa"
+      ],
+      [
+        "ty",
+        "godnie"
+      ],
+      [
+        "sta",
+        "wał"
+      ],
+      [
+        "da",
+        "l"
+      ],
+      [
+        "da",
+        "w"
+      ],
+      [
+        "da",
+        "je"
+      ],
+      [
+        "re",
+        "m"
+      ],
+      [
+        "re",
+        "zy"
+      ],
+      [
+        "ce",
+        "m"
+      ],
+      [
+        "ry",
+        "ki"
+      ],
+      [
+        "ry",
+        "wał"
+      ],
+      [
+        "ży",
+        "je"
+      ],
+      [
+        "dzie",
+        "ć"
+      ],
+      [
+        "dzie",
+        "stym"
+      ],
+      [
+        "prze",
+        "szło"
+      ],
+      [
+        "czy",
+        "ty"
+      ],
+      [
+        "cza",
+        "r"
+      ],
+      [
+        "em",
+        "u"
+      ],
+      [
+        "ją",
+        "cej"
+      ],
+      [
+        "mo",
+        "rze"
+      ],
+      [
+        "mo",
+        "wa"
+      ],
+      [
+        "mo",
+        "rza"
+      ],
+      [
+        "ma",
+        "r"
+      ],
+      [
+        "ma",
+        "sz"
+      ],
+      [
+        "mu",
+        "si"
+      ],
+      [
+        "od",
+        "u"
+      ],
+      [
+        "sa",
+        "ny"
+      ],
+      [
+        "bi",
+        "ć"
+      ],
+      [
+        "raz",
+        "u"
+      ],
+      [
+        "ru",
+        "ch"
+      ],
+      [
+        "latarni",
+        "ę"
+      ],
+      [
+        "bie",
+        "rał"
+      ],
+      [
+        "roz",
+        "u"
+      ],
+      [
+        "roz",
+        "le"
+      ],
+      [
+        "roz",
+        "ma"
+      ],
+      [
+        "przy",
+        "wo"
+      ],
+      [
+        "pra",
+        "g"
+      ],
+      [
+        "pra",
+        "wi"
+      ],
+      [
+        "si",
+        "ł"
+      ],
+      [
+        "spo",
+        "kój"
+      ],
+      [
+        "jest",
+        "e"
+      ],
+      [
+        "sk",
+        "ą"
+      ],
+      [
+        "bo",
+        "wał"
+      ],
+      [
+        "ska",
+        "le"
+      ],
+      [
+        "bu",
+        "rza"
+      ],
+      [
+        "bu",
+        "ję"
+      ],
+      [
+        "ze",
+        "sta"
+      ],
+      [
+        "pod",
+        "róż"
+      ],
+      [
+        "Po",
+        "la"
+      ],
+      [
+        "se",
+        "rca"
+      ],
+      [
+        "sto",
+        "i"
+      ],
+      [
+        "ga",
+        "r"
+      ],
+      [
+        "ności",
+        "ą"
+      ],
+      [
+        "og",
+        "óle"
+      ],
+      [
+        "Na",
+        "d"
+      ],
+      [
+        "gi",
+        "a"
+      ],
+      [
+        "wię",
+        "k"
+      ],
+      [
+        "gł",
+        "ę"
+      ],
+      [
+        "podob",
+        "na"
+      ],
+      [
+        "nio",
+        "ne"
+      ],
+      [
+        "sam",
+        "ego"
+      ],
+      [
+        "wiel",
+        "ki"
+      ],
+      [
+        "su",
+        "la"
+      ],
+      [
+        "tę",
+        "sk"
+      ],
+      [
+        "dru",
+        "gą"
+      ],
+      [
+        "pro",
+        "mie"
+      ],
+      [
+        "pro",
+        "stu"
+      ],
+      [
+        "czu",
+        "ł"
+      ],
+      [
+        "ste",
+        "j"
+      ],
+      [
+        "szczę",
+        "ści"
+      ],
+      [
+        "pia",
+        "sku"
+      ],
+      [
+        "pia",
+        "szczy"
+      ],
+      [
+        "trze",
+        "buję"
+      ],
+      [
+        "rzu",
+        "ci"
+      ],
+      [
+        "wio",
+        "ny"
+      ],
+      [
+        "wz",
+        "ią"
+      ],
+      [
+        "pier",
+        "wszy"
+      ],
+      [
+        "międz",
+        "ymo"
+      ],
+      [
+        "olbrzym",
+        "i"
+      ],
+      [
+        "olbrzym",
+        "ie"
+      ],
+      [
+        "me",
+        "w"
+      ],
+      [
+        "mni",
+        "ał"
+      ],
+      [
+        "py",
+        "ta"
+      ],
+      [
+        "myśl",
+        "ał"
+      ],
+      [
+        "świat",
+        "ła"
+      ],
+      [
+        "To",
+        "warzy"
+      ],
+      [
+        "bra",
+        "kło"
+      ],
+      [
+        "swe",
+        "go"
+      ],
+      [
+        "zo",
+        "stał"
+      ],
+      [
+        "mia",
+        "st"
+      ],
+      [
+        "praw",
+        "dziwie"
+      ],
+      [
+        "chodzi",
+        "ł"
+      ],
+      [
+        "chodzi",
+        "ła"
+      ],
+      [
+        "wysep",
+        "ce"
+      ],
+      [
+        "zie",
+        "lonych"
+      ],
+      [
+        "chwi",
+        "la"
+      ],
+      [
+        "chwi",
+        "li"
+      ],
+      [
+        "książ",
+        "ki"
+      ],
+      [
+        "książ",
+        "kę"
+      ],
+      [
+        "Ta",
+        "k"
+      ],
+      [
+        "fa",
+        "la"
+      ],
+      [
+        "zwy",
+        "kle"
+      ],
+      [
+        "Ja",
+        "k"
+      ],
+      [
+        "opa",
+        "r"
+      ],
+      [
+        "ur",
+        "wi"
+      ],
+      [
+        "szu",
+        "mi"
+      ],
+      [
+        "szczęście",
+        "m"
+      ],
+      [
+        "Pana",
+        "my"
+      ],
+      [
+        "bę",
+        "dzie"
+      ],
+      [
+        "drze",
+        "w"
+      ],
+      [
+        "sch",
+        "od"
+      ],
+      [
+        "koły",
+        "s"
+      ],
+      [
+        "leż",
+        "ał"
+      ],
+      [
+        "dziw",
+        "nego"
+      ],
+      [
+        "dale",
+        "j"
+      ],
+      [
+        "balko",
+        "nie"
+      ],
+      [
+        "Skawińskie",
+        "mu"
+      ],
+      [
+        "drugie",
+        "j"
+      ],
+      [
+        "Ch",
+        "wi"
+      ],
+      [
+        "podz",
+        "wrot"
+      ],
+      [
+        "posa",
+        "dę"
+      ],
+      [
+        "powia",
+        "dał"
+      ],
+      [
+        "kon",
+        "sula"
+      ],
+      [
+        "skali",
+        "stej"
+      ],
+      [
+        "pun",
+        "kci"
+      ],
+      [
+        "Jest",
+        "em"
+      ],
+      [
+        "śmier",
+        "ci"
+      ],
+      [
+        "połud",
+        "nio"
+      ],
+      [
+        "kształ",
+        "t"
+      ],
+      [
+        "In",
+        "di"
+      ],
+      [
+        "Ni",
+        "c"
+      ],
+      [
+        "Wszy",
+        "st"
+      ],
+      [
+        "fal",
+        "ą"
+      ],
+      [
+        "isz",
+        "pa"
+      ],
+      [
+        "księ",
+        "ży"
+      ],
+      [
+        "oczym",
+        "a"
+      ],
+      [
+        "pię",
+        "k"
+      ],
+      [
+        "niesko",
+        "ńczo"
+      ],
+      [
+        "niepowo",
+        "dze"
+      ],
+      [
+        "wypa",
+        "d"
+      ],
+      [
+        "zawod",
+        "ów"
+      ],
+      [
+        "piaszczy",
+        "ste"
+      ],
+      [
+        "wzią",
+        "ł"
+      ],
+      [
+        "Towarzy",
+        "st"
+      ],
+      [
+        "podzwrot",
+        "niko"
+      ],
+      [
+        "!",
+        "”"
+      ],
+      [
+        "!",
+        "…"
+      ],
+      [
+        "A",
+        "ma"
+      ],
+      [
+        "A",
+        "me"
+      ],
+      [
+        "B",
+        "ie"
+      ],
+      [
+        "C",
+        "i"
+      ],
+      [
+        "C",
+        "za"
+      ],
+      [
+        "C",
+        "ze"
+      ],
+      [
+        "D",
+        "o"
+      ],
+      [
+        "H",
+        "m"
+      ],
+      [
+        "K",
+        "to"
+      ],
+      [
+        "K",
+        "re"
+      ],
+      [
+        "L",
+        "i"
+      ],
+      [
+        "M",
+        "i"
+      ],
+      [
+        "M",
+        "ło"
+      ],
+      [
+        "O",
+        "b"
+      ],
+      [
+        "O",
+        "j"
+      ],
+      [
+        "P",
+        "ew"
+      ],
+      [
+        "R",
+        "ze"
+      ],
+      [
+        "T",
+        "ym"
+      ],
+      [
+        "T",
+        "wa"
+      ],
+      [
+        "T",
+        "en"
+      ],
+      [
+        "W",
+        "ę"
+      ],
+      [
+        "Z",
+        "e"
+      ],
+      [
+        "Z",
+        "resztą"
+      ],
+      [
+        "Z",
+        "jedno"
+      ],
+      [
+        "a",
+        "u"
+      ],
+      [
+        "a",
+        "ć"
+      ],
+      [
+        "a",
+        "wa"
+      ],
+      [
+        "a",
+        "no"
+      ],
+      [
+        "a",
+        "spinwal"
+      ],
+      [
+        "b",
+        "ł"
+      ],
+      [
+        "b",
+        "rz"
+      ],
+      [
+        "b",
+        "ni"
+      ],
+      [
+        "b",
+        "ko"
+      ],
+      [
+        "b",
+        "le"
+      ],
+      [
+        "b",
+        "roni"
+      ],
+      [
+        "c",
+        "ą"
+      ],
+      [
+        "c",
+        "ymi"
+      ],
+      [
+        "d",
+        "r"
+      ],
+      [
+        "d",
+        "ą"
+      ],
+      [
+        "d",
+        "ra"
+      ],
+      [
+        "d",
+        "ym"
+      ],
+      [
+        "d",
+        "wa"
+      ],
+      [
+        "d",
+        "ła"
+      ],
+      [
+        "d",
+        "ną"
+      ],
+      [
+        "d",
+        "łu"
+      ],
+      [
+        "d",
+        "ały"
+      ],
+      [
+        "d",
+        "ało"
+      ],
+      [
+        "d",
+        "wu"
+      ],
+      [
+        "e",
+        "j"
+      ],
+      [
+        "f",
+        "ności"
+      ],
+      [
+        "f",
+        "ur"
+      ],
+      [
+        "g",
+        "h"
+      ],
+      [
+        "g",
+        "na"
+      ],
+      [
+        "g",
+        "rze"
+      ],
+      [
+        "g",
+        "ne"
+      ],
+      [
+        "g",
+        "ły"
+      ],
+      [
+        "g",
+        "lą"
+      ],
+      [
+        "h",
+        "a"
+      ],
+      [
+        "h",
+        "iszpa"
+      ],
+      [
+        "i",
+        "z"
+      ],
+      [
+        "i",
+        "ż"
+      ],
+      [
+        "i",
+        "le"
+      ],
+      [
+        "i",
+        "ły"
+      ],
+      [
+        "i",
+        "gh"
+      ],
+      [
+        "j",
+        "i"
+      ],
+      [
+        "j",
+        "ś"
+      ],
+      [
+        "j",
+        "cie"
+      ],
+      [
+        "j",
+        "mu"
+      ],
+      [
+        "j",
+        "ały"
+      ],
+      [
+        "j",
+        "niej"
+      ],
+      [
+        "k",
+        "la"
+      ],
+      [
+        "k",
+        "to"
+      ],
+      [
+        "k",
+        "rą"
+      ],
+      [
+        "k",
+        "nął"
+      ],
+      [
+        "k",
+        "niętym"
+      ],
+      [
+        "l",
+        "m"
+      ],
+      [
+        "l",
+        "ne"
+      ],
+      [
+        "l",
+        "skie"
+      ],
+      [
+        "l",
+        "gia"
+      ],
+      [
+        "m",
+        "ę"
+      ],
+      [
+        "m",
+        "ły"
+      ],
+      [
+        "m",
+        "ru"
+      ],
+      [
+        "m",
+        "ałe"
+      ],
+      [
+        "m",
+        "gła"
+      ],
+      [
+        "n",
+        "ne"
+      ],
+      [
+        "n",
+        "dy"
+      ],
+      [
+        "o",
+        "j"
+      ],
+      [
+        "o",
+        "wi"
+      ],
+      [
+        "o",
+        "ra"
+      ],
+      [
+        "o",
+        "ko"
+      ],
+      [
+        "o",
+        "ka"
+      ],
+      [
+        "o",
+        "do"
+      ],
+      [
+        "o",
+        "no"
+      ],
+      [
+        "o",
+        "ne"
+      ],
+      [
+        "o",
+        "to"
+      ],
+      [
+        "o",
+        "be"
+      ],
+      [
+        "o",
+        "czu"
+      ],
+      [
+        "o",
+        "bra"
+      ],
+      [
+        "o",
+        "świe"
+      ],
+      [
+        "o",
+        "stro"
+      ],
+      [
+        "o",
+        "tacz"
+      ],
+      [
+        "p",
+        "ch"
+      ],
+      [
+        "p",
+        "ta"
+      ],
+      [
+        "p",
+        "ło"
+      ],
+      [
+        "p",
+        "le"
+      ],
+      [
+        "r",
+        "do"
+      ],
+      [
+        "r",
+        "ne"
+      ],
+      [
+        "r",
+        "ków"
+      ],
+      [
+        "r",
+        "wała"
+      ],
+      [
+        "r",
+        "igh"
+      ],
+      [
+        "s",
+        "no"
+      ],
+      [
+        "s",
+        "ów"
+      ],
+      [
+        "s",
+        "pie"
+      ],
+      [
+        "t",
+        "k"
+      ],
+      [
+        "t",
+        "nie"
+      ],
+      [
+        "t",
+        "ce"
+      ],
+      [
+        "t",
+        "ały"
+      ],
+      [
+        "t",
+        "wą"
+      ],
+      [
+        "t",
+        "wier"
+      ],
+      [
+        "u",
+        "p"
+      ],
+      [
+        "u",
+        "ka"
+      ],
+      [
+        "u",
+        "ła"
+      ],
+      [
+        "u",
+        "fności"
+      ],
+      [
+        "w",
+        "ka"
+      ],
+      [
+        "w",
+        "ki"
+      ],
+      [
+        "w",
+        "ny"
+      ],
+      [
+        "w",
+        "sta"
+      ],
+      [
+        "w",
+        "spo"
+      ],
+      [
+        "w",
+        "ska"
+      ],
+      [
+        "z",
+        "wi"
+      ],
+      [
+        "z",
+        "bu"
+      ],
+      [
+        "z",
+        "on"
+      ],
+      [
+        "z",
+        "wła"
+      ],
+      [
+        "z",
+        "żył"
+      ],
+      [
+        "z",
+        "mą"
+      ],
+      [
+        "ó",
+        "r"
+      ],
+      [
+        "ą",
+        "ce"
+      ],
+      [
+        "ę",
+        "pu"
+      ],
+      [
+        "ę",
+        "dził"
+      ],
+      [
+        "Ł",
+        "ód"
+      ],
+      [
+        "ł",
+        "ko"
+      ],
+      [
+        "ł",
+        "ka"
+      ],
+      [
+        "ł",
+        "ało"
+      ],
+      [
+        "ń",
+        "st"
+      ],
+      [
+        "ś",
+        "la"
+      ],
+      [
+        "ś",
+        "miał"
+      ],
+      [
+        "ź",
+        "nie"
+      ],
+      [
+        "ź",
+        "niej"
+      ],
+      [
+        "ż",
+        "ę"
+      ],
+      [
+        "ż",
+        "na"
+      ],
+      [
+        "ż",
+        "ący"
+      ],
+      [
+        "cz",
+        "ki"
+      ],
+      [
+        "cz",
+        "ny"
+      ],
+      [
+        "cz",
+        "em"
+      ],
+      [
+        "cz",
+        "ór"
+      ],
+      [
+        "na",
+        "le"
+      ],
+      [
+        "na",
+        "to"
+      ],
+      [
+        "na",
+        "dzie"
+      ],
+      [
+        "na",
+        "tu"
+      ],
+      [
+        "na",
+        "tych"
+      ],
+      [
+        "na",
+        "sy"
+      ],
+      [
+        "na",
+        "zwi"
+      ],
+      [
+        "ał",
+        "ym"
+      ],
+      [
+        "ał",
+        "em"
+      ],
+      [
+        "ch",
+        "ę"
+      ],
+      [
+        "ch",
+        "wy"
+      ],
+      [
+        "st",
+        "ało"
+      ],
+      [
+        "st",
+        "ałe"
+      ],
+      [
+        "st",
+        "ęp"
+      ],
+      [
+        "sz",
+        "o"
+      ],
+      [
+        "sz",
+        "la"
+      ],
+      [
+        "sz",
+        "ła"
+      ],
+      [
+        "sz",
+        "li"
+      ],
+      [
+        "sz",
+        "to"
+      ],
+      [
+        "sz",
+        "czał"
+      ],
+      [
+        "po",
+        "t"
+      ],
+      [
+        "po",
+        "go"
+      ],
+      [
+        "po",
+        "za"
+      ],
+      [
+        "po",
+        "ży"
+      ],
+      [
+        "po",
+        "ru"
+      ],
+      [
+        "po",
+        "chy"
+      ],
+      [
+        "po",
+        "nieważ"
+      ],
+      [
+        "ni",
+        "ż"
+      ],
+      [
+        "ni",
+        "kt"
+      ],
+      [
+        "ni",
+        "czym"
+      ],
+      [
+        "nie",
+        "do"
+      ],
+      [
+        "nie",
+        "wy"
+      ],
+      [
+        "nie",
+        "cie"
+      ],
+      [
+        "nie",
+        "prze"
+      ],
+      [
+        "nie",
+        "ma"
+      ],
+      [
+        "nie",
+        "ba"
+      ],
+      [
+        "nie",
+        "spo"
+      ],
+      [
+        "nie",
+        "bo"
+      ],
+      [
+        "nie",
+        "szczęści"
+      ],
+      [
+        "dz",
+        "ą"
+      ],
+      [
+        "wi",
+        "li"
+      ],
+      [
+        "wi",
+        "nął"
+      ],
+      [
+        "ra",
+        "n"
+      ],
+      [
+        "ra",
+        "na"
+      ],
+      [
+        "ra",
+        "do"
+      ],
+      [
+        "ra",
+        "bi"
+      ],
+      [
+        "ta",
+        "ch"
+      ],
+      [
+        "ta",
+        "niem"
+      ],
+      [
+        "ko",
+        "ło"
+      ],
+      [
+        "ko",
+        "ńcu"
+      ],
+      [
+        "wie",
+        "m"
+      ],
+      [
+        "wie",
+        "sza"
+      ],
+      [
+        "wie",
+        "lo"
+      ],
+      [
+        "wie",
+        "ża"
+      ],
+      [
+        "wie",
+        "dnie"
+      ],
+      [
+        "wie",
+        "żo"
+      ],
+      [
+        "wie",
+        "żę"
+      ],
+      [
+        "wie",
+        "czór"
+      ],
+      [
+        "ka",
+        "ndy"
+      ],
+      [
+        "ro",
+        "da"
+      ],
+      [
+        "ro",
+        "śli"
+      ],
+      [
+        "ło",
+        "dzie"
+      ],
+      [
+        "ło",
+        "sy"
+      ],
+      [
+        "do",
+        "wi"
+      ],
+      [
+        "do",
+        "wie"
+      ],
+      [
+        "do",
+        "bie"
+      ],
+      [
+        "do",
+        "łu"
+      ],
+      [
+        "do",
+        "znał"
+      ],
+      [
+        "ci",
+        "sz"
+      ],
+      [
+        "ci",
+        "cha"
+      ],
+      [
+        "rze",
+        "kł"
+      ],
+      [
+        "la",
+        "t"
+      ],
+      [
+        "la",
+        "da"
+      ],
+      [
+        "la",
+        "ją"
+      ],
+      [
+        "wa",
+        "li"
+      ],
+      [
+        "wa",
+        "ją"
+      ],
+      [
+        "wa",
+        "nych"
+      ],
+      [
+        "wa",
+        "pli"
+      ],
+      [
+        "le",
+        "p"
+      ],
+      [
+        "le",
+        "ś"
+      ],
+      [
+        "le",
+        "ni"
+      ],
+      [
+        "le",
+        "pie"
+      ],
+      [
+        "wy",
+        "j"
+      ],
+      [
+        "wy",
+        "że"
+      ],
+      [
+        "wy",
+        "pi"
+      ],
+      [
+        "wy",
+        "dę"
+      ],
+      [
+        "za",
+        "cie"
+      ],
+      [
+        "za",
+        "du"
+      ],
+      [
+        "no",
+        "sta"
+      ],
+      [
+        "no",
+        "szą"
+      ],
+      [
+        "ja",
+        "sk"
+      ],
+      [
+        "li",
+        "i"
+      ],
+      [
+        "li",
+        "te"
+      ],
+      [
+        "li",
+        "ły"
+      ],
+      [
+        "by",
+        "wa"
+      ],
+      [
+        "by",
+        "wać"
+      ],
+      [
+        "ne",
+        "m"
+      ],
+      [
+        "wo",
+        "li"
+      ],
+      [
+        "wo",
+        "dy"
+      ],
+      [
+        "wo",
+        "ść"
+      ],
+      [
+        "mi",
+        "ała"
+      ],
+      [
+        "mi",
+        "jały"
+      ],
+      [
+        "te",
+        "dy"
+      ],
+      [
+        "to",
+        "nął"
+      ],
+      [
+        "że",
+        "k"
+      ],
+      [
+        "że",
+        "gla"
+      ],
+      [
+        "ty",
+        "k"
+      ],
+      [
+        "ty",
+        "tu"
+      ],
+      [
+        "ty",
+        "kał"
+      ],
+      [
+        "sta",
+        "da"
+      ],
+      [
+        "sta",
+        "wia"
+      ],
+      [
+        "sta",
+        "tki"
+      ],
+      [
+        "sta",
+        "wała"
+      ],
+      [
+        "sta",
+        "tku"
+      ],
+      [
+        "sta",
+        "rzec"
+      ],
+      [
+        "da",
+        "wało"
+      ],
+      [
+        "ry",
+        "ch"
+      ],
+      [
+        "ry",
+        "bni"
+      ],
+      [
+        "ży",
+        "cia"
+      ],
+      [
+        "pa",
+        "ro"
+      ],
+      [
+        "pa",
+        "pier"
+      ],
+      [
+        "pa",
+        "trzy"
+      ],
+      [
+        "pa",
+        "lm"
+      ],
+      [
+        "prze",
+        "ko"
+      ],
+      [
+        "prze",
+        "ci"
+      ],
+      [
+        "prze",
+        "su"
+      ],
+      [
+        "prze",
+        "szedł"
+      ],
+      [
+        "czy",
+        "ł"
+      ],
+      [
+        "mo",
+        "gły"
+      ],
+      [
+        "dy",
+        "nym"
+      ],
+      [
+        "ku",
+        "li"
+      ],
+      [
+        "ku",
+        "jąc"
+      ],
+      [
+        "ści",
+        "ł"
+      ],
+      [
+        "ści",
+        "ach"
+      ],
+      [
+        "cze",
+        "go"
+      ],
+      [
+        "cze",
+        "rwo"
+      ],
+      [
+        "cze",
+        "kać"
+      ],
+      [
+        "cze",
+        "ńst"
+      ],
+      [
+        "ma",
+        "t"
+      ],
+      [
+        "ma",
+        "cie"
+      ],
+      [
+        "ma",
+        "nia"
+      ],
+      [
+        "ma",
+        "tki"
+      ],
+      [
+        "co",
+        "na"
+      ],
+      [
+        "co",
+        "wi"
+      ],
+      [
+        "co",
+        "ne"
+      ],
+      [
+        "we",
+        "j"
+      ],
+      [
+        "jak",
+        "ą"
+      ],
+      [
+        "od",
+        "da"
+      ],
+      [
+        "od",
+        "rę"
+      ],
+      [
+        "od",
+        "poczy"
+      ],
+      [
+        "sa",
+        "mi"
+      ],
+      [
+        "ró",
+        "żo"
+      ],
+      [
+        "bi",
+        "ły"
+      ],
+      [
+        "mie",
+        "ć"
+      ],
+      [
+        "mie",
+        "sz"
+      ],
+      [
+        "mie",
+        "ście"
+      ],
+      [
+        "ba",
+        "gne"
+      ],
+      [
+        "pi",
+        "ą"
+      ],
+      [
+        "szy",
+        "bko"
+      ],
+      [
+        "latarni",
+        "kiem"
+      ],
+      [
+        "lu",
+        "bi"
+      ],
+      [
+        "sze",
+        "j"
+      ],
+      [
+        "sze",
+        "go"
+      ],
+      [
+        "roz",
+        "ko"
+      ],
+      [
+        "roz",
+        "biła"
+      ],
+      [
+        "przy",
+        "pły"
+      ],
+      [
+        "przy",
+        "sła"
+      ],
+      [
+        "pra",
+        "wo"
+      ],
+      [
+        "spo",
+        "tykał"
+      ],
+      [
+        "łu",
+        "dnia"
+      ],
+      [
+        "jest",
+        "em"
+      ],
+      [
+        "tu",
+        "ż"
+      ],
+      [
+        "pie",
+        "czeńst"
+      ],
+      [
+        "sk",
+        "wapli"
+      ],
+      [
+        "bo",
+        "wiem"
+      ],
+      [
+        "nia",
+        "ch"
+      ],
+      [
+        "gło",
+        "ś"
+      ],
+      [
+        "gło",
+        "wie"
+      ],
+      [
+        "gło",
+        "wa"
+      ],
+      [
+        "gło",
+        "sy"
+      ],
+      [
+        "gło",
+        "wę"
+      ],
+      [
+        "ska",
+        "ch"
+      ],
+      [
+        "tym",
+        "czasem"
+      ],
+      [
+        "cho",
+        "wy"
+      ],
+      [
+        "jed",
+        "ne"
+      ],
+      [
+        "jed",
+        "ną"
+      ],
+      [
+        "jed",
+        "en"
+      ],
+      [
+        "ca",
+        "ć"
+      ],
+      [
+        "ca",
+        "mi"
+      ],
+      [
+        "ze",
+        "ga"
+      ],
+      [
+        "ze",
+        "szedł"
+      ],
+      [
+        "pod",
+        "nosi"
+      ],
+      [
+        "gdy",
+        "ś"
+      ],
+      [
+        "my",
+        "śli"
+      ],
+      [
+        "nym",
+        "i"
+      ],
+      [
+        "Po",
+        "trzebuję"
+      ],
+      [
+        "Po",
+        "łudnia"
+      ],
+      [
+        "rę",
+        "ka"
+      ],
+      [
+        "rę",
+        "ki"
+      ],
+      [
+        "rę",
+        "ce"
+      ],
+      [
+        "se",
+        "t"
+      ],
+      [
+        "sto",
+        "chowy"
+      ],
+      [
+        "ga",
+        "m"
+      ],
+      [
+        "ga",
+        "ze"
+      ],
+      [
+        "mię",
+        "ta"
+      ],
+      [
+        "mię",
+        "tał"
+      ],
+      [
+        "ało",
+        "żył"
+      ],
+      [
+        "szcze",
+        "gó"
+      ],
+      [
+        "zna",
+        "la"
+      ],
+      [
+        "zna",
+        "le"
+      ],
+      [
+        "nad",
+        "e"
+      ],
+      [
+        "sza",
+        "na"
+      ],
+      [
+        "be",
+        "łko"
+      ],
+      [
+        "og",
+        "rom"
+      ],
+      [
+        "pu",
+        "szcza"
+      ],
+      [
+        "Na",
+        "gle"
+      ],
+      [
+        "lo",
+        "ną"
+      ],
+      [
+        "du",
+        "ją"
+      ],
+      [
+        "du",
+        "sza"
+      ],
+      [
+        "gł",
+        "ym"
+      ],
+      [
+        "świa",
+        "ta"
+      ],
+      [
+        "świa",
+        "de"
+      ],
+      [
+        "podob",
+        "nych"
+      ],
+      [
+        "podob",
+        "niej"
+      ],
+      [
+        "nio",
+        "m"
+      ],
+      [
+        "sam",
+        "emu"
+      ],
+      [
+        "które",
+        "go"
+      ],
+      [
+        "śli",
+        "czna"
+      ],
+      [
+        "czo",
+        "nych"
+      ],
+      [
+        "czo",
+        "nym"
+      ],
+      [
+        "wiel",
+        "ka"
+      ],
+      [
+        "wiel",
+        "kich"
+      ],
+      [
+        "wiel",
+        "kim"
+      ],
+      [
+        "de",
+        "n"
+      ],
+      [
+        "de",
+        "ł"
+      ],
+      [
+        "dla",
+        "tego"
+      ],
+      [
+        "pły",
+        "wały"
+      ],
+      [
+        "su",
+        "miennym"
+      ],
+      [
+        "skie",
+        "go"
+      ],
+      [
+        "tę",
+        "czo"
+      ],
+      [
+        "dro",
+        "b"
+      ],
+      [
+        "dro",
+        "ga"
+      ],
+      [
+        "dro",
+        "gi"
+      ],
+      [
+        "pó",
+        "l"
+      ],
+      [
+        "pó",
+        "źniej"
+      ],
+      [
+        "pro",
+        "ste"
+      ],
+      [
+        "ża",
+        "g"
+      ],
+      [
+        "ża",
+        "gle"
+      ],
+      [
+        "czu",
+        "je"
+      ],
+      [
+        "czu",
+        "cie"
+      ],
+      [
+        "cha",
+        "ć"
+      ],
+      [
+        "cha",
+        "ty"
+      ],
+      [
+        "zapa",
+        "la"
+      ],
+      [
+        "zapa",
+        "sy"
+      ],
+      [
+        "zapa",
+        "lił"
+      ],
+      [
+        "zapa",
+        "miętał"
+      ],
+      [
+        "jąc",
+        "ą"
+      ],
+      [
+        "jąc",
+        "ym"
+      ],
+      [
+        "pia",
+        "ną"
+      ],
+      [
+        "pia",
+        "ski"
+      ],
+      [
+        "Cz",
+        "uł"
+      ],
+      [
+        "Je",
+        "dynym"
+      ],
+      [
+        "Sta",
+        "nów"
+      ],
+      [
+        "rzu",
+        "cała"
+      ],
+      [
+        "wio",
+        "ne"
+      ],
+      [
+        "peł",
+        "ni"
+      ],
+      [
+        "peł",
+        "en"
+      ],
+      [
+        "tą",
+        "d"
+      ],
+      [
+        "wz",
+        "ru"
+      ],
+      [
+        "żo",
+        "ny"
+      ],
+      [
+        "stra",
+        "cił"
+      ],
+      [
+        "jakie",
+        "jś"
+      ],
+      [
+        "pier",
+        "wsze"
+      ],
+      [
+        "Aspinwal",
+        "lu"
+      ],
+      [
+        "br",
+        "ał"
+      ],
+      [
+        "ksią",
+        "żek"
+      ],
+      [
+        "me",
+        "wy"
+      ],
+      [
+        "mó",
+        "wili"
+      ],
+      [
+        "sły",
+        "szy"
+      ],
+      [
+        "wła",
+        "śnie"
+      ],
+      [
+        "cią",
+        "gu"
+      ],
+      [
+        "cią",
+        "głym"
+      ],
+      [
+        "myśl",
+        "ą"
+      ],
+      [
+        "bez",
+        "wiednie"
+      ],
+      [
+        "bez",
+        "pieczeńst"
+      ],
+      [
+        "człowie",
+        "ka"
+      ],
+      [
+        "sie",
+        "d"
+      ],
+      [
+        "sie",
+        "dział"
+      ],
+      [
+        "świe",
+        "tle"
+      ],
+      [
+        "rzą",
+        "d"
+      ],
+      [
+        "rzą",
+        "do"
+      ],
+      [
+        "powie",
+        "w"
+      ],
+      [
+        "powie",
+        "dzieć"
+      ],
+      [
+        "las",
+        "em"
+      ],
+      [
+        "noc",
+        "ą"
+      ],
+      [
+        "mia",
+        "sta"
+      ],
+      [
+        "którym",
+        "i"
+      ],
+      [
+        "praw",
+        "da"
+      ],
+      [
+        "praw",
+        "dę"
+      ],
+      [
+        "chodzi",
+        "ć"
+      ],
+      [
+        "nast",
+        "u"
+      ],
+      [
+        "godzi",
+        "n"
+      ],
+      [
+        "godzi",
+        "na"
+      ],
+      [
+        "godzi",
+        "ny"
+      ],
+      [
+        "spokoj",
+        "na"
+      ],
+      [
+        "spokoj",
+        "nie"
+      ],
+      [
+        "książ",
+        "ka"
+      ],
+      [
+        "cał",
+        "ą"
+      ],
+      [
+        "całe",
+        "j"
+      ],
+      [
+        "fa",
+        "li"
+      ],
+      [
+        "in",
+        "wali"
+      ],
+      [
+        "krzy",
+        "ż"
+      ],
+      [
+        "zwy",
+        "kł"
+      ],
+      [
+        "zwy",
+        "czaj"
+      ],
+      [
+        "jako",
+        "ś"
+      ],
+      [
+        "mor",
+        "ska"
+      ],
+      [
+        "mor",
+        "ską"
+      ],
+      [
+        "głos",
+        "em"
+      ],
+      [
+        "pół",
+        "kuli"
+      ],
+      [
+        "lą",
+        "dach"
+      ],
+      [
+        "ona",
+        "mi"
+      ],
+      [
+        "opa",
+        "no"
+      ],
+      [
+        "tra",
+        "cił"
+      ],
+      [
+        "tra",
+        "cić"
+      ],
+      [
+        "zda",
+        "rzy"
+      ],
+      [
+        "zda",
+        "wało"
+      ],
+      [
+        "por",
+        "t"
+      ],
+      [
+        "por",
+        "tu"
+      ],
+      [
+        "połu",
+        "dnie"
+      ],
+      [
+        "war",
+        "ty"
+      ],
+      [
+        "żyw",
+        "ność"
+      ],
+      [
+        "jące",
+        "go"
+      ],
+      [
+        "tuła",
+        "cz"
+      ],
+      [
+        "tuła",
+        "ctwa"
+      ],
+      [
+        "Pana",
+        "mie"
+      ],
+      [
+        "He",
+        "j"
+      ],
+      [
+        "He",
+        "ral"
+      ],
+      [
+        "drze",
+        "wa"
+      ],
+      [
+        "opu",
+        "szcza"
+      ],
+      [
+        "trzy",
+        "dziestym"
+      ],
+      [
+        "ący",
+        "ch"
+      ],
+      [
+        "łą",
+        "k"
+      ],
+      [
+        "łą",
+        "ki"
+      ],
+      [
+        "czte",
+        "r"
+      ],
+      [
+        "czte",
+        "ry"
+      ],
+      [
+        "strze",
+        "l"
+      ],
+      [
+        "powo",
+        "du"
+      ],
+      [
+        "począ",
+        "ć"
+      ],
+      [
+        "począ",
+        "ł"
+      ],
+      [
+        "niko",
+        "go"
+      ],
+      [
+        "tajemni",
+        "cza"
+      ],
+      [
+        "kocha",
+        "na"
+      ],
+      [
+        "kocha",
+        "nym"
+      ],
+      [
+        "wyso",
+        "kości"
+      ],
+      [
+        "balko",
+        "nu"
+      ],
+      [
+        "skał",
+        "ę"
+      ],
+      [
+        "skrzy",
+        "deł"
+      ],
+      [
+        "Skawińskie",
+        "go"
+      ],
+      [
+        "drugi",
+        "mi"
+      ],
+      [
+        "drugie",
+        "mu"
+      ],
+      [
+        "słoń",
+        "ce"
+      ],
+      [
+        "słoń",
+        "ca"
+      ],
+      [
+        "strażni",
+        "czą"
+      ],
+      [
+        "włas",
+        "nego"
+      ],
+      [
+        "służ",
+        "by"
+      ],
+      [
+        "poczyna",
+        "ła"
+      ],
+      [
+        "Pró",
+        "cz"
+      ],
+      [
+        "Wie",
+        "dział"
+      ],
+      [
+        "bli",
+        "ska"
+      ],
+      [
+        "ot",
+        "rzym"
+      ],
+      [
+        "oce",
+        "an"
+      ],
+      [
+        "zło",
+        "te"
+      ],
+      [
+        "łód",
+        "ź"
+      ],
+      [
+        "łód",
+        "ki"
+      ],
+      [
+        "chał",
+        "up"
+      ],
+      [
+        "chmu",
+        "r"
+      ],
+      [
+        "pol",
+        "ska"
+      ],
+      [
+        "jedy",
+        "na"
+      ],
+      [
+        "pacz",
+        "ka"
+      ],
+      [
+        "dziec",
+        "ka"
+      ],
+      [
+        "moc",
+        "no"
+      ],
+      [
+        "miejs",
+        "cu"
+      ],
+      [
+        "szere",
+        "g"
+      ],
+      [
+        "chorą",
+        "g"
+      ],
+      [
+        "chorą",
+        "gie"
+      ],
+      [
+        "swoje",
+        "j"
+      ],
+      [
+        "ogni",
+        "sk"
+      ],
+      [
+        "ogni",
+        "sko"
+      ],
+      [
+        "szczęśli",
+        "wy"
+      ],
+      [
+        "Czę",
+        "stochowy"
+      ],
+      [
+        "żołnie",
+        "rz"
+      ],
+      [
+        "piersi",
+        "ach"
+      ],
+      [
+        "wszel",
+        "kim"
+      ],
+      [
+        "następ",
+        "ca"
+      ],
+      [
+        "następ",
+        "cę"
+      ],
+      [
+        "John",
+        "s"
+      ],
+      [
+        "uczci",
+        "wy"
+      ],
+      [
+        "rodzin",
+        "nej"
+      ],
+      [
+        "Al",
+        "l"
+      ],
+      [
+        "Si",
+        "r"
+      ],
+      [
+        "blas",
+        "ku"
+      ],
+      [
+        "har",
+        "to"
+      ],
+      [
+        "kra",
+        "ju"
+      ],
+      [
+        "kró",
+        "tce"
+      ],
+      [
+        "pł",
+        "ó"
+      ],
+      [
+        "pró",
+        "bował"
+      ],
+      [
+        "rpli",
+        "wość"
+      ],
+      [
+        "tro",
+        "chę"
+      ],
+      [
+        "uro",
+        "czy"
+      ],
+      [
+        "wra",
+        "cał"
+      ],
+      [
+        "niedzie",
+        "lę"
+      ],
+      [
+        "wide",
+        "cie"
+      ],
+      [
+        "widze",
+        "ń"
+      ],
+      [
+        "konie",
+        "c"
+      ],
+      [
+        "wieczo",
+        "rem"
+      ],
+      [
+        "rzeczywi",
+        "sto"
+      ],
+      [
+        "wyciąg",
+        "nął"
+      ],
+      [
+        "zam",
+        "kniętym"
+      ],
+      [
+        "zapo",
+        "mniał"
+      ],
+      [
+        "jas",
+        "nej"
+      ],
+      [
+        "rezy",
+        "gna"
+      ],
+      [
+        "czyty",
+        "wał"
+      ],
+      [
+        "morza",
+        "ch"
+      ],
+      [
+        "masz",
+        "tów"
+      ],
+      [
+        "musi",
+        "ał"
+      ],
+      [
+        "rozu",
+        "mieć"
+      ],
+      [
+        "rozma",
+        "i"
+      ],
+      [
+        "jeste",
+        "ście"
+      ],
+      [
+        "zesta",
+        "rzał"
+      ],
+      [
+        "więk",
+        "szą"
+      ],
+      [
+        "międzymo",
+        "rze"
+      ],
+      [
+        "Chwi",
+        "la"
+      ],
+      [
+        "punkci",
+        "ki"
+      ],
+      [
+        "Wszyst",
+        "ko"
+      ],
+      [
+        "księży",
+        "ca"
+      ],
+      [
+        "pięk",
+        "ność"
+      ],
+      [
+        "nieskończo",
+        "ność"
+      ],
+      [
+        "Ama",
+        "zon"
+      ],
+      [
+        "Ame",
+        "ryki"
+      ],
+      [
+        "Mi",
+        "ał"
+      ],
+      [
+        "Ob",
+        "razy"
+      ],
+      [
+        "Pew",
+        "nego"
+      ],
+      [
+        "Tym",
+        "czasem"
+      ],
+      [
+        "Twa",
+        "rz"
+      ],
+      [
+        "Wę",
+        "grze"
+      ],
+      [
+        "Zjedno",
+        "czonych"
+      ],
+      [
+        "bł",
+        "ęki"
+      ],
+      [
+        "brz",
+        "mi"
+      ],
+      [
+        "dwu",
+        "nastu"
+      ],
+      [
+        "fur",
+        "ko"
+      ],
+      [
+        "glą",
+        "da"
+      ],
+      [
+        "hiszpa",
+        "ń"
+      ],
+      [
+        "kla",
+        "szto"
+      ],
+      [
+        "krą",
+        "g"
+      ],
+      [
+        "mły",
+        "n"
+      ],
+      [
+        "pch",
+        "nię"
+      ],
+      [
+        "righ",
+        "t"
+      ],
+      [
+        "uka",
+        "zy"
+      ],
+      [
+        "zwła",
+        "szcza"
+      ],
+      [
+        "zmą",
+        "co"
+      ],
+      [
+        "Łód",
+        "ź"
+      ],
+      [
+        "natych",
+        "miast"
+      ],
+      [
+        "niema",
+        "l"
+      ],
+      [
+        "niespo",
+        "dzia"
+      ],
+      [
+        "wielo",
+        "rybni"
+      ],
+      [
+        "kandy",
+        "da"
+      ],
+      [
+        "rośli",
+        "n"
+      ],
+      [
+        "wyże",
+        "j"
+      ],
+      [
+        "wypi",
+        "sany"
+      ],
+      [
+        "nosta",
+        "lgia"
+      ],
+      [
+        "odrę",
+        "b"
+      ],
+      [
+        "bełko",
+        "tały"
+      ],
+      [
+        "świade",
+        "ctwa"
+      ],
+      [
+        "pierwsze",
+        "j"
+      ],
+      [
+        "rezygna",
+        "c"
+      ],
+      [
+        "Amazon",
+        "ce"
+      ],
+      [
+        "Węgrze",
+        "ch"
+      ],
+      [
+        "klaszto",
+        "rne"
+      ],
+      [
+        "wielorybni",
+        "ku"
+      ]
+    ]
+  }
+}

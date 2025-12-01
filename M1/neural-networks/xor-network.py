@@ -22,9 +22,9 @@ class SimpleXORNet(nn.Module):
     def __init__(self):
         super(SimpleXORNet, self).__init__()
         # Warstwa ukryta: 2 wejścia (X) -> 4 neurony
-        self.fc1 = nn.Linear(2, 4)
+        self.fc1 = nn.Linear(2, 200)
         # Warstwa wyjściowa: 4 neurony -> 1 wyjście (Y)
-        self.fc2 = nn.Linear(4, 1)
+        self.fc2 = nn.Linear(200, 1)
 
     def forward(self, x):
         # 1. Przejście przez pierwszą warstwę liniową
@@ -42,7 +42,7 @@ class SimpleXORNet(nn.Module):
 model = SimpleXORNet()
 model_epochs = 0
 
-LEARNING_RATE = 0.5 # 🔥🔥🔥
+LEARNING_RATE = 0.2 # 🔥🔥🔥
 
 # BCELoss dla klasyfikacji binarnej (używamy go po Sigmoidzie)
 criterion = nn.BCELoss()
@@ -53,7 +53,7 @@ optimizer = optim.SGD(model.parameters(), LEARNING_RATE)
 ## 3. Przygotowanie Danych i Pętla Treningowa
 # Ważne: PyTorch oczekuje liczb zmiennoprzecinkowych dla wejść sieci.
 
-NUM_EPOCHS = 2000 # 🔥🔥🔥
+NUM_EPOCHS = 200 # 🔥🔥🔥
 
 # Dane wejściowe (4 pary: [0, 0], [0, 1], [1, 0], [1, 1])
 X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
@@ -79,7 +79,7 @@ for epoch in range(NUM_EPOCHS):
 
     model_epochs += 1
     # Logowanie postępów co 200 epok
-    if (epoch + 1) % 200 == 0:
+    if (epoch + 1) % 20 == 0:
         print(f'Epoka [{epoch+1}/{NUM_EPOCHS}, all: {model_epochs}], Strata (Loss): {loss.item():.6f}')
         # print(f'   outputs: {outputs.detach().numpy()}')
         writer.add_scalar('Loss', loss.item(), epoch)
