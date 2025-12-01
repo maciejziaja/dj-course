@@ -11,5 +11,6 @@ __all__ = [
     'session_summary',
     'session_pop',
     'session_to_pdf',
+    'set_parameters',
 ]
 

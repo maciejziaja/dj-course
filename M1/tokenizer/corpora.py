@@ -4,12 +4,14 @@ from pathlib import Path
 CORPORA_DIRS = {
     "NKJP": Path("../korpus-nkjp/output"),
     "WOLNELEKTURY": Path("../korpus-wolnelektury"),
+    "MINI": Path("../korpus-mini"),
 }
 
 CORPORA_FILES = {
     "NKJP": list(CORPORA_DIRS["NKJP"].glob("*.txt")),
     "WOLNELEKTURY": list(CORPORA_DIRS["WOLNELEKTURY"].glob("*.txt")),
     "PAN_TADEUSZ": list(CORPORA_DIRS["WOLNELEKTURY"].glob("pan-tadeusz-ksiega-*.txt")),
+    "MINI": list(CORPORA_DIRS["MINI"].glob("*.txt")),
 }
 
 # removing PAN_TADEUSZ from ALL_CORPORA to avoid duplicates (PAN_TADEUSZ is already in WOLNELEKTURY)
@@ -31,4 +33,6 @@ if __name__ == "__main__":
     print("\nget_corpus_file:")
     print("nkjp *", len(get_corpus_file("NKJP", "*.txt")))
     print("nkjp krzyzacy", len(get_corpus_file("WOLNELEKTURY", "krzyzacy-*.txt")))
+    print("mini chopin", len(get_corpus_file("MINI", "fryderyk-chopin-wikipedia.txt")))
+    print("mini pickwick", len(get_corpus_file("MINI", "the-pickwick-papers-gutenberg.txt")))
     

@@ -11,8 +11,8 @@ from corpora import CORPORA_FILES
 # Ustawienie logowania dla gensim
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-# files = CORPORA_FILES["ALL"]
-files = CORPORA_FILES["WOLNELEKTURY"]
+files = CORPORA_FILES["ALL"]
+# files = CORPORA_FILES["WOLNELEKTURY"]
 # files = CORPORA_FILES["PAN_TADEUSZ"]
 
 TOKENIZER_FILE = "../tokenizer/tokenizers/bielik-v3-tokenizer.json"
@@ -20,12 +20,12 @@ OUTPUT_MODEL_FILE = "doc2vec_model_combined.model"
 OUTPUT_SENTENCE_MAP = "doc2vec_model_sentence_map_combined.json"
 
 # Parametry treningu Doc2Vec
-VECTOR_LENGTH = 20
-WINDOW_SIZE = 6   
-MIN_COUNT = 4         
+VECTOR_LENGTH = 400
+WINDOW_SIZE = 15
+MIN_COUNT = 10
 WORKERS = 4           
-EPOCHS = 20           
-SG_MODE = 0   
+EPOCHS = 60
+SG_MODE = 0
 
 # --- ETAP 1: Wczytanie, Tokenizacja i Przygotowanie Danych ---
 try:
@@ -106,7 +106,7 @@ print("=== ROZPOCZYNAM ETAP WNIOSKOWANIA (INFERENCE) ===")
 print("="*50)
 
 #  🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥testowanie🔥🔥🔥🔥🔥🔥🔥🔥
-new_sentence = "Jestem głodny." 
+new_sentence = "Jestem głodny i bardzo chętnie zjadłbym coś."
 print(f"Zdanie do wnioskowania: \"{new_sentence}\"")
 
 

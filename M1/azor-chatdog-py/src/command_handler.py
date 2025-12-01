@@ -4,8 +4,9 @@ from commands.session_list import list_sessions_command
 from commands.session_display import display_full_session
 from commands.session_to_pdf import export_session_to_pdf
 from commands.session_remove import remove_session_command
+from commands.set_parameters import handle_set_command
 
-VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf']
+VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/set']
 
 def handle_command(user_input: str) -> bool:
     """
@@ -72,6 +73,11 @@ def handle_command(user_input: str) -> bool:
     elif command == '/pdf':
         current = manager.get_current_session()
         export_session_to_pdf(current.get_history(), current.session_id, current.assistant_name)
+
+    elif command == '/set':
+        parameter_name = parts[1] if len(parts) >= 2 else None
+        value_text = parts[2] if len(parts) >= 3 else None
+        handle_set_command(parameter_name, value_text)
 
     return False
 

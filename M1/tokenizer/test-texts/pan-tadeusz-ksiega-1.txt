@@ -1,0 +1,5 @@
+# This is a reference file
+# The actual Pan Tadeusz Book 1 text is located at:
+# ../M1/korpus-wolnelektury/pan-tadeusz-ksiega-1.txt
+# 
+# For the comparison script, we'll read directly from the corpus folder
