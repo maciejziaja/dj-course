@@ -210,25 +210,29 @@ class AudioRecorderApp:
         self.history_frame = tk.Frame(self.notebook, bg="#121212") # Consistent dark background
         self.notebook.add(self.history_frame, text='Transcription History')
         
-        # Content for History Tab: Last Transcription Display
-        tk.Label(self.history_frame, text="Last transcription:", font=('Arial', 14, 'bold'), fg='white', bg="#121212").pack(pady=(10, 5))
-        
-        self.history_display = tk.Text(self.history_frame, 
-                                       height=10, 
-                                       wrap=tk.WORD, 
-                                       font=('Arial', 11),
-                                       relief=tk.SUNKEN, 
-                                       bg='#1E1E1E', 
-                                       fg='white', 
-                                       insertbackground='white', 
-                                       state=tk.DISABLED 
-                                      )
-        self.history_display.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
-        
-        # Placeholder text in history
-        self.history_display.config(state=tk.NORMAL)
-        self.history_display.insert(tk.END, "Under construction...")
-        self.history_display.config(state=tk.DISABLED)
+        # Content for History Tab: Treeview with list of transcriptions
+        self.history_tree = ttk.Treeview(
+            self.history_frame,
+            columns=("date", "summary"),
+            show="headings"
+        )
+        self.history_tree.heading("date", text="Date")
+        self.history_tree.heading("summary", text="Summary")
+        self.history_tree.column("date", width=160, anchor="w")
+        self.history_tree.column("summary", anchor="w")
+        self.history_tree.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
+
+        # Store mapping from Treeview item ID to file paths
+        self.history_entries = {}
+
+        # Delete button for selected history entry
+        self.delete_history_button = ttk.Button(
+            self.history_frame,
+            text="Delete selected entry",
+            command=self.delete_selected_history_entry,
+            style='Dark.TButton'
+        )
+        self.delete_history_button.pack(pady=(0, 10))
 
 
         # 3. Settings Tab
@@ -277,6 +281,9 @@ class AudioRecorderApp:
         # Handle window closing
         master.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        # Load history when user switches to the Transcription History tab
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+
         # Start the loop checking the queue
         self.master.after(100, self.check_transcription_queue)
         logging.info("GUI initialized successfully.")
@@ -410,7 +417,119 @@ class AudioRecorderApp:
         """
         logging.info(f"Running transcription for {audio_path} in thread: {threading.get_ident()}")
         transcription = transcribe_audio(audio_path, MODEL_NAME)
+
+        # --- Save transcription next to the audio file as .txt ---
+        try:
+            # If the audio file is e.g. output/recording-123456.wav
+            # this will create output/recording-123456.txt
+            base, _ = os.path.splitext(audio_path)
+            txt_path = base + ".txt"
+
+            # Ensure the directory exists (should already, but for safety)
+            os.makedirs(os.path.dirname(txt_path), exist_ok=True)
+
+            with open(txt_path, "w", encoding="utf-8") as f:
+                f.write(transcription)
+
+            logging.info(f"Transcription saved to text file: {txt_path}")
+        except Exception as e:
+            # We don't want saving the text file to break the UI,
+            # so we only log the error and continue.
+            logging.error(f"Failed to save transcription to text file: {e}", exc_info=True)
+
         self.transcription_queue.put(transcription)
+
+    def load_history_entries(self):
+        """
+        Loads transcription history from the 'output' directory into the Treeview.
+        Each row represents one transcription (txt + wav pair).
+        """
+        # Clear existing entries
+        for item in self.history_tree.get_children():
+            self.history_tree.delete(item)
+        self.history_entries.clear()
+
+        output_dir = "output"
+        if not os.path.isdir(output_dir):
+            logging.info("History load skipped: 'output' directory does not exist.")
+            return
+
+        try:
+            files = sorted(os.listdir(output_dir), reverse=True)
+        except Exception as e:
+            logging.error(f"Failed to list 'output' directory: {e}", exc_info=True)
+            return
+
+        for filename in files:
+            if not filename.lower().endswith(".txt"):
+                continue
+
+            base_name = filename[:-4]  # strip .txt
+            base_path = os.path.join(output_dir, base_name)
+            txt_path = base_path + ".txt"
+            wav_path = base_path + ".wav"
+
+            # Date / time from txt file modification time
+            try:
+                mtime = os.path.getmtime(txt_path)
+                date_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+            except OSError:
+                date_str = "?"
+
+            # Short summary from txt file content
+            try:
+                with open(txt_path, "r", encoding="utf-8") as f:
+                    full_text = f.read().strip().replace("\n", " ")
+            except Exception as e:
+                logging.error(f"Failed to read transcription file {txt_path}: {e}", exc_info=True)
+                full_text = ""
+
+            if not full_text:
+                summary = "(empty)"
+            else:
+                max_len = 80
+                summary = (full_text[: max_len - 3] + "...") if len(full_text) > max_len else full_text
+
+            item_id = self.history_tree.insert("", "end", values=(date_str, summary))
+            self.history_entries[item_id] = {"txt": txt_path, "wav": wav_path}
+
+        logging.info("Transcription history loaded into Treeview.")
+
+    def delete_selected_history_entry(self):
+        """
+        Deletes the selected history entry (both .txt and .wav) and removes it from the Treeview.
+        """
+        selected = self.history_tree.selection()
+        if not selected:
+            messagebox.showinfo("Delete entry", "No entry selected.")
+            return
+
+        item_id = selected[0]
+        paths = self.history_entries.get(item_id)
+        if not paths:
+            return
+
+        confirm = messagebox.askyesno(
+            "Delete entry",
+            "Do you want to delete the selected transcription and its audio file?"
+        )
+        if not confirm:
+            return
+
+        for path in (paths.get("txt"), paths.get("wav")):
+            if not path:
+                continue
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+                    logging.info(f"Deleted file: {path}")
+            except Exception as e:
+                logging.error(f"Failed to delete file {path}: {e}", exc_info=True)
+
+        # Remove from Treeview and internal mapping
+        self.history_tree.delete(item_id)
+        self.history_entries.pop(item_id, None)
+
 
     def check_transcription_queue(self):
         """
@@ -425,12 +544,11 @@ class AudioRecorderApp:
             self.transcription_display.delete('1.0', tk.END)
             self.transcription_display.insert(tk.END, result)
             self.transcription_display.config(state=tk.DISABLED)
-            
-            # 2. Update History tab (last output)
-            self.history_display.config(state=tk.NORMAL)
-            self.history_display.delete('1.0', tk.END)
-            self.history_display.insert(tk.END, "Under construction..." + result)
-            self.history_display.config(state=tk.DISABLED)
+
+            # 2. If History tab is visible, refresh its contents so the new entry appears
+            current_tab_text = self.notebook.tab(self.notebook.select(), "text")
+            if current_tab_text == 'Transcription History':
+                self.load_history_entries()
             
             if "ERROR" in result:
                 logging.warning("Transcription failed with error message.")
@@ -445,6 +563,14 @@ class AudioRecorderApp:
             pass
         finally:
             self.master.after(100, self.check_transcription_queue)
+
+    def on_tab_changed(self, event):
+        """
+        Reloads history each time the user switches to the Transcription History tab.
+        """
+        tab_text = event.widget.tab(event.widget.select(), "text")
+        if tab_text == 'Transcription History':
+            self.load_history_entries()
 
     def on_closing(self):
         """Handles clean application shutdown."""

@@ -1,7 +1,7 @@
 from cli import console
 from .chat_session import ChatSession
-from assistant import create_azor_assistant
 from files import session_files
+from assistant.registry import get_assistant_by_id
 
 
 class SessionManager:
@@ -29,12 +29,13 @@ class SessionManager:
         """Returns True if there's an active session."""
         return self._current_session is not None
     
-    def create_new_session(self, save_current: bool = True) -> tuple[ChatSession, bool, str | None, str | None]:
+    def create_new_session(self, save_current: bool = True, assistant_id: str | None = None) -> tuple[ChatSession, bool, str | None, str | None]:
         """
         Creates a new session, optionally saving the current one.
         
         Args:
             save_current: If True, saves current session before creating new one
+            assistant_id: Optional assistant ID to use for the new session (defaults to "azor")
             
         Returns:
             tuple: (new_session, save_attempted, previous_session_id, save_error)
@@ -56,8 +57,9 @@ class SessionManager:
                 save_error = error
         
         # Create new session
-        assistant = create_azor_assistant()
-        new_session = ChatSession(assistant=assistant)
+        resolved_id = assistant_id or "azor"
+        assistant = get_assistant_by_id(resolved_id)
+        new_session = ChatSession(assistant=assistant, assistant_id=resolved_id)
         self._current_session = new_session
         
         return new_session, save_attempted, previous_session_id, save_error
@@ -88,9 +90,8 @@ class SessionManager:
             previous_session_id = self._current_session.session_id
             self._current_session.save_to_file()
         
-        # Load new session
-        assistant = create_azor_assistant()
-        new_session, error = ChatSession.load_from_file(assistant=assistant, session_id=session_id)
+        # Load new session using stored assistant_id (handled internally)
+        new_session, error = ChatSession.load_from_file(session_id)
         
         if error:
             # Failed to load - don't change current session
@@ -119,8 +120,8 @@ class SessionManager:
         remove_success, remove_error = session_files.remove_session_file(removed_session_id)
 
         # Create a new session regardless of whether the file was successfully removed
-        assistant = create_azor_assistant()
-        new_session = ChatSession(assistant=assistant)
+        assistant = get_assistant_by_id("azor")
+        new_session = ChatSession(assistant=assistant, assistant_id="azor")
         self._current_session = new_session
 
         return new_session, removed_session_id, remove_success, remove_error
@@ -137,13 +138,13 @@ class SessionManager:
             ChatSession: The initialized session
         """
         if cli_session_id:
-            assistant = create_azor_assistant()
-            session, error = ChatSession.load_from_file(assistant=assistant, session_id=cli_session_id)
+            session, error = ChatSession.load_from_file(cli_session_id)
             
             if error:
                 console.print_error(error)
-                # Fallback to new session
-                session = ChatSession(assistant=assistant)
+                # Fallback to new session with default assistant
+                assistant = get_assistant_by_id("azor")
+                session = ChatSession(assistant=assistant, assistant_id="azor")
                 console.print_info(f"Rozpoczęto nową sesję z ID: {session.session_id}")
             
             self._current_session = session
@@ -154,8 +155,8 @@ class SessionManager:
                 display_history_summary(session.get_history(), session.assistant_name)
         else:
             print("Rozpoczynanie nowej sesji.")
-            assistant = create_azor_assistant()
-            session = ChatSession(assistant=assistant)
+            assistant = get_assistant_by_id("azor")
+            session = ChatSession(assistant=assistant, assistant_id="azor")
             self._current_session = session
             console.display_help(session.session_id)
         

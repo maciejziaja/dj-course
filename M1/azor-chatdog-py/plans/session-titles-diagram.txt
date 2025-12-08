@@ -1,0 +1,68 @@
+sequenceDiagram
+    participant U as User
+    participant C as CLI / chat.main_loop
+    participant SM as SessionManager
+    participant S as ChatSession
+    participant LLM as LLM Client
+    participant FS as Session Files
+
+    Note over U,C: 1. Start aplikacji
+    U->>C: uruchom `python src/run.py`
+    C->>SM: initialize_from_cli(optional_session_id)
+    SM->>FS: load_session_history(session_id?)
+    FS-->>SM: history (bez / z title)
+    SM-->>C: bieżąca ChatSession (S)
+
+    Note over U,C: 2. Tura rozmowy
+    U->>C: wpisuje zwykły tekst (bez '/')
+    C->>SM: get_current_session()
+    SM-->>C: S
+    C->>S: send_message(user_text)
+
+    Note over S,LLM: 3. Główna odpowiedź modelu
+    S->>LLM: send_message(user_text)
+    LLM-->>S: response_text
+    S->>S: aktualizacja history (user + assistant)
+
+    Note over S,LLM: 4. Auto-generacja tytułu<br/>wykonywana gdy brak title w logu sesji
+    alt brak title
+        S->>LLM: generate_title(history)
+        LLM-->>S: short_title (<= 60 znaków)
+        S->>S: walidacja tytułu (min. 3 znaki, nie pusty)
+        alt tytuł poprawny
+            S->>S: przycięcie tytułu do 60 znaków, zapis w polu title
+            S->>FS: save_session_history(session_id, history, title, ...)
+            FS-->>S: potwierdzenie zapisu
+        else tytuł niepoprawny
+            S->>S: pozostaw title = None (przy kolejnej turze ponowna próba)
+        end
+    else title już istnieje
+        S->>S: pomiń auto-tytułowanie
+    end
+
+    Note over C,U: 5. Wyświetlenie odpowiedzi i info o tokenach
+    S-->>C: response_text, token_info
+    C-->>U: odpowiedź modelu + info o tokenach
+
+    Note over U,C: 6. Komenda `/session title`
+    U->>C: /session title
+    C->>SM: get_current_session()
+    SM-->>C: S
+    C->>S: pobierz title, session_id
+    S-->>C: title lub None
+    C-->>U: wyświetl tytuł lub info o braku tytułu
+
+    Note over U,C: 7. Komenda `/session rename NEW_TITLE`
+    U->>C: /session rename NEW_TITLE
+    C->>SM: get_current_session()
+    SM-->>C: S
+    C->>S: set_title(NEW_TITLE[0..60])
+    S->>FS: save_session_history(session_id, history, title, ...)
+    FS-->>S: potwierdzenie zapisu
+    C-->>U: komunikat: "Zmieniono tytuł sesji..."
+
+    Note over U,C: 8. Komenda `/session list`
+    U->>C: /session list
+    C->>FS: list sessions (id, title, metadata)
+    FS-->>C: lista sesji z title / bez
+    C-->>U: tabela: [ID, Tytuł (title lub fallback do ID)]
