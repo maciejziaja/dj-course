@@ -1,0 +1,252 @@
+```mermaid
+graph TB
+    subgraph "User Interface Layer"
+        UI[prompt.py<br/>CLI Input]
+        CMD[command_handler.py<br/>Command Router]
+        CON[console.py<br/>Output Display]
+    end
+
+    subgraph "Assistant Registry"
+        REG[registry.py<br/>Assistant Factory]
+        AZOR[azor.py<br/>create_azor_assistant]
+        PERF[perfectionist.py<br/>create_perfectionist_assistant]
+        BUS[businessman.py<br/>create_businessman_assistant]
+        OPT[optimist.py<br/>create_optimist_assistant]
+        
+        REG --> AZOR
+        REG --> PERF
+        REG --> BUS
+        REG --> OPT
+    end
+
+    subgraph "Session Management"
+        SM[SessionManager<br/>Lifecycle Control]
+        CS[ChatSession<br/>Session State]
+        ASST[Assistant<br/>Behavior Config]
+    end
+
+    subgraph "Persistence Layer"
+        SF[session_files.py<br/>Save/Load]
+        JSON[(session-id-log.json<br/>History + assistant_id)]
+    end
+
+    subgraph "Commands"
+        AL[assistant_list.py<br/>List Assistants]
+        AS[assistant_switch.py<br/>Switch Assistant]
+    end
+
+    %% User interactions
+    UI -->|"/assistant"| CMD
+    UI -->|"/assistant <id>"| CMD
+    
+    %% Command routing
+    CMD -->|list| AL
+    CMD -->|switch| AS
+    
+    %% Assistant listing
+    AL --> REG
+    AL --> CON
+    REG -->|get list| CON
+    
+    %% Assistant switching
+    AS --> CS
+    AS --> REG
+    REG -->|create| ASST
+    CS -->|switch_assistant| ASST
+    
+    %% Session operations
+    SM -->|create/load| CS
+    CS -->|uses| ASST
+    CS -->|save/load| SF
+    
+    %% Assistant creation flow
+    SM -->|get assistant| REG
+    CS -->|get assistant| REG
+    
+    %% Persistence
+    SF -->|save| JSON
+    SF -->|load| JSON
+    JSON -->|assistant_id| SF
+    SF -->|assistant_id| CS
+    
+    %% Assistant change flow
+    CS -->|add change message| CS
+    CS -->|reinitialize LLM| CS
+    CS -->|save| SF
+    
+    style REG fill:#e1f5ff
+    style ASST fill:#fff4e1
+    style CS fill:#e8f5e9
+    style SF fill:#fce4ec
+    style JSON fill:#f3e5f5
+```
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant UI as prompt.py
+    participant CH as command_handler.py
+    participant CS as ChatSession
+    participant R as Assistant Registry
+    participant A as Assistant
+    participant SF as session_files.py
+    participant F as File System
+
+    Note over U,F: Scenario 1: Creating New Session
+    U->>UI: Start app
+    UI->>CH: Initialize
+    CH->>CS: create_new_session()
+    CS->>R: get_assistant_by_id("azor")
+    R->>A: create_azor_assistant()
+    A-->>CS: Assistant instance
+    CS-->>CH: ChatSession with Azor
+    
+    Note over U,F: Scenario 2: Loading Existing Session
+    U->>UI: /switch <session_id>
+    UI->>CH: handle_command()
+    CH->>CS: load_from_file(session_id)
+    CS->>SF: load_session_history(session_id)
+    SF->>F: Read JSON file
+    F-->>SF: {history, title, assistant_id, ...}
+    SF-->>CS: history, title, assistant_id
+    CS->>R: get_assistant_by_id(assistant_id or "azor")
+    R->>A: create_[assistant]()
+    A-->>CS: Assistant instance
+    CS->>CS: __init__(assistant, session_id, history, title)
+    CS->>CS: _initialize_llm_session()
+    CS-->>CH: ChatSession restored
+    
+    Note over U,F: Scenario 3: Switching Assistant
+    U->>UI: /assistant perfectionist
+    UI->>CH: handle_command()
+    CH->>AS: switch_assistant_command(session, "perfectionist")
+    AS->>R: validate assistant_id("perfectionist")
+    R-->>AS: Valid
+    AS->>CS: switch_assistant("perfectionist")
+    CS->>R: get_assistant_by_id("perfectionist")
+    R->>A: create_perfectionist_assistant()
+    A-->>CS: New Assistant instance
+    CS->>CS: Add change message to history
+    Note right of CS: [SYSTEM: Change AZOR → PERFEKCJONISTA]
+    CS->>CS: self.assistant = new_assistant
+    CS->>CS: self.assistant_id = "perfectionist"
+    CS->>CS: _initialize_llm_session()
+    CS->>SF: save_to_file()
+    SF->>F: Write JSON with new assistant_id
+    CS-->>AS: Success
+    AS-->>CH: Success
+    CH->>UI: Display confirmation
+```
+
+```mermaid
+classDiagram
+    class Assistant {
+        +str system_prompt
+        +str name
+        +get_system_prompt() str
+        +get_name() str
+    }
+    
+    class AssistantRegistry {
+        +Dict[str, Callable] _factories
+        +get_assistant_by_id(id: str) Assistant
+        +list_available_assistants() List[Dict]
+        +register_assistant(id: str, factory: Callable) None
+    }
+    
+    class ChatSession {
+        +Assistant assistant
+        +str assistant_id
+        +str session_id
+        +str|None title
+        +List history
+        +switch_assistant(assistant_id: str) None
+        +save_to_file() tuple[bool, str|None]
+        +load_from_file(session_id: str) tuple[ChatSession|None, str|None]
+        -_get_assistant_id_from_assistant() str
+    }
+    
+    class SessionManager {
+        +ChatSession _current_session
+        +create_new_session(assistant_id: str|None, save_current: bool) tuple
+        +switch_to_session(session_id: str) tuple
+        +initialize_from_cli(session_id: str|None) ChatSession
+        +remove_current_session_and_create_new() tuple
+    }
+    
+    class SessionFiles {
+        +save_session_history(id, history, system_prompt, model_name, title, assistant_id) tuple
+        +load_session_history(session_id: str) tuple[List, str|None, str|None, str|None]
+    }
+    
+    AssistantRegistry --> Assistant : creates
+    ChatSession --> Assistant : contains
+    ChatSession --> SessionFiles : uses
+    SessionManager --> ChatSession : manages
+    SessionManager --> AssistantRegistry : uses
+    ChatSession --> AssistantRegistry : uses
+
+    note for ChatSession "assistant_id stored in session file"
+    note for SessionFiles "JSON format extended with assistant_id field"
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> NewSession: App Start
+    NewSession --> AzorSelected: Default Assistant
+    NewSession --> CustomSelected: CLI arg provided
+    
+    AzorSelected --> Chatting: User types message
+    CustomSelected --> Chatting: User types message
+    
+    Chatting --> Saving: Auto-save
+    Saving --> Chatting: Save complete
+    
+    Chatting --> SwitchingAssistant: /assistant <id>
+    SwitchingAssistant --> ValidateAssistantId: Validate ID in registry
+    ValidateAssistantId --> GetAssistantFromRegistry: ID valid
+    GetAssistantFromRegistry --> AddChangeMessage: Get Assistant instance
+    AddChangeMessage --> UpdateAssistantFields: Add to history
+    UpdateAssistantFields --> ReinitializeLLM: Update assistant & assistant_id
+    ReinitializeLLM --> SaveWithNewAssistant: Update system prompt
+    SaveWithNewAssistant --> Chatting: Assistant switched
+    
+    Chatting --> LoadingSession: /switch <id>
+    LoadingSession --> ReadAssistantId: Load file
+    ReadAssistantId --> CreateAssistant: Get assistant_id
+    CreateAssistant --> RestoredChatting: Initialize
+    RestoredChatting --> Chatting: Session loaded
+    
+    Chatting --> [*]: /exit or /quit
+```
+
+```mermaid
+graph LR
+    subgraph "Data Flow: Assistant ID"
+        A1[assistant_id: str] -->|save| J1[JSON: assistant_id field]
+        J1 -->|load| A2[assistant_id: str]
+        A2 -->|lookup| R1[Registry]
+        R1 -->|create| A3[Assistant instance]
+        A3 -->|use| C1[ChatSession]
+    end
+    
+    subgraph "Data Flow: System Prompt"
+        SP1[Assistant.system_prompt] -->|set| LLM1[LLM Chat Session]
+        SP2[New Assistant.system_prompt] -->|reinitialize| LLM2[LLM Chat Session]
+    end
+    
+    subgraph "Data Flow: Change Message"
+        CM1[switch_assistant(assistant_id)] -->|get from registry| R2[Registry]
+        R2 -->|create| A4[New Assistant]
+        CM1 -->|add| H1[History: change message]
+        H1 -->|contains| MSG["[SYSTEM: Change X → Y]"]
+        MSG -->|context for| LLM3[Next LLM response]
+        CM1 -->|update| F1[assistant_id field in JSON]
+    end
+    
+    style A1 fill:#e1f5ff
+    style A3 fill:#fff4e1
+    style H1 fill:#fce4ec
+    style LLM2 fill:#e8f5e9
+```
+

@@ -7,6 +7,9 @@ from animate import run_tts_animation, console
 warnings.filterwarnings("ignore", category=UserWarning)
 
 FILE_PATH = "sample-agent.wav"
+# FILE_PATH = "sample-announcer.mp3"
+# FILE_PATH = "sample-cherry.mp3"
+# FILE_PATH = "sample-knapik.mp3"
 OUTPUT_WAV_PATH = "output.wav"
 
 GENERATION_DONE = threading.Event() 
@@ -29,6 +32,8 @@ texts = [
     "Sąd sądem, a sprawiedliwość musi być po naszej stronie.",
     "A może by tak rzucić to wszystko i wyjechać w Bieszczady?",
     "Nie matura, lecz chęć szczera zrobi z ciebie oficera.",
+    # "motherfuckers!",
+    # "Tomasz, Tomasz, jak się masz? Czy Ty wódę jakąś masz? Bo ja wiem to mój ty Bracie, Orzeł Siedem zawiezie Cię."
 ]
 
 if __name__ == "__main__":

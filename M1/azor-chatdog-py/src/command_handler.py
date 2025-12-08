@@ -5,8 +5,11 @@ from commands.session_display import display_full_session
 from commands.session_to_pdf import export_session_to_pdf
 from commands.session_remove import remove_session_command
 from commands.set_parameters import handle_set_command
+from commands.audio import generate_audio_command
+from commands.session_title import show_session_title_command
+from commands.session_rename import rename_session_command
 
-VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/set']
+VALID_SLASH_COMMANDS = ['/exit', '/quit', '/switch', '/help', '/session', '/pdf', '/set', '/audio', '/assistant']
 
 def handle_command(user_input: str) -> bool:
     """
@@ -66,23 +69,42 @@ def handle_command(user_input: str) -> bool:
     # Session subcommands
     elif command == '/session':
         if len(parts) < 2:
-            console.print_error("Błąd: Komenda /session wymaga podkomendy (list, display, pop, clear, new).")
+            console.print_error("Błąd: Komenda /session wymaga podkomendy (list, display, pop, clear, new, title, rename).")
         else:
-            handle_session_subcommand(parts[1].lower(), manager)
+            handle_session_subcommand(parts[1].lower(), parts[2:] if len(parts) > 2 else [], manager)
 
     elif command == '/pdf':
         current = manager.get_current_session()
         export_session_to_pdf(current.get_history(), current.session_id, current.assistant_name)
+
+    elif command == '/assistant':
+        if len(parts) == 1:
+            # List assistants
+            current = manager.get_current_session()
+            from commands.assistant_list import list_assistants_command
+            list_assistants_command(current)
+        elif len(parts) == 2:
+            # Switch assistant
+            assistant_id = parts[1]
+            current = manager.get_current_session()
+            from commands.assistant_switch import switch_assistant_command
+            switch_assistant_command(current, assistant_id)
+        else:
+            console.print_error("Błąd: Użycie: /assistant [<ID>]")
 
     elif command == '/set':
         parameter_name = parts[1] if len(parts) >= 2 else None
         value_text = parts[2] if len(parts) >= 3 else None
         handle_set_command(parameter_name, value_text)
 
+    elif command == '/audio':
+        current = manager.get_current_session()
+        generate_audio_command(current.get_history(), current.session_id)
+
     return False
 
 
-def handle_session_subcommand(subcommand: str, manager):
+def handle_session_subcommand(subcommand: str, args: list[str], manager):
     """Handles /session subcommands."""
     current = manager.get_current_session()
     
@@ -120,6 +142,17 @@ def handle_session_subcommand(subcommand: str, manager):
 
     elif subcommand == 'remove':
         remove_session_command(manager)
+    
+    elif subcommand == 'title':
+        show_session_title_command()
+    
+    elif subcommand == 'rename':
+        if not args:
+            console.print_error("Błąd: Użycie: /session rename NEW_TITLE")
+        else:
+            # Join all remaining arguments as the title
+            new_title = ' '.join(args)
+            rename_session_command(new_title)
         
     else:
         console.print_error(f"Błąd: Nieznana podkomenda dla /session: {subcommand}. Użyj /help.")

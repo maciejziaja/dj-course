@@ -65,11 +65,17 @@ def display_help(session_id: str):
     print_help("                      Bez argumentów pokazuje bieżące wartości,")
     print_help("                      /set top_p        czyści parametr,")
     print_help("                      /set top_p 0.9    ustawia wartość.")
+    print_help("  /pdf              - Eksportuje historię sesji do pliku PDF.")
+    print_help("  /audio            - Generuje plik audio z ostatniej wypowiedzi asystenta.")
+    print_help("  /assistant [<ID>] - Wyświetla listę asystentów lub przełącza asystenta.")
     print_help("\n  /session list     - Wyświetla listę dostępnych sesji.")
     print_help("  /session display  - Wyświetla całą historię sesji.")
     print_help("  /session pop      - Usuwa ostatnią parę wpisów (TY i asystent).")
     print_help("  /session clear    - Czyści historię bieżącej sesji.")
     print_help("  /session new      - Rozpoczyna nową sesję.")
+    print_help("  /session title    - Wyświetla tytuł bieżącej sesji.")
+    print_help("  /session title    - Wyświetla tytuł bieżącej sesji.")
+    print_help("  /session rename   - Zmienia tytuł bieżącej sesji.")
 
 
 def display_final_instructions(session_id: str):

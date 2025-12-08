@@ -25,7 +25,7 @@ class ChatSession:
     Encapsulates session ID, conversation history, assistant, and LLM chat session.
     """
     
-    def __init__(self, assistant: Assistant, session_id: str | None = None, history: List[Any] | None = None):
+    def __init__(self, assistant: Assistant, session_id: str | None = None, history: List[Any] | None = None, title: str | None = None, assistant_id: str | None = None):
         """
         Initialize a chat session.
         
@@ -33,14 +33,35 @@ class ChatSession:
             assistant: Assistant instance that defines the behavior and model for this session
             session_id: Unique session identifier. If None, generates a new UUID.
             history: Initial conversation history. If None, starts empty.
+            title: Optional session title. If None, will be auto-generated when needed.
+            assistant_id: Optional assistant identifier. If None, inferred from assistant.
         """
         self.assistant = assistant
         self.session_id = session_id or str(uuid.uuid4())
         self._history = history or []
+        self._title: str | None = title
+        # Determine assistant_id based on provided argument or assistant properties
+        self.assistant_id: str = assistant_id or self._get_assistant_id_from_assistant(assistant)
         self._llm_client: Union[GeminiLLMClient, LlamaClient, ClaudeLLMClient, None] = None
         self._llm_chat_session = None
         self._max_context_tokens = 32768
         self._initialize_llm_session()
+    
+    def _get_assistant_id_from_assistant(self, assistant: Assistant) -> str:
+        """Map Assistant instance to assistant_id using its display name."""
+        try:
+            name = (assistant.name or "").upper()
+        except Exception:
+            name = ""
+        if name == "AZOR":
+            return "azor"
+        if name == "PERFEKCJONISTA":
+            return "perfectionist"
+        if name == "BIZNESMEN":
+            return "businessman"
+        if name == "OPTYMISTA":
+            return "optimist"
+        return "azor"
     
     def _initialize_llm_session(self):
         """
@@ -68,23 +89,43 @@ class ChatSession:
     
     
     @classmethod
-    def load_from_file(cls, assistant: Assistant, session_id: str) -> tuple['ChatSession | None', str | None]:
+    def load_from_file(cls, session_id: str, assistant: Assistant | None = None) -> tuple['ChatSession | None', str | None]:
         """
-        Loads a session from disk.
+        Loads a session from disk, including assistant information if available.
+        Creates the appropriate assistant using the registry (falls back to provided assistant or default Azor).
         
         Args:
-            assistant: Assistant instance to use for this session
             session_id: ID of the session to load
+            assistant: Optional Assistant instance (kept for backward compatibility; will be overridden if file has assistant_id)
             
         Returns:
             tuple: (ChatSession object or None, error_message or None)
         """
-        history, error = session_files.load_session_history(session_id)
-        
+        history, title, assistant_id, error = session_files.load_session_history(session_id)
         if error:
             return None, error
         
-        session = cls(assistant=assistant, session_id=session_id, history=history)
+        try:
+            from assistant.registry import get_assistant_by_id
+            resolved_id = assistant_id or None
+            if resolved_id is None and assistant is not None:
+                # Infer from provided assistant if available
+                temp_session = cls(assistant=assistant)
+                resolved_id = temp_session.assistant_id
+            if resolved_id is None:
+                resolved_id = "azor"
+            assistant_obj = get_assistant_by_id(resolved_id)
+        except Exception:
+            # Fallbacks: use provided assistant, else create Azor via registry
+            if assistant is not None:
+                assistant_obj = assistant
+                resolved_id = cls._get_assistant_id_from_assistant(assistant)
+            else:
+                from assistant.registry import get_assistant_by_id
+                assistant_obj = get_assistant_by_id("azor")
+                resolved_id = "azor"
+        
+        session = cls(assistant=assistant_obj, session_id=session_id, history=history, title=title, assistant_id=resolved_id)
         return session, None
     
     def save_to_file(self) -> tuple[bool, str | None]:
@@ -103,13 +144,16 @@ class ChatSession:
             self.session_id, 
             self._history, 
             self.assistant.system_prompt, 
-            self._llm_client.get_model_name()
+            self._llm_client.get_model_name(),
+            self._title,
+            self.assistant_id,
         )
     
     def send_message(self, text: str):
         """
         Sends a message to the LLM and returns the response.
         Updates internal history automatically and logs to WAL.
+        Auto-generates title if missing.
         
         Args:
             text: User's message
@@ -124,6 +168,19 @@ class ChatSession:
         
         # Sync history after message
         self._history = self._llm_chat_session.get_history()
+        
+        # Auto-generate title if missing
+        if self._title is None and len(self._history) >= 2:
+            try:
+                from llm.title_generation import generate_title_from_history
+                generated_title = generate_title_from_history(self._llm_client, self._history)
+                if generated_title:
+                    self._title = generated_title
+                    # Save the session with the new title
+                    self.save_to_file()
+            except Exception:
+                # Silently fail - don't interrupt the conversation
+                pass
         
         # Log to WAL
         total_tokens = self.count_tokens()
@@ -228,3 +285,68 @@ class ChatSession:
             str: The assistant's display name
         """
         return self.assistant.name
+    
+    def switch_assistant(self, assistant_id: str) -> None:
+        """
+        Zmienia asystenta w trakcie sesji i dodaje wpis do historii.
+        """
+        from assistant.registry import get_assistant_by_id
+        old_name = self.assistant.name
+        new_assistant = get_assistant_by_id(assistant_id)
+        new_name = new_assistant.name
+        change_message = {
+            "role": "model",
+            "parts": [{"text": f"[SYSTEM: Zmiana asystenta z {old_name} na {new_name}]"}]
+        }
+        # Ensure current history is up-to-date
+        if self._llm_chat_session:
+            self._history = self._llm_chat_session.get_history()
+        self._history.append(change_message)
+        self.assistant = new_assistant
+        self.assistant_id = assistant_id
+        # Reinitialize LLM session with new system prompt and existing history
+        self._initialize_llm_session()
+        # Persist change
+        self.save_to_file()
+    
+    def get_title(self) -> str | None:
+        """
+        Gets the current session title.
+        
+        Returns:
+            str | None: The session title, or None if not set
+        """
+        return self._title
+    
+    def set_title(self, title: str) -> bool:
+        """
+        Sets the session title (truncated to 60 characters).
+        Saves the session to file after updating.
+        
+        Args:
+            title: The new title (will be trimmed to 60 chars)
+            
+        Returns:
+            bool: True if title was set successfully, False if validation failed
+        """
+        # Remove surrounding quotes if present
+        title = title.strip()
+        if title.startswith('"') and title.endswith('"'):
+            title = title[1:-1]
+        elif title.startswith("'") and title.endswith("'"):
+            title = title[1:-1]
+        
+        title = title.strip()
+        
+        # Validate: must be at least 3 characters
+        if len(title) < 3:
+            return False
+        
+        # Trim to 60 characters
+        if len(title) > 60:
+            title = title[:60]
+        
+        self._title = title
+        # Save to file
+        self.save_to_file()
+        return True

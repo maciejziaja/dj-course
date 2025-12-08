@@ -74,13 +74,49 @@ python src/run.py
 /session pop
 /session clear
 /session new
+/session remove
+/session title
+/session rename <NOWY_TYTUŁ>
+/assistant [<ID>]
+/pdf
+/set [param] [value]
+/audio
 ```
+
+### Wielu asystentów (Multi-Assistant)
+
+Aplikacja obsługuje wielu asystentów w ramach jednej instalacji. Każda sesja zapamiętuje wybranego asystenta (pole assistant_id w pliku sesji), a w trakcie rozmowy możesz się przełączać:
+
+- Lista asystentów: `/assistant`
+- Przełącz na innego: `/assistant <ID>`
+
+Dostępne identyfikatory:
+- `azor` – przyjazny pies-asystent
+- `perfectionist` – skrupulatny perfekcjonista
+- `businessman` – rzeczowy i zwięzły biznesmen
+- `optimist` – pełen entuzjazmu optymista
+
+Kompatybilność wsteczna: starsze sesje bez `assistant_id` wczytają się domyślnie z asystentem `azor`.
 
 ## Pliki Sesji
 
 Sesje są zapisywane w `~/.azor/`:
 - `<session-id>-log.json` - historia konwersacji
 - `azor-wal.json` - Write-Ahead Log (wszystkie transakcje)
+
+## Testy
+
+Do projektu dodano zestaw testów (pytest) dla obsługi wielu asystentów (persistencja assistant_id, przełączanie, zgodność wsteczna).
+
+Uruchamianie testów:
+
+1. Zainstaluj zależności deweloperskie (pytest):
+   pip install -r requirements.txt pytest
+
+2. Uruchom testy:
+   pytest -q M1/azor-chatdog-py/tests
+
+Testy nie wymagają kluczy API ani uruchamiania prawdziwych klientów LLM – używają stubów i tymczasowego katalogu LOG_DIR.
 
 ## Architektura
 
