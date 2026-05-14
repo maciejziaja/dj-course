@@ -7,6 +7,15 @@ let isActive = false;
 // let isBlocking = true;
 // let blockedWebsites = [];
 
+// Helper function to get current date in YYYY-MM-DD format (local timezone)
+function getCurrentDate() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // Initialize when extension starts
 chrome.runtime.onStartup.addListener(initializeExtension);
 chrome.runtime.onInstalled.addListener(initializeExtension);
@@ -16,8 +25,8 @@ function initializeExtension() {
     loadSettingsFromStorage();
     console.log('initialize')
 
-    // Initialize storage
-    chrome.storage.local.get(['timeData', 'currentSessionTime', 'gotchaStats'], function(result) {
+    // Initialize storage and migrate old data if needed
+    chrome.storage.local.get(['timeData', 'currentSessionTime', 'gotchaStats', 'dataMigrated'], function(result) {
         if (!result.timeData) {
             chrome.storage.local.set({timeData: {}});
         }
@@ -26,6 +35,11 @@ function initializeExtension() {
         }
         if (!result.gotchaStats) {
             chrome.storage.local.set({gotchaStats: {}});
+        }
+        
+        // Migrate old data structure to new one if not already migrated
+        if (!result.dataMigrated) {
+            migrateOldData();
         }
     });
 
@@ -72,8 +86,20 @@ function updateTime(domain) {
     chrome.storage.local.get(['timeData', 'currentSessionTime'], (result) => {
         const timeData = result.timeData || {};
         const currentSessionTime = result.currentSessionTime || 0;
+        const today = getCurrentDate();
 
-        timeData[domain] = (timeData[domain] || 0) + 1;
+        // Initialize domain object if it doesn't exist
+        if (!timeData[domain]) {
+            timeData[domain] = {};
+        }
+        
+        // Initialize today's entry if it doesn't exist
+        if (!timeData[domain][today]) {
+            timeData[domain][today] = 0;
+        }
+        
+        // Increment time for today
+        timeData[domain][today] = (timeData[domain][today] || 0) + 1;
 
         chrome.storage.local.set({
             timeData: timeData,
@@ -148,7 +174,20 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             
             chrome.storage.local.get('gotchaStats', (result) => {
                 const stats = result.gotchaStats || {};
-                stats[domain] = (stats[domain] || 0) + 1;
+                const today = getCurrentDate();
+                
+                // Initialize domain object if it doesn't exist
+                if (!stats[domain]) {
+                    stats[domain] = {};
+                }
+                
+                // Initialize today's entry if it doesn't exist
+                if (!stats[domain][today]) {
+                    stats[domain][today] = 0;
+                }
+                
+                // Increment count for today
+                stats[domain][today] = (stats[domain][today] || 0) + 1;
                 chrome.storage.local.set({ gotchaStats: stats });
             });
         }
@@ -189,7 +228,20 @@ function monitorIfBlocked() {
                     chrome.tabs.update(tab.id, { url: blockedPageUrl });
                     chrome.storage.local.get('gotchaStats', (result) => {
                         const stats = result.gotchaStats || {};
-                        stats[domain] = (stats[domain] || 0) + 1;
+                        const today = getCurrentDate();
+                        
+                        // Initialize domain object if it doesn't exist
+                        if (!stats[domain]) {
+                            stats[domain] = {};
+                        }
+                        
+                        // Initialize today's entry if it doesn't exist
+                        if (!stats[domain][today]) {
+                            stats[domain][today] = 0;
+                        }
+                        
+                        // Increment count for today
+                        stats[domain][today] = (stats[domain][today] || 0) + 1;
                         chrome.storage.local.set({ gotchaStats: stats });
                     });
                 }
@@ -243,5 +295,71 @@ chrome.alarms.onAlarm.addListener((alarm) => {
         monitorIfBlocked();
     }
 });
+
+// Migrate old data structure to new structure with dates
+function migrateOldData() {
+    console.log('Migrating old data structure to new format...');
+    
+    chrome.storage.local.get(['timeData', 'gotchaStats'], (result) => {
+        const timeData = result.timeData || {};
+        const gotchaStats = result.gotchaStats || {};
+        const today = getCurrentDate();
+        let timeDataMigrated = false;
+        let gotchaStatsMigrated = false;
+        
+        // Migrate timeData
+        const newTimeData = {};
+        for (const [domain, value] of Object.entries(timeData)) {
+            // Check if it's old structure (number) or new structure (object with dates)
+            if (typeof value === 'number') {
+                // Old structure: migrate to new structure
+                newTimeData[domain] = {};
+                newTimeData[domain][today] = value;
+                timeDataMigrated = true;
+                console.log(`Migrated timeData for ${domain}: ${value} seconds assigned to ${today}`);
+            } else if (typeof value === 'object' && value !== null) {
+                // Already new structure or empty object
+                newTimeData[domain] = value;
+            }
+        }
+        
+        // Migrate gotchaStats
+        const newGotchaStats = {};
+        for (const [domain, value] of Object.entries(gotchaStats)) {
+            // Check if it's old structure (number) or new structure (object with dates)
+            if (typeof value === 'number') {
+                // Old structure: migrate to new structure
+                newGotchaStats[domain] = {};
+                newGotchaStats[domain][today] = value;
+                gotchaStatsMigrated = true;
+                console.log(`Migrated gotchaStats for ${domain}: ${value} attempts assigned to ${today}`);
+            } else if (typeof value === 'object' && value !== null) {
+                // Already new structure or empty object
+                newGotchaStats[domain] = value;
+            }
+        }
+        
+        // Save migrated data
+        const dataToSave = {
+            dataMigrated: true
+        };
+        
+        if (timeDataMigrated) {
+            dataToSave.timeData = newTimeData;
+        }
+        
+        if (gotchaStatsMigrated) {
+            dataToSave.gotchaStats = newGotchaStats;
+        }
+        
+        chrome.storage.local.set(dataToSave, () => {
+            if (timeDataMigrated || gotchaStatsMigrated) {
+                console.log('Data migration completed successfully');
+            } else {
+                console.log('No old data to migrate - data already in new format');
+            }
+        });
+    });
+}
 
 console.log('Background script loaded');

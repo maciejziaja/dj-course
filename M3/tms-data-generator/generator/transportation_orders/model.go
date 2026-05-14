@@ -78,3 +78,27 @@ type OrderItem struct {
 	TotalPrice  float64
 	ItemType    ItemType
 }
+
+// AssignmentStatus represents the status of an order assignment.
+type AssignmentStatus string
+
+const (
+	AssignmentPlanned    AssignmentStatus = "PLANNED"
+	AssignmentInProgress AssignmentStatus = "IN_PROGRESS"
+	AssignmentCompleted  AssignmentStatus = "COMPLETED"
+	AssignmentCancelled  AssignmentStatus = "CANCELLED"
+)
+
+// OrderAssignment represents an assignment of driver and/or vehicle to a transportation order.
+type OrderAssignment struct {
+	ID              int
+	OrderID         int
+	DriverID        *int // Pointer, bo może być NULL
+	VehicleID       *int // Pointer, bo może być NULL
+	AssignedAt      time.Time
+	StartTime       time.Time
+	EndTime         *time.Time
+	ActualStartTime *time.Time
+	ActualEndTime   *time.Time
+	Status          AssignmentStatus
+}

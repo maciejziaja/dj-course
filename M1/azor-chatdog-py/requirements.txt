@@ -9,3 +9,5 @@ markdown
 anthropic
 coqui-tts
 rich
+coqui-tts
+rich

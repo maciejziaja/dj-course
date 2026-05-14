@@ -28,8 +28,16 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .stats-columns-wrapper {
+            display: flex;
             flex-direction: row;
             gap: 40px;
+            width: 100%;
             align-items: flex-start;
         }
 
@@ -139,11 +147,198 @@
         .scrollbar::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
+
+        .filters-section {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+
+        .date-range-picker {
+            display: none;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .date-range-picker.active {
+            display: flex;
+        }
+
+        .date-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .date-input-group label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .date-input-group input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .date-input-group input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .apply-date-range-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .apply-date-range-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .import-export-section {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .import-export-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .import-export-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .import-export-btn.export-btn {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .import-export-btn.export-btn:hover {
+            background: rgba(76, 175, 80, 0.4);
+        }
+
+        .import-export-btn.import-btn {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: rgba(33, 150, 243, 0.5);
+        }
+
+        .import-export-btn.import-btn:hover {
+            background: rgba(33, 150, 243, 0.4);
+        }
+
+        #importFileInput {
+            display: none;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            display: block;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="stats-column">
+        <div class="filters-section">
+            <div class="tabs">
+                <div class="tab active" data-period="week">Ostatni tydzień</div>
+                <div class="tab" data-period="month">Ostatni miesiąc</div>
+                <div class="tab" data-period="all">Wszystkie dane</div>
+                <div class="tab" data-period="custom">Własny zakres</div>
+            </div>
+            <div class="date-range-picker" id="dateRangePicker">
+                <div class="date-input-group">
+                    <label for="startDate">Data początkowa</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="date-input-group">
+                    <label for="endDate">Data końcowa</label>
+                    <input type="date" id="endDate">
+                </div>
+                <button class="apply-date-range-btn" id="applyDateRange">Zastosuj</button>
+            </div>
+            <div class="import-export-section">
+                <button class="import-export-btn export-btn" id="exportBtn">
+                    📥 Export
+                </button>
+                <button class="import-export-btn import-btn" id="importBtn">
+                    📤 Import
+                </button>
+                <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            </div>
+            <div id="message" class="message"></div>
+        </div>
+        <div class="stats-columns-wrapper">
+            <div class="stats-column">
             <h1>📊 Time Statistics</h1>
             <h2>Time spent per domain</h2>
             <div class="chart-container">
@@ -165,6 +360,7 @@
             <div id="clearGotchaStats" class="clear-btn">
                 ❌ Clear "Gotcha" Statistics
             </div>
+        </div>
         </div>
     </div>
 
