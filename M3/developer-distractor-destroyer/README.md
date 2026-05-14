@@ -95,6 +95,133 @@ All data is stored **locally** in your browser. No data is ever sent to any serv
 - Take short breaks and deep breaths
 - Move your body for mental clarity
 
+## Testowanie i Rozwój (Testing & Development)
+
+### Jak przetestować rozszerzenie
+
+1. **Załaduj rozszerzenie w Chrome:**
+   - Otwórz Chrome i przejdź do `chrome://extensions/`
+   - Włącz "Tryb deweloperski" (przełącznik w prawym górnym rogu)
+   - Kliknij "Załaduj rozpakowane" (Load unpacked)
+   - Wybierz folder zawierający pliki rozszerzenia (`developer-distractor-destroyer`)
+
+2. **Podstawowe testy funkcjonalności:**
+   - **Test blokowania stron:**
+     - Kliknij ikonę rozszerzenia w pasku narzędzi
+     - Dodaj stronę do blokowania (np. `facebook.com`)
+     - Włącz przełącznik "Block websites"
+     - Spróbuj otworzyć zablokowaną stronę - powinna pojawić się strona blokująca
+   
+   - **Test śledzenia czasu:**
+     - Otwórz dowolną stronę (nie zablokowaną)
+     - Pozwól stronie być aktywną przez kilka sekund
+     - Kliknij "📊 View Time Statistics" w popupie, aby zobaczyć statystyki
+
+3. **Debugowanie:**
+   - **Console logi w background script:**
+     - W `chrome://extensions/` znajdź rozszerzenie
+     - Kliknij "service worker" (lub "background page") aby otworzyć konsolę
+     - Zobaczysz logi z `background.js`
+   
+   - **Console logi w popup:**
+     - Kliknij prawym przyciskiem na ikonę rozszerzenia
+     - Wybierz "Sprawdź elementy popup" (Inspect popup)
+     - Otworzy się DevTools z konsolą dla popup.html
+   
+   - **Console logi na stronie blokującej:**
+     - Otwórz zablokowaną stronę
+     - Kliknij F12 lub prawym przyciskiem → "Zbadaj" (Inspect)
+     - Zobaczysz konsolę dla `blocked.html`
+
+### Jak rozwijać rozszerzenie
+
+#### 1. **Struktura plików i ich rola:**
+
+- **`manifest.json`** - Konfiguracja rozszerzenia (uprawnienia, pliki, wersja)
+- **`popup.html` / `popup.js`** - Interfejs użytkownika (okienko po kliknięciu ikony)
+- **`background.js`** - Service worker działający w tle (śledzenie czasu, blokowanie)
+- **`blocked.html` / `blocked.js`** - Strona wyświetlana gdy strona jest zablokowana
+- **`stats.html` / `stats.js`** - Strona ze statystykami czasu przeglądania
+
+#### 2. **Proces wprowadzania zmian:**
+
+**Krok 1: Edytuj pliki**
+- Otwórz odpowiedni plik w edytorze
+- Wprowadź zmiany w kodzie
+
+**Krok 2: Przeładuj rozszerzenie**
+- Przejdź do `chrome://extensions/`
+- Kliknij ikonę odświeżania (🔄) przy rozszerzeniu
+- **WAŻNE:** Po zmianach w `background.js` może być konieczne całkowite wyłączenie i ponowne włączenie rozszerzenia
+
+**Krok 3: Przetestuj zmiany**
+- Sprawdź czy zmiany działają poprawnie
+- Użyj konsoli deweloperskiej do debugowania
+
+#### 3. **Typowe zadania deweloperskie:**
+
+**Dodanie nowej funkcjonalności:**
+```javascript
+// Przykład: Dodanie nowego przycisku w popup.html
+<button id="newFeature">Nowa funkcja</button>
+
+// W popup.js dodaj obsługę:
+document.getElementById('newFeature').addEventListener('click', () => {
+    // Twoja logika
+});
+```
+
+**Modyfikacja logiki blokowania:**
+- Edytuj funkcję `monitorIfBlocked()` w `background.js`
+- Zmień logikę sprawdzania zablokowanych stron w `chrome.tabs.onUpdated`
+
+**Zmiana wyglądu UI:**
+- Edytuj style CSS w `<style>` tagu w `popup.html`
+- Lub dodaj osobny plik CSS i zaimportuj w HTML
+
+**Dodanie nowych uprawnień:**
+- Jeśli potrzebujesz nowych uprawnień, dodaj je do `manifest.json` w sekcji `permissions`
+- Przeładuj rozszerzenie i zaakceptuj nowe uprawnienia
+
+#### 4. **Najlepsze praktyki:**
+
+- **Zawsze testuj po zmianach** - Przeładuj rozszerzenie i sprawdź czy działa
+- **Używaj console.log()** - Pomaga w debugowaniu, szczególnie w `background.js`
+- **Sprawdzaj konsolę błędów** - Chrome pokazuje błędy w konsoli service workera
+- **Zapisuj dane w chrome.storage** - Używaj `chrome.storage.local` do przechowywania danych
+- **Obsługuj błędy** - Dodawaj try-catch tam gdzie to możliwe
+- **Testuj na różnych stronach** - Niektóre strony mogą mieć specjalne zachowania
+
+#### 5. **Częste problemy i rozwiązania:**
+
+**Problem:** Zmiany nie są widoczne po przeładowaniu
+- **Rozwiązanie:** Wyłącz i włącz rozszerzenie, lub zrestartuj Chrome
+
+**Problem:** Service worker się zatrzymuje
+- **Rozwiązanie:** Service worker w MV3 może się zatrzymać. Użyj `chrome.alarms` do okresowych zadań
+
+**Problem:** Błędy w konsoli service workera
+- **Rozwiązanie:** Sprawdź `chrome://extensions/` → kliknij "service worker" przy rozszerzeniu
+
+**Problem:** Uprawnienia nie działają
+- **Rozwiązanie:** Sprawdź `manifest.json` i upewnij się, że wszystkie potrzebne uprawnienia są dodane
+
+#### 6. **Przydatne narzędzia:**
+
+- **Chrome DevTools** - Do debugowania popup, content scripts, i stron
+- **chrome://extensions/** - Zarządzanie rozszerzeniami
+- **chrome.storage API** - Do przechowywania danych lokalnie
+- **Chrome Extension API Documentation** - https://developer.chrome.com/docs/extensions/
+
+#### 7. **Przykładowe ulepszenia do zaimplementowania:**
+
+- Dodanie eksportu statystyk do pliku JSON/CSV
+- Implementacja harmonogramu blokowania (np. blokuj tylko w określonych godzinach)
+- Dodanie powiadomień gdy próbujesz wejść na zablokowaną stronę
+- Integracja z systemem celów (np. maksymalny czas na stronie dziennie)
+- Dodanie trybu "Focus mode" z automatycznym blokowaniem rozpraszaczy
+- Eksport danych do chmury (opcjonalny, z zachowaniem prywatności)
+
 ## License
 
 MIT License

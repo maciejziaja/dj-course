@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS order_assignments;
+DROP TABLE IF EXISTS driver_availability_periods;
+DROP TABLE IF EXISTS vehicle_availability_periods;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS order_timeline_events;
 DROP TABLE IF EXISTS transportation_orders;
@@ -72,7 +75,57 @@ CREATE TABLE order_items (
     FOREIGN KEY (order_id) REFERENCES transportation_orders(id)
 );
 
+CREATE TABLE driver_availability_periods (
+    id INT PRIMARY KEY,
+    driver_id INT NOT NULL,
+    period_type VARCHAR(20) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+    reason VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (driver_id) REFERENCES drivers(id)
+);
+
+CREATE TABLE vehicle_availability_periods (
+    id INT PRIMARY KEY,
+    vehicle_id INT NOT NULL,
+    period_type VARCHAR(20) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+    reason VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+);
+
+CREATE TABLE order_assignments (
+    id INT PRIMARY KEY,
+    order_id INT NOT NULL,
+    driver_id INT,
+    vehicle_id INT,
+    assigned_at TIMESTAMP NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+    actual_start_time TIMESTAMP,
+    actual_end_time TIMESTAMP,
+    status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES transportation_orders(id),
+    FOREIGN KEY (driver_id) REFERENCES drivers(id),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
+    CHECK (driver_id IS NOT NULL OR vehicle_id IS NOT NULL)
+);
+
 CREATE INDEX idx_timeline_order ON order_timeline_events(order_id);
 CREATE INDEX idx_items_order ON order_items(order_id);
 CREATE INDEX idx_orders_customer ON transportation_orders(customer_id);
 CREATE INDEX idx_orders_status ON transportation_orders(status);
+CREATE INDEX idx_driver_availability_driver ON driver_availability_periods(driver_id);
+CREATE INDEX idx_driver_availability_time ON driver_availability_periods(start_time, end_time);
+CREATE INDEX idx_driver_availability_type ON driver_availability_periods(period_type);
+CREATE INDEX idx_vehicle_availability_vehicle ON vehicle_availability_periods(vehicle_id);
+CREATE INDEX idx_vehicle_availability_time ON vehicle_availability_periods(start_time, end_time);
+CREATE INDEX idx_vehicle_availability_type ON vehicle_availability_periods(period_type);
+CREATE INDEX idx_order_assignments_order ON order_assignments(order_id);
+CREATE INDEX idx_order_assignments_driver ON order_assignments(driver_id);
+CREATE INDEX idx_order_assignments_vehicle ON order_assignments(vehicle_id);
+CREATE INDEX idx_order_assignments_time ON order_assignments(start_time, end_time);
+CREATE INDEX idx_order_assignments_status ON order_assignments(status);

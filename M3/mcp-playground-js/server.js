@@ -1,6 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { readdir, readFile, unlink } from 'fs/promises';
+import { join } from 'path';
+import { homedir } from 'os';
 
 const log = (...args) => {
   if (process.env.CONFIG_LOG_LEVEL?.toUpperCase() == "VERBOSE") {
@@ -8,120 +11,133 @@ const log = (...args) => {
   }
 };
 
+const AZOR_DIR = join(homedir(), '.azor');
+
 const server = new McpServer({
-  name: 'DJServer',
+  name: 'AZOR files',
   version: '1.0.0'
 });
 
+// Helper function to extract date from first timestamp in history
+const getThreadDate = (thread) => {
+  if (thread.history && thread.history.length > 0 && thread.history[0].timestamp) {
+    const timestamp = thread.history[0].timestamp;
+    // Extract YYYY-MM-DD from ISO timestamp
+    return timestamp.split('T')[0];
+  }
+  return null;
+};
+
+// Helper function to check if date is in range
+const isDateInRange = (date, fromDate, toDate) => {
+  if (!date) return false;
+  if (fromDate && date < fromDate) return false;
+  if (toDate && date > toDate) return false;
+  return true;
+};
+
 server.tool(
-  'greet',
-  'Greets a person by name',
-  // MCP uses standard ts runtime type check libraries: zod, ajv, ...
+  'list_azor_threads',
+  'Lists all AZOR threads with optional date filtering',
   {
-    name: z.string().describe('Recipient name'),
-    //....
+    fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filter threads from this date (YYYY-MM-DD, inclusive)'),
+    toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('Filter threads to this date (YYYY-MM-DD, inclusive)'),
   },
-  async ({ name }) => {
-    log('[greet]', {name}); // ❗️ stderr
-    // console.log('[greet]', {name}); // ❗️ stdout
+  async ({ fromDate, toDate }) => {
+    log('[list_azor_threads]', { fromDate, toDate });
+    
+    const files = await readdir(AZOR_DIR);
+    const logFiles = files.filter(f => f.endsWith('-log.json'));
+    
+    const threads = [];
+    
+    for (const file of logFiles) {
+      const filePath = join(AZOR_DIR, file);
+      const content = await readFile(filePath, 'utf-8');
+      const thread = JSON.parse(content);
+      
+      const date = getThreadDate(thread);
+      
+      // Filter by date range if specified
+      if (!isDateInRange(date, fromDate, toDate)) {
+        continue;
+      }
+      
+      threads.push({
+        session_id: thread.session_id || null,
+        assistant_id: thread.assistant_id || null,
+        title: thread.title || null,
+        date: date
+      });
+    }
+    
+    // Sort by date (newest first)
+    threads.sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return b.date.localeCompare(a.date);
+    });
+    
     return {
       content: [{
         type: 'text',
-        text: `Hello, ${name}! You are ${name.startsWith('A') ? 'awesome' : 'not awesome'}`
+        text: JSON.stringify(threads, null, 2)
       }]
-    }
+    };
   }
 );
 
-const RESOURCE_CONTENT = `
-GEORGE WASHINGTON | 1789-1797
-JOHN ADAMS | 1797-1801
-THOMAS JEFFERSON | 1801-1809
-JAMES MADISON | 1809-1817
-JAMES MONROE | 1817-1825
-JOHN QUINCY ADAMS | 1825-1829
-ANDREW JACKSON | 1829-1837
-MARTIN VAN BUREN | 1837-1841
-WILLIAM HENRY HARRISON | 1841
-JOHN TYLER | 1841-1845
-JAMES K. POLK | 1845-1849
-ZACHARY TAYLOR | 1849-1850
-MILLARD FILLMORE | 1850-1853
-FRANKLIN PIERCE | 1853-1857
-JAMES BUCHANAN | 1857-1861
-ABRAHAM LINCOLN | 1861-1865
-ANDREW JOHNSON | 1865-1869
-ULYSSES S. GRANT | 1869-1877
-RUTHERFORD B. HAYES | 1877-1881
-JAMES A. GARFIELD | 1881
-CHESTER A. ARTHUR | 1881-1885
-GROVER CLEVELAND | 1885-1889 / 1893-1897
-BENJAMIN HARRISON | 1889-1893
-WILLIAM MCKINLEY | 1897-1901
-THEODORE ROOSEVELT | 1901-1909
-WILLIAM HOWARD TAFT | 1909-1913
-WOODROW WILSON | 1913-1921
-WARREN G. HARDING | 1921-1923
-CALVIN COOLIDGE | 1923-1929
-HERBERT HOOVER | 1929-1933
-FRANKLIN D. ROOSEVELT | 1933-1945
-HARRY S. TRUMAN | 1945-1953
-DWIGHT D. EISENHOWER | 1953-1961
-JOHN F. KENNEDY | 1961-1963
-LYNDON B. JOHNSON | 1963-1969
-RICHARD M. NIXON | 1969-1974
-GERALD R. FORD | 1974-1977
-JIMMY CARTER | 1977-1981
-RONALD REAGAN | 1981-1989
-GEORGE BUSH | 1989-1993
-WILLIAM J. CLINTON | 1993-2001
-GEORGE W. BUSH | 2001-2009
-BARACK OBAMA | 2009-2017
-DONALD J. TRUMP | 2017-2021 / 2025-
-JOSEPH R. BIDEN JR. | 2021-2025
-`
-
-server.resource(
-    'american-presidents',
-    'resources://american-presidents',
-    {
-        title: 'American Presidents',
-        description: 'List of all presidents of the United States with their terms in office',
-        mimeType: "text/markdown",
-    },
-    async (uri) => {
-      return {
-          contents: [{
-              uri: uri.href,
-              name: `American Presidents List`,
-              mimeType: "text/markdown",
-              text: RESOURCE_CONTENT
-          }]
-      };
-    }
+server.tool(
+  'get_azor_thread',
+  'Returns full JSON content of a specific AZOR thread',
+  {
+    session_id: z.string().describe('Session ID of the thread to retrieve'),
+  },
+  async ({ session_id }) => {
+    log('[get_azor_thread]', { session_id });
+    
+    const filePath = join(AZOR_DIR, `${session_id}-log.json`);
+    const content = await readFile(filePath, 'utf-8');
+    
+    return {
+      content: [{
+        type: 'text',
+        text: content
+      }]
+    };
+  }
 );
 
-server.prompt(
-  'ask-about',
-  'Ask about a topic',
+server.tool(
+  'delete_azor_threads',
+  'Deletes one or more AZOR threads by session ID',
   {
-    topic: z.string().describe('Topic to ask about'),
+    session_ids: z.array(z.string()).describe('Array of session IDs to delete'),
   },
-  async (options) => ({
-    messages: [
-      {
-        role: "user",
-        content: {
-          type: "text",
-          text: `I need you to provide a detailed analysis about "${options.repository}" in the following format:
-          - don't be sycophantic
-          - provide bullet-point list-organized answer, each point has a short 1-sentence description
-          - provide mermaid/markdown sequence diagrams where applicable 
-          `
-        }
+  async ({ session_ids }) => {
+    log('[delete_azor_threads]', { session_ids });
+    
+    const deleted = [];
+    
+    for (const session_id of session_ids) {
+      const filePath = join(AZOR_DIR, `${session_id}-log.json`);
+      try {
+        await unlink(filePath);
+        deleted.push(session_id);
+      } catch (error) {
+        // File doesn't exist or already deleted - ignore
+        log('[delete_azor_threads] File not found:', filePath);
       }
-    ]
-  })
+    }
+    
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ deleted, count: deleted.length }, null, 2)
+      }]
+    };
+  }
 );
 
 const transport = new StdioServerTransport();
