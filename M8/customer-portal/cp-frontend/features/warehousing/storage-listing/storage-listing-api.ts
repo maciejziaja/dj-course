@@ -1,16 +1,23 @@
+import { useQuery } from '@tanstack/vue-query'
+import type { Ref } from 'vue'
 import type { StorageItem } from './storage-listing.model'
-import { mockStorageItems } from './storage-listing.mocks'
 
-export async function getStorageItems(filters: any = {}): Promise<StorageItem[]> {
-  await new Promise(resolve => setTimeout(resolve, 500))
+export async function getStorageItems(filters: { status?: string; cargoType?: string } = {}): Promise<StorageItem[]> {
+  const query = new URLSearchParams()
 
-  let items = [...mockStorageItems]
+  if (filters.status) query.append('status', filters.status)
+  if (filters.cargoType) query.append('cargoType', filters.cargoType)
 
-  if (filters.status) {
-    items = items.filter(item => item.status === filters.status)
-  }
-  if (filters.cargoType) {
-    items = items.filter(item => item.cargoType === filters.cargoType)
-  }
-  return items
-} 
+  const queryString = query.toString()
+  const url = `/api/storage${queryString ? `?${queryString}` : ''}`
+
+  return await $fetch(url)
+}
+
+export const useStorageItems = (filters: Ref<{ status: string; cargoType: string }>) => {
+  return useQuery({
+    queryKey: ['storageItems', filters],
+    queryFn: () => getStorageItems(filters.value),
+    staleTime: 5 * 60 * 1000,
+  })
+}

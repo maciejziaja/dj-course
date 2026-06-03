@@ -4,13 +4,13 @@
     description="Inventory items in storage"
     :data="storageItems"
     :columns="columns"
-    :loading="isLoading"
+    :loading="isPending"
     :error="isError"
     loading-text="Loading storage items..."
     error-title="Error Loading Storage Items"
     error-message="There was a problem loading storage items."
     :row-actions="rowActions"
-    @retry="fetchItems"
+    @retry="refetch"
   >
     <template #cell-cargoType="{ value }">
       <StorageTypeBadge :storageType="value" />
@@ -29,32 +29,17 @@
 <script setup lang="ts">
 import DataTable from '~/components/ui-library/datatable/DataTable.vue';
 import type { StorageItem } from './storage-listing.model';
-import { getStorageItems } from './storage-listing-api';
-import { ref, onMounted, watch } from 'vue';
+import { useStorageItems } from './storage-listing-api';
+import { computed, toRef } from 'vue';
 import { EyeIcon } from '@heroicons/vue/24/outline';
 import { navigateTo } from '#app';
 import StorageTypeBadge from '~/components/badges/StorageTypeBadge.vue'
 import StorageStatusBadge from '~/components/badges/StorageStatusBadge.vue'
 
 const props = defineProps<{ filters: { status: string; cargoType: string } }>();
-const storageItems = ref<StorageItem[]>([]);
-const isLoading = ref(false);
-const isError = ref(false);
 
-const fetchItems = async () => {
-  isLoading.value = true;
-  isError.value = false;
-  try {
-    storageItems.value = await getStorageItems(props.filters);
-  } catch (error) {
-    isError.value = true;
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-onMounted(fetchItems);
-watch(() => props.filters, fetchItems, { deep: true });
+const { data, isPending, isError, refetch } = useStorageItems(toRef(props, 'filters'));
+const storageItems = computed(() => data.value ?? []);
 
 const columns = [
   { key: 'id', label: 'ID' },
@@ -65,8 +50,9 @@ const columns = [
   { key: 'arrivalDate', label: 'Arrival Date' }
 ];
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
+function formatDate(date: Date | string) {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
 }
 
 const rowActions = [

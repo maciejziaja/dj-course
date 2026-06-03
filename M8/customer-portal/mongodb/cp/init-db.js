@@ -12,6 +12,7 @@ db.createCollection('metrics');
 db.createCollection('route_performance');
 db.createCollection('transportation_requests');
 db.createCollection('warehousing_requests');
+db.createCollection('storage_items');
 
 // Wstawianie danych dla dashboard_stats
 db.dashboard_stats.insertMany([
@@ -565,6 +566,43 @@ db.warehousing_requests.insertMany([
     updatedAt: new Date('2024-01-21')
   }
 ]);
+
+// Wstawianie danych dla storage_items
+db.storage_items.insertMany([
+  {
+    id: 'ST-001',
+    cargoType: 'GENERAL_CARGO',
+    quantity: 100,
+    unitType: 'pcs',
+    storageLocation: 'Warehouse A-1',
+    status: 'IN_STORAGE',
+    arrivalDate: new Date('2024-01-15')
+  },
+  {
+    id: 'ST-002',
+    cargoType: 'PERISHABLE',
+    quantity: 20,
+    unitType: 'boxes',
+    storageLocation: 'Cold Storage B-2',
+    status: 'PENDING',
+    arrivalDate: new Date('2024-02-01')
+  },
+  {
+    id: 'ST-003',
+    cargoType: 'HAZARDOUS',
+    quantity: 5,
+    unitType: 'drums',
+    storageLocation: 'Hazmat Zone C-3',
+    status: 'DISPATCHED',
+    arrivalDate: new Date('2024-01-10'),
+    departureDate: new Date('2024-01-20')
+  }
+]);
+
+// Indeksy dla storage_items
+db.storage_items.createIndex({ "itemId": 1 }, { unique: true });
+db.storage_items.createIndex({ "status": 1 });
+db.storage_items.createIndex({ "cargoType": 1 });
 
 // Tworzenie indeksów
 db.recent_requests.createIndex({ "date": -1 });
