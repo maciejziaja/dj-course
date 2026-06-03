@@ -70,8 +70,9 @@ const route = useRoute()
 const id = route.params.id as string
 const { data: item, isLoading, isError, refetch } = useStorageItemDetails(id) as unknown as { data: Ref<StorageItem>; isLoading: Ref<boolean>; isError: Ref<boolean>; refetch: () => void }
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+function formatDate(date: Date | string) {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d)
 }
 
 function formatStatus(status: string) {
