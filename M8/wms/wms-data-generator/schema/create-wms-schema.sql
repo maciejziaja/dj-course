@@ -112,6 +112,7 @@ CREATE TABLE customer_contact (
 );
 
 CREATE INDEX idx_contact_lookup ON customer_contact(details, type);
+CREATE INDEX idx_customer_contact_customer_id ON customer_contact(customer_id);
 
 -- CUSTOMER ADDRESSES
 CREATE TABLE customer_address (
@@ -123,6 +124,8 @@ CREATE TABLE customer_address (
     postal_code TEXT NOT NULL,
     address_type TEXT NOT NULL CHECK (address_type IN ('BILLING','SHIPPING','CORPORATE','OTHER'))
 );
+
+CREATE INDEX idx_customer_address_customer_id ON customer_address(customer_id);
 
 -- EMPLOYEES
 CREATE TABLE employee (
@@ -211,6 +214,12 @@ CREATE TABLE storage_record (
     cargo_volume NUMERIC NOT NULL
 );
 
+-- CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- CREATE INDEX idx_storage_record_cargo_description_trgm
+-- ON storage_record
+-- USING GIN (cargo_description gin_trgm_ops);
+
 -- PAYMENTS
 CREATE TABLE payment (
     payment_id SERIAL PRIMARY KEY,
@@ -222,6 +231,8 @@ CREATE TABLE payment (
     payment_date TIMESTAMP,
     external_reference TEXT
 );
+
+CREATE INDEX idx_payment_customer_id ON payment (customer_id);
 
 -- STORAGE EVENT TYPES
 CREATE TABLE storage_event_type (
@@ -241,3 +252,5 @@ CREATE TABLE storage_event_history (
     employee_id INTEGER REFERENCES employee(employee_id),
     details JSONB
 );
+
+CREATE INDEX idx_storage_event_history_storage_record_id ON storage_event_history (storage_record_id);
