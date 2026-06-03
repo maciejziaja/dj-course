@@ -1,0 +1,104 @@
+erDiagram
+    fleet_assets {
+        uuid id PK
+        enum category
+        string vin
+        string registration_plate
+        string fleet_number
+        int current_mileage
+        decimal average_fuel_consumption
+        string current_base_location
+        jsonb specs "Dane techniczne, gabaryty, wyposażenie"
+    }
+
+    asset_documents {
+        uuid id PK
+        uuid asset_id FK
+        enum document_type
+        string document_number
+        string issuer_name
+        date valid_from
+        date valid_to
+        string document_url "Scany/PDF"
+        jsonb metadata "Zakres ubezpieczenia, dane specyficzne certyfikatu"
+    }
+
+    policy_installments {
+        uuid id PK
+        uuid document_id FK
+        date due_date
+        decimal amount_pln
+        boolean is_paid
+    }
+
+    service_intervals {
+        uuid id PK
+        uuid asset_id FK
+        string service_type
+        int interval_km
+        int interval_mth
+        int interval_days
+    }
+
+    work_orders {
+        uuid id PK
+        uuid asset_id FK
+        enum repair_class
+        string damage_number
+        date date_received
+        date date_released
+        text description
+        decimal labor_cost_pln
+    }
+
+    work_order_parts {
+        uuid id PK
+        uuid work_order_id FK
+        uuid part_id FK
+        int quantity
+        jsonb usage_details "Dla opon: bieżnik, pozycja, sezon"
+    }
+
+    parts {
+        uuid id PK
+        string oem_number
+        string replacement_number
+        string name
+        string category
+        int min_stock_level
+    }
+
+    inventory_levels {
+        uuid id PK
+        uuid part_id FK
+        string rack
+        string shelf
+        int quantity
+    }
+
+    alert_rules {
+        uuid id PK
+        enum trigger
+        int threshold_value
+        enum target_role
+        string description_template
+    }
+
+    alert_tasks {
+        uuid id PK
+        uuid rule_id FK
+        uuid reference_id "ID dokumentu/zasobu"
+        string reference_type
+        enum status
+        timestamp created_at
+    }
+
+%% Relacje
+    fleet_assets ||--o{ asset_documents : "posiada dokumenty"
+    fleet_assets ||--o{ service_intervals : "ma zdefiniowane interwały"
+    fleet_assets ||--o{ work_orders : "historia napraw"
+    asset_documents ||--o{ policy_installments : "podział na raty"
+    work_orders ||--o{ work_order_parts : "zużywa części"
+    parts ||--o{ work_order_parts : "jest wydawana"
+    parts ||--o{ inventory_levels : "znajduje się na"
+    alert_rules ||--o{ alert_tasks : "generuje"

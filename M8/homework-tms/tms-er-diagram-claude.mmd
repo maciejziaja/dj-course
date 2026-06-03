@@ -1,0 +1,393 @@
+erDiagram
+    bases {
+        int id PK
+        varchar code
+        varchar name
+        varchar address_line
+        varchar city
+        char country_iso
+    }
+    roles {
+        int id PK
+        varchar code
+        varchar name
+    }
+    users {
+        int id PK
+        varchar email
+        varchar full_name
+        int role_id FK
+        int base_id FK
+        bool is_active
+    }
+
+    parties {
+        int id PK
+        party_type party_type
+        varchar legal_name
+        varchar tax_id
+        char country_iso
+        varchar address_line
+        varchar city
+        varchar postal_code
+        varchar contact_email
+        varchar contact_phone
+    }
+    workshop_details {
+        int party_id PK,FK
+        party_type party_type FK
+        bool is_internal
+    }
+    inspection_station_details {
+        int party_id PK,FK
+        party_type party_type FK
+        varchar station_code
+        varchar accreditation
+    }
+
+    fuel_types {
+        int id PK
+        varchar code
+        varchar name
+    }
+    emission_standards {
+        int id PK
+        varchar code
+        varchar name
+        date valid_from
+    }
+    body_types {
+        int id PK
+        varchar code
+        varchar name
+    }
+    vehicle_makes {
+        int id PK
+        varchar name
+        char country_iso
+    }
+    vehicle_models {
+        int id PK
+        int make_id FK
+        varchar name
+        asset_kind asset_kind
+    }
+
+    assets {
+        int id PK
+        asset_kind asset_kind
+        varchar vin
+        varchar registration_number
+        varchar fleet_number
+        int model_id FK
+        smallint year_of_manufacture
+        numeric curb_weight_kg
+        numeric gvw_kg
+        numeric max_payload_kg
+        int current_base_id FK
+        date in_service_since
+        date decommissioned_at
+    }
+    vehicles {
+        int asset_id PK,FK
+        numeric engine_power_kw
+        int engine_displacement_cm3
+        int fuel_type_id FK
+        int emission_standard_id FK
+        int current_odometer_km
+        int current_engine_hours_mth
+        numeric avg_fuel_consumption_l_100km
+        numeric last_known_latitude
+        numeric last_known_longitude
+        timestamptz last_position_at
+    }
+    trailers {
+        int asset_id PK,FK
+        int body_type_id FK
+        smallint euro_pallets_count
+        numeric cargo_volume_m3
+        smallint interior_height_cm
+        bool has_tail_lift
+        bool has_refrigeration_unit
+        bool has_temperature_sensors
+        numeric min_temperature_c
+        numeric max_temperature_c
+    }
+
+    document_types {
+        int id PK
+        varchar code
+        varchar name
+        bool is_certificate
+        bool has_expiry
+    }
+    documents {
+        int id PK
+        int asset_id FK
+        int document_type_id FK
+        varchar document_number
+        date issued_at
+        date valid_until
+        varchar issuing_authority
+        varchar file_path
+        char file_checksum_sha256
+        jsonb metadata
+    }
+
+    insurance_types {
+        int id PK
+        varchar code
+        varchar name
+    }
+    policies {
+        int id PK
+        int asset_id FK
+        int insurer_id FK
+        party_type insurer_type FK
+        varchar policy_number
+        date starts_on
+        date ends_on
+        numeric sum_insured
+        numeric total_premium
+        char currency_iso
+    }
+    policy_coverages {
+        int policy_id PK,FK
+        int insurance_type_id PK,FK
+        numeric coverage_amount
+    }
+    policy_installments {
+        int id PK
+        int policy_id FK
+        smallint installment_no
+        numeric amount
+        date due_date
+        date paid_at
+    }
+
+    inspection_types {
+        int id PK
+        varchar code
+        varchar name
+        smallint default_interval_months
+        varchar legal_basis
+    }
+    inspections {
+        int id PK
+        int asset_id FK
+        int inspection_type_id FK
+        int station_id FK
+        party_type station_type FK
+        date performed_on
+        date next_due_on
+        inspection_result result
+        varchar certificate_number
+        numeric cost
+        jsonb findings
+    }
+
+    service_types {
+        int id PK
+        varchar code
+        varchar name
+    }
+    service_intervals {
+        int id PK
+        int asset_id FK
+        int service_type_id FK
+        interval_basis basis
+        int interval_value
+        date last_performed_on
+        int last_performed_odometer_km
+        int last_performed_hours_mth
+        date next_due_on
+        int next_due_odometer_km
+        int next_due_hours_mth
+    }
+
+    damage_claims {
+        int id PK
+        varchar claim_number
+        int policy_id FK
+        date incident_date
+        text description
+        numeric estimated_loss
+    }
+    repair_orders {
+        int id PK
+        varchar order_number
+        int asset_id FK
+        int workshop_id FK
+        party_type workshop_type FK
+        repair_class classification
+        int damage_claim_id FK
+        text fault_description
+        timestamptz received_at
+        timestamptz released_at
+        int odometer_at_intake
+        numeric labor_cost
+        numeric parts_cost
+        varchar status
+    }
+
+    part_categories {
+        int id PK
+        varchar code
+        varchar name
+        int parent_id FK
+    }
+    parts_catalog {
+        int id PK
+        varchar oem_number
+        varchar name
+        int category_id FK
+        varchar unit_of_measure
+        numeric min_stock_threshold
+        bool is_fluid
+        bool is_tire
+        varchar manufacturer
+    }
+    part_substitutes {
+        int original_part_id PK,FK
+        int substitute_part_id PK,FK
+        varchar notes
+    }
+    warehouse_locations {
+        int id PK
+        int base_id FK
+        varchar rack
+        varchar shelf
+        varchar bin
+    }
+    inventory {
+        int id PK
+        int part_id FK
+        int location_id FK
+        numeric quantity
+        timestamptz last_counted_at
+    }
+    repair_parts {
+        int id PK
+        int repair_order_id FK
+        int part_id FK
+        int location_id FK
+        numeric quantity
+        numeric unit_cost
+    }
+
+    tires {
+        int id PK
+        varchar serial_number
+        int part_id FK
+        varchar size
+        tire_season season
+        date purchased_at
+        numeric initial_tread_mm
+        numeric current_tread_mm
+        bool is_retired
+    }
+    tire_assignments {
+        int id PK
+        int tire_id FK
+        int asset_id FK
+        axle_position position
+        date mounted_at
+        int mounted_odometer_km
+        date dismounted_at
+        int dismounted_odometer_km
+        varchar reason
+    }
+
+    alert_rules {
+        int id PK
+        varchar name
+        alert_trigger trigger_type
+        int threshold_value
+        alert_threshold_unit threshold_unit
+        jsonb parameters
+        bool is_active
+    }
+    alert_rule_recipients {
+        int alert_rule_id PK,FK
+        int role_id PK,FK
+    }
+    alert_tasks {
+        int id PK
+        int alert_rule_id FK
+        int asset_id FK
+        timestamptz triggered_at
+        task_status status
+        int assigned_to_user_id FK
+        text message
+        timestamptz resolved_at
+        varchar related_entity_type
+        int related_entity_id
+    }
+
+%% --- Org / context ---
+    roles ||--o{ users : "grants"
+    bases ||--o{ users : "based_at"
+    bases ||--o{ assets : "stationed_at"
+    bases ||--o{ warehouse_locations : "houses"
+
+%% --- Party archetype ---
+    parties ||--o| workshop_details : "is_a"
+    parties ||--o| inspection_station_details : "is_a"
+    parties ||--o{ policies : "issues"
+    parties ||--o{ repair_orders : "executes"
+    parties ||--o{ inspections : "performs"
+
+%% --- Asset catalog (supertype / subtype) ---
+    vehicle_makes ||--o{ vehicle_models : "produces"
+    vehicle_models ||--o{ assets : "categorizes"
+    assets ||--o| vehicles : "is_a"
+    assets ||--o| trailers : "is_a"
+    fuel_types ||--o{ vehicles : "powers"
+    emission_standards ||--o{ vehicles : "complies_with"
+    body_types ||--o{ trailers : "classifies"
+
+%% --- Digital repository ---
+    document_types ||--o{ documents : "categorizes"
+    assets ||--o{ documents : "owns"
+
+%% --- Insurance ---
+    assets ||--o{ policies : "is_insured_under"
+    policies ||--o{ policy_coverages : "lists"
+    insurance_types ||--o{ policy_coverages : "appears_in"
+    policies ||--o{ policy_installments : "split_into"
+    policies ||--o{ damage_claims : "covers"
+
+%% --- Inspections ---
+    inspection_types ||--o{ inspections : "classifies"
+    assets ||--o{ inspections : "undergoes"
+
+%% --- Maintenance schedule ---
+    service_types ||--o{ service_intervals : "defines"
+    assets ||--o{ service_intervals : "has_schedule"
+
+%% --- Workshop / repair history ---
+    assets ||--o{ repair_orders : "subject_of"
+    damage_claims ||--o{ repair_orders : "triggers"
+    repair_orders ||--o{ repair_parts : "consumes"
+    parts_catalog ||--o{ repair_parts : "used_as"
+
+%% --- Parts catalog & warehouse ---
+    part_categories ||--o{ parts_catalog : "classifies"
+    part_categories ||--o{ part_categories : "child_of"
+    parts_catalog ||--o{ part_substitutes : "originates"
+    parts_catalog ||--o{ part_substitutes : "replaces_as"
+    warehouse_locations ||--o{ inventory : "holds"
+    parts_catalog ||--o{ inventory : "stocked_as"
+    warehouse_locations ||--o{ repair_parts : "issued_from"
+
+%% --- Tires (specialized parts) ---
+    parts_catalog ||--o{ tires : "type_of"
+    tires ||--o{ tire_assignments : "mounted_as"
+    assets ||--o{ tire_assignments : "wears"
+
+%% --- Alerts ---
+    alert_rules ||--o{ alert_rule_recipients : "notifies"
+    roles ||--o{ alert_rule_recipients : "receives_from"
+    alert_rules ||--o{ alert_tasks : "spawns"
+    assets ||--o{ alert_tasks : "concerns"
+    users ||--o{ alert_tasks : "assigned_to"
