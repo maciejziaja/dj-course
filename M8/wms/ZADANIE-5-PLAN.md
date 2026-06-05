@@ -24,7 +24,7 @@ Moduł cargo **działa w żywej bazie** (pełny re-init na `MODE=LARGE`, zweryfi
 | `cargo_metadata_audit_fn()` + trigger `trg_cargo_metadata_audit` (`AFTER INSERT OR UPDATE OF metadata`) | **automatyczne** zasilanie audytu (Krok 4) |
 | dane (generator): 4 kategorie + 5000 towarów + 7000 audytu | LARGE; audyt = 5000 (insert `old=NULL`) + 2000 (update `old→new`) **w całości z triggera** |
 
-**Pozostało:** Krok 3 (queries — dokument referencyjny poniżej), Krok 5 (Flask — opcjonalny). Reszta zrobiona i zweryfikowana na żywej bazie.
+**Status:** wszystkie kroki zrobione. Krok 3 (queries) zmaterializowany w handlerach Flask (Krok 5), Krok 5 zaimplementowany w `wms-api/src/routes/storage.py` i **zweryfikowany na żywej bazie** (7/7 handlerów, pełny cykl POST→PATCH→DELETE + audyt z triggera). Reszta (DDL, trigger, generator, trwałość) zrobiona wcześniej.
 
 ---
 
@@ -251,9 +251,21 @@ EXECUTE FUNCTION cargo_metadata_audit_fn();
 
 ---
 
-## Krok 5 (opcjonalny) — Endpointy Flask
+## Krok 5 — Endpointy Flask — ✅ ZROBIONE
 
-Dodać do `wms-api/src/routes/storage.py`. Wzorzec z istniejących handlerów: `Blueprint`, `text()` z `:param`, `result.mappings()` → `dict`, `jsonify`.
+> **Status:** zaimplementowane w `wms-api/src/routes/storage.py` (sekcja „CARGO MODULE (JSONB)"). 7 handlerów (3.1–3.6) + helper `_exec_cargo_mutation` (transakcja + GUC `app.current_user_id` pod trigger audytu). Zweryfikowane na żywej bazie po `docker compose --profile full up -d --build wms-api`:
+> - `POST /cargo` → 201; zły `category_id` → 400 (FK→`IntegrityError`); braki pól → 400.
+> - `GET /cargo/:id` → 200 + `category_name` (JOIN); brak → 404.
+> - `PATCH /cargo/:id/metadata` → 200, shallow merge (nadpisuje wskazane klucze, resztę zachowuje); brak → 404.
+> - `DELETE /cargo/:id/metadata/:key` → 200, usuwa klucz top-level; brak → 404.
+> - `GET /cargo/search?fragile=true` → 200 (partial `idx_cargo_fragile`).
+> - `GET /cargo/stats?firmware=1.2.1` → 200, `{count:311, total_weight:"77590.34"}` (GIN `@>`).
+> - `GET /cargo/:id/history` → 200, ślad old→new w 100% z triggera (Krok 4).
+>
+> Przykłady requestów dopisane do `wms-api/.http` (sekcja „Storage / Cargo (JSONB)" + zmienna `@cargo_id`).
+> ⚠️ API budowany z obrazu (brak montażu źródeł w `docker-compose.yml`) → po zmianie kodu **konieczny rebuild** kontenera (`task run-wms` albo `docker compose --profile full up -d --build wms-api`); sam restart nie wystarczy.
+
+Wzorzec z istniejących handlerów: `Blueprint`, `text()` z `:param`, `result.mappings()` → `dict`, `jsonify`. Kod faktyczny w repo poniżej jako referencja.
 
 ### ⚠️ Uwaga o kolizjach tras
 - W `storage.py` **już istnieje** `@storage_bp.route('/cargo', methods=['GET'])` → `get_cargo_by_description()` (szuka po `storage_record.cargo_description`, *inna* domena niż nasza tabela `cargo`). Nasz `POST /cargo` współistnieje (inna metoda). Nazewnictwo się nakłada — warto to odnotować, ale konfliktu routingu nie ma.
@@ -418,7 +430,7 @@ DoD zadania: *„parametry z requesta HTTP da się zmapować na parametry w quer
 **Checklist:**
 - [x] Schemat aktywny w żywej bazie — re-init na LARGE (Priorytet 0 ✅).
 - [x] Trigger audytu działa — żywa baza LARGE: 7000 wpisów (5000 `old=NULL` + 2000 `old→new` z `changed_by`), w 100% z triggera.
-- [ ] Każdy z 6 requestów z `.http` zwraca oczekiwany rezultat — **zależne od Kroku 5 (Flask, opcjonalny)**.
+- [x] Każdy z requestów z `.http` zwraca oczekiwany rezultat — **Krok 5 zaimplementowany i zweryfikowany na żywej bazie** (7/7 handlerów, kody 201/200/400/404 zgodne z kontraktem).
 - [x] Indeksy faktycznie używane — `EXPLAIN ANALYZE` na LARGE, **bez** `enable_seqscan=off`.
 
 **Dowód użycia indeksów — żywa baza LARGE (planner wybiera je naturalnie):**
