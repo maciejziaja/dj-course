@@ -19,6 +19,10 @@ DROP TABLE IF EXISTS payment CASCADE;
 DROP TABLE IF EXISTS storage_event_type CASCADE;
 DROP TABLE IF EXISTS storage_event_history CASCADE;
 DROP TABLE IF EXISTS employee_warehouse CASCADE;
+DROP TABLE IF EXISTS cargo_metadata_audit CASCADE;
+DROP TABLE IF EXISTS cargo CASCADE;
+DROP TABLE IF EXISTS cargo_category CASCADE;
+DROP FUNCTION IF EXISTS cargo_metadata_audit_fn() CASCADE;
 
 -- LOCATIONS
 CREATE TABLE location (
@@ -254,3 +258,121 @@ CREATE TABLE storage_event_history (
 );
 
 CREATE INDEX idx_storage_event_history_storage_record_id ON storage_event_history (storage_record_id);
+
+-- =========================================================================
+-- STORAGE / CARGO MODULE (JSONB) -- Task 5
+-- Flexible technical "passport" of cargo in a JSONB column + change audit.
+-- =========================================================================
+
+-- CARGO CATEGORIES (dictionary of predefined product groups)
+-- Req "Identification and classification": the warehouse worker picks a group before adding cargo.
+CREATE TABLE cargo_category (
+    category_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX idx_cargo_category_name ON cargo_category(name);
+
+-- CARGO (the goods; category-dependent attributes kept FLEXIBLY in "metadata")
+-- Req "Identification": name + weight are first-class columns (weight = logistics/shelf load).
+-- Req "Technical passport": arbitrary attributes (serial_number, adr_class, expiry_date, ...) in JSONB.
+-- metadata NOT NULL DEFAULT '{}' -> partial-update (||) and key removal (-) never hit NULL.
+CREATE TABLE cargo (
+    cargo_id SERIAL PRIMARY KEY,
+    category_id INTEGER NOT NULL REFERENCES cargo_category(category_id),
+    name TEXT NOT NULL,
+    weight NUMERIC NOT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- FK index (PostgreSQL does not index FKs automatically) -- JOIN on category in GET /cargo/:id.
+CREATE INDEX idx_cargo_category ON cargo(category_id);
+
+-- Main JSONB index: covers search by any key/value, e.g.
+--   metadata @> '{"fragile": true}'                 (search by flag)
+--   metadata @> '{"firmware_version": "1.2.1"}'     (stats by firmware)
+--   metadata ? 'serial_number'                      (key existence)
+CREATE INDEX idx_cargo_metadata_gin ON cargo USING GIN (metadata);
+
+-- Req "Technical passport": "instantly" flag cargo that needs careful handling (fragile).
+-- Partial index -- indexes ONLY fragile=true rows, so it is small and very fast.
+CREATE INDEX idx_cargo_fragile ON cargo (cargo_id)
+    WHERE (metadata->>'fragile')::boolean = true;
+
+-- Req "Resource analytics": extracting NUMERIC values hidden in metadata (e.g. volume).
+-- Expression B-tree on (metadata->>'volume')::numeric -> works for ranges/equality and SUM().
+-- Partial (only when the key exists), because "not every cargo has a volume".
+CREATE INDEX idx_cargo_volume ON cargo (((metadata->>'volume')::numeric))
+    WHERE metadata ? 'volume';
+
+-- AUDIT LOG of metadata changes
+-- Req "Transparency and audit": full revision trail -- WHO / WHAT / WHEN + before/after snapshot.
+--   changed_by  -> WHO  (nullable: the .http contract passes no auth/user; same pattern as storage_event_history)
+--   changed_at  -> WHEN (precise time of the operation)
+--   old/new_metadata -> WHAT (snapshot of "how it was" and "how it is"; old=NULL on the first entry)
+CREATE TABLE cargo_metadata_audit (
+    audit_id SERIAL PRIMARY KEY,
+    cargo_id INTEGER NOT NULL REFERENCES cargo(cargo_id) ON DELETE CASCADE,
+    changed_by INTEGER REFERENCES employee(employee_id),
+    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    old_metadata JSONB,
+    new_metadata JSONB
+);
+
+-- History of a single cargo item, newest first (GET /cargo/:id/history).
+CREATE INDEX idx_cargo_audit_cargo ON cargo_metadata_audit(cargo_id, changed_at DESC);
+
+-- AUDIT TRIGGER: fills cargo_metadata_audit automatically so the trail cannot be
+-- bypassed from the application layer. Fires on INSERT and on metadata-changing UPDATEs.
+--   WHO -> app sets a transaction-local GUC (set_config('app.current_user_id', ...));
+--          current_setting(..., true) returns NULL when unset (the .http contract has no auth).
+--   The UPDATE branch logs only when metadata actually changed (IS DISTINCT FROM).
+CREATE OR REPLACE FUNCTION cargo_metadata_audit_fn()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO cargo_metadata_audit (cargo_id, changed_by, old_metadata, new_metadata)
+        VALUES (
+            NEW.cargo_id,
+            NULLIF(current_setting('app.current_user_id', true), '')::int,  -- WHO (NULL when unset)
+            NULL,                                                           -- no "before" state on insert
+            NEW.metadata
+        );
+    ELSIF TG_OP = 'UPDATE' AND OLD.metadata IS DISTINCT FROM NEW.metadata THEN
+        INSERT INTO cargo_metadata_audit (cargo_id, changed_by, old_metadata, new_metadata)
+        VALUES (
+            NEW.cargo_id,
+            NULLIF(current_setting('app.current_user_id', true), '')::int,
+            OLD.metadata,
+            NEW.metadata
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger placed BEFORE the cargo seeds below, so the 5 sample rows are audited too
+-- (5 INSERT entries with old_metadata = NULL) -- gives GET /cargo/:id/history immediate data.
+CREATE TRIGGER trg_cargo_metadata_audit
+AFTER INSERT OR UPDATE OF metadata ON cargo
+FOR EACH ROW
+EXECUTE FUNCTION cargo_metadata_audit_fn();
+
+-- Cargo categories (predefined product groups; category_id 1/2 used in .http)
+INSERT INTO cargo_category (category_id, name) VALUES
+(1, 'Electronics'),
+(2, 'Chemicals'),
+(3, 'Food'),
+(4, 'Textiles');
+SELECT setval('cargo_category_category_id_seq', (SELECT MAX(category_id) FROM cargo_category));
+
+-- Sample cargo (metadata shapes per .http) -- data for query testing (Step 3).
+-- We leave cargo_id to SERIAL so the sequence stays healthy for inserts from the API.
+INSERT INTO cargo (category_id, name, weight, metadata) VALUES
+(1, 'Laptop XPS 13', 1.25, '{"serial_number": "SN-98765", "firmware_version": "1.2.0", "fragile": true, "warranty_months": 24, "volume": 2.5}'::jsonb),
+(1, 'Server Rack Unit', 18.40, '{"serial_number": "SN-55501", "firmware_version": "1.2.1", "fragile": true, "volume": 60}'::jsonb),
+(2, 'Industrial Cleaning Agent X', 25.00, '{"adr_class": "8", "un_number": "UN1760", "storage_temperature_max": 25, "expiry_date": "2027-12-31", "requires_ventilation": true, "volume": 30}'::jsonb),
+(2, 'Solvent Z', 12.00, '{"adr_class": "3", "un_number": "UN1993", "expiry_date": "2026-09-01", "fragile": false}'::jsonb),
+(3, 'Canned Goods Pallet', 320.00, '{"expiry_date": "2027-01-01", "volume": 800}'::jsonb);
