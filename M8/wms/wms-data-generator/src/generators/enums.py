@@ -17,6 +17,13 @@ STORAGE_EVENT_TYPES = [
     {'id': 8, 'name': 'SAFETY_INCIDENT', 'description': 'Safety or accident incident reported'}
 ]
 
+CARGO_CATEGORIES = [
+    {'id': 1, 'name': 'Electronics'},
+    {'id': 2, 'name': 'Chemicals'},
+    {'id': 3, 'name': 'Food'},
+    {'id': 4, 'name': 'Textiles'}
+]
+
 def sql_str(s):
     return "'" + str(s).replace("'", "''") + "'"
 
@@ -32,4 +39,13 @@ def storage_event_types_insert_sql():
     lines.append(",\n".join(
         f"({event['id']}, {sql_str(event['name'])}, {sql_str(event['description'])})" for event in STORAGE_EVENT_TYPES
     ) + ";")
+    return "\n".join(lines)
+
+def cargo_categories_insert_sql():
+    lines = ["INSERT INTO cargo_category (category_id, name) VALUES"]
+    lines.append(",\n".join(
+        f"({c['id']}, {sql_str(c['name'])})" for c in CARGO_CATEGORIES
+    ) + ";")
+    # Keep the SERIAL in sync with explicit ids so API inserts do not collide.
+    lines.append("SELECT setval('cargo_category_category_id_seq', (SELECT MAX(category_id) FROM cargo_category));")
     return "\n".join(lines)

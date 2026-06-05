@@ -10,8 +10,8 @@ from src.generators.warehouse_structure import generate_warehouse_structure
 from src.generators.contractors import generate_contractors_data
 from src.generators.employees import generate_employees_data
 from src.generators.payments import generate_payments_data
-from src.generators.storage import generate_storage_data
-from src.generators.enums import ROLES, STORAGE_EVENT_TYPES, roles_insert_sql, storage_event_types_insert_sql
+from src.generators.storage import generate_storage_data, generate_cargo_data
+from src.generators.enums import ROLES, STORAGE_EVENT_TYPES, CARGO_CATEGORIES, roles_insert_sql, storage_event_types_insert_sql, cargo_categories_insert_sql
 
 fake = Faker()
 
@@ -55,5 +55,14 @@ def generate_sql_inserts():
     # --- Payments ---
     payments_result = generate_payments_data(result.data['customers'], result.data['storage_records'])
     result.merge_with(payments_result)
+
+    # --- Cargo Categories (dictionary, fixed ids referenced by .http) ---
+    result.add_data('cargo_categories', CARGO_CATEGORIES)
+    result.add_line("\n-- Cargo Categories")
+    result.add_line(cargo_categories_insert_sql())
+
+    # --- Cargo (+ audit filled automatically by the trigger) ---
+    cargo_result = generate_cargo_data(result.data['employees'])
+    result.merge_with(cargo_result)
 
     return result

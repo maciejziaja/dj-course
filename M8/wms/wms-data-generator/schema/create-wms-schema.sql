@@ -360,19 +360,6 @@ AFTER INSERT OR UPDATE OF metadata ON cargo
 FOR EACH ROW
 EXECUTE FUNCTION cargo_metadata_audit_fn();
 
--- Cargo categories (predefined product groups; category_id 1/2 used in .http)
-INSERT INTO cargo_category (category_id, name) VALUES
-(1, 'Electronics'),
-(2, 'Chemicals'),
-(3, 'Food'),
-(4, 'Textiles');
-SELECT setval('cargo_category_category_id_seq', (SELECT MAX(category_id) FROM cargo_category));
-
--- Sample cargo (metadata shapes per .http) -- data for query testing (Step 3).
--- We leave cargo_id to SERIAL so the sequence stays healthy for inserts from the API.
-INSERT INTO cargo (category_id, name, weight, metadata) VALUES
-(1, 'Laptop XPS 13', 1.25, '{"serial_number": "SN-98765", "firmware_version": "1.2.0", "fragile": true, "warranty_months": 24, "volume": 2.5}'::jsonb),
-(1, 'Server Rack Unit', 18.40, '{"serial_number": "SN-55501", "firmware_version": "1.2.1", "fragile": true, "volume": 60}'::jsonb),
-(2, 'Industrial Cleaning Agent X', 25.00, '{"adr_class": "8", "un_number": "UN1760", "storage_temperature_max": 25, "expiry_date": "2027-12-31", "requires_ventilation": true, "volume": 30}'::jsonb),
-(2, 'Solvent Z', 12.00, '{"adr_class": "3", "un_number": "UN1993", "expiry_date": "2026-09-01", "fragile": false}'::jsonb),
-(3, 'Canned Goods Pallet', 320.00, '{"expiry_date": "2027-01-01", "volume": 800}'::jsonb);
+-- NOTE: cargo_category / cargo rows (and the cargo_metadata_audit trail, filled
+-- automatically by the trigger above) are produced by the data generator
+-- (src/generators/enums.py + src/generators/storage/cargo.py). This file is DDL only.
