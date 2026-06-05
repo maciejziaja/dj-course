@@ -6,11 +6,18 @@ from .storage_requests_reservations import (
     storage_reservations_insert_sql
 )
 from .storage_records_events import (
-    generate_storage_records, 
-    storage_records_insert_sql, 
-    generate_storage_event_history, 
+    generate_storage_records,
+    storage_records_insert_sql,
+    generate_storage_event_history,
     storage_event_history_insert_sql
 )
+from .cargo import (
+    generate_cargo,
+    cargo_insert_sql,
+    generate_cargo_metadata_updates,
+    cargo_metadata_updates_sql
+)
+from src.config import DATA_QUANTITIES
 from src.result_composite import ResultComposite
 from faker import Faker
 from datetime import timedelta
@@ -87,5 +94,27 @@ def generate_storage_data(customers, employees):
     result.add_line("\n-- Storage Event History")
     result.add_line(storage_event_history_insert_sql(event_history))
     result.add_data('storage_event_history', event_history)
-    
+
+    return result
+
+
+def generate_cargo_data(employees):
+    """Cargo module (Task 5). cargo_metadata_audit is NOT inserted directly --
+    the AFTER INSERT/UPDATE trigger fills it from the statements below."""
+    result = ResultComposite()
+
+    # --- Cargo (trigger writes one "creation" audit row per insert) ---
+    cargo = generate_cargo(DATA_QUANTITIES["NUM_CARGO"])
+    result.add_line("\n-- Cargo")
+    result.add_line(cargo_insert_sql(cargo))
+    result.add_data('cargo', cargo)
+
+    # --- Metadata updates (trigger logs old->new into cargo_metadata_audit) ---
+    updates = generate_cargo_metadata_updates(
+        cargo, employees, DATA_QUANTITIES["NUM_CARGO_METADATA_UPDATES"]
+    )
+    if updates:
+        result.add_line("\n-- Cargo metadata updates (audited via trigger)")
+        result.add_line(cargo_metadata_updates_sql(updates))
+
     return result

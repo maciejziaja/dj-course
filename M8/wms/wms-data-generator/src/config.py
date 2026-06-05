@@ -18,7 +18,9 @@ DATA_QUANTITIES_SMALL = {
     "NUM_STORAGE_REQUESTS": 200,
     "NUM_STORAGE_RECORDS": 4,
     "NUM_PAYMENTS": 40,
-    "NUM_CARGO_EVENT_HISTORY": 4
+    "NUM_CARGO_EVENT_HISTORY": 4,
+    "NUM_CARGO": 12,
+    "NUM_CARGO_METADATA_UPDATES": 5
 }
 
 
@@ -38,7 +40,9 @@ DATA_QUANTITIES_LARGE = {
     "NUM_STORAGE_REQUESTS": 50000,     # Zlecenia przyjęcia/wydania (ASN/Release Orders)
     "NUM_STORAGE_RECORDS": 150000,     # Konkretne pozycje (linie) na zleceniach
     "NUM_PAYMENTS": 45000,             # Faktury i płatności powiązane z usługami
-    "NUM_CARGO_EVENT_HISTORY": 600000  # Pełny audit log: ruchy wewnątrzmagazynowe, skany, zmiany statusów
+    "NUM_CARGO_EVENT_HISTORY": 600000, # Pełny audit log: ruchy wewnątrzmagazynowe, skany, zmiany statusów
+    "NUM_CARGO": 5000,                 # Towary z elastycznym "paszportem" w JSONB
+    "NUM_CARGO_METADATA_UPDATES": 2000 # Zmiany metadanych -> ślad old->new w cargo_metadata_audit (przez trigger)
 }
 
 

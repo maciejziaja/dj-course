@@ -31,6 +31,8 @@ class ResultComposite:
             'storage_records': 'storage_record',
             'cargo_event_history': 'cargo_event_history',
             'payments': 'payment',
+            'cargo_categories': 'cargo_category',
+            'cargo': 'cargo',
         }
     
     def merge_with(self, other):

@@ -5,60 +5,51 @@
 
 ---
 
-## ✅ Status — co już zrobione (Krok 1 + 2 + 4 + trwałość)
+## ✅ Status — co już zrobione (Krok 1 + 2 + 4 + 6 + trwałość + aktywacja LARGE)
 
-Zaimplementowane i **zwalidowane na żywym Postgresie** (w transakcji z `ROLLBACK`, baza nietknięta).
-Cały moduł cargo żyje teraz w **dwóch** plikach (mirror, zweryfikowany `diff`-em jako identyczny):
-- `postgres/init-scripts/wms-latest.sql` — aktywny init-script,
-- `wms-data-generator/schema/create-wms-schema.sql` — szablon generatora (**trwałość** — przeżywa `generate-sql-and-sync`).
+Moduł cargo **działa w żywej bazie** (pełny re-init na `MODE=LARGE`, zweryfikowany). Architektura zgodna z resztą repo:
+- `wms-data-generator/schema/create-wms-schema.sql` — **czyste DDL** (tabele + indeksy + funkcja + trigger; **zero** INSERT-ów),
+- dane wszystkich 3 tabel cargo produkuje **generator** (`src/generators/`), audyt zasila **trigger** (nie jawne INSERT-y),
+- `generate-and-sync` skleja DDL + wygenerowane INSERT-y → `postgres/init-scripts/wms-latest.sql` (aktywny init-script). Regeneracja **odtwarza** moduł cargo zamiast go kasować (Priorytet 0 rozwiązany u źródła).
 
 | Obiekt | Rola |
 |---|---|
 | `cargo_category` + `idx_cargo_category_name` (UNIQUE) | słownik kategorii |
 | `cargo` (`name`, `weight` kolumny; `metadata JSONB NOT NULL DEFAULT '{}'`) | towar + elastyczny „paszport techniczny" |
 | `idx_cargo_category` | FK index pod JOIN kategorii |
-| `idx_cargo_metadata_gin` (GIN) | search po dowolnym kluczu/wartości — *potwierdzone użycie* |
-| `idx_cargo_fragile` (partial) | „błyskawiczne" wskazanie fragile — *potwierdzone użycie* |
+| `idx_cargo_metadata_gin` (GIN) | search po dowolnym kluczu/wartości — *potwierdzone użycie (LARGE)* |
+| `idx_cargo_fragile` (partial) | „błyskawiczne" wskazanie fragile — *potwierdzone użycie (LARGE)* |
 | `idx_cargo_volume` (expression + partial) | analityka liczbowa po `volume` — *potwierdzone użycie* |
 | `cargo_metadata_audit` (`changed_by`→kto, `changed_at`→kiedy, `old/new_metadata`→co) + `idx_cargo_audit_cargo` | audyt |
 | `cargo_metadata_audit_fn()` + trigger `trg_cargo_metadata_audit` (`AFTER INSERT OR UPDATE OF metadata`) | **automatyczne** zasilanie audytu (Krok 4) |
-| seed: 4 kategorie + 5 towarów + `setval` | dane pod testy (5 seedów → 5 wpisów audytu z `old=NULL`) |
+| dane (generator): 4 kategorie + 5000 towarów + 7000 audytu | LARGE; audyt = 5000 (insert `old=NULL`) + 2000 (update `old→new`) **w całości z triggera** |
 
-**Pozostało:** aktywacja schematu w żywej bazie (ostatnia część Priorytetu 0), Krok 3 (queries), Krok 5 (Flask — opcjonalny), Krok 6 (generator — opcjonalny), weryfikacja/DoD.
+**Pozostało:** Krok 3 (queries — dokument referencyjny poniżej), Krok 5 (Flask — opcjonalny). Reszta zrobiona i zweryfikowana na żywej bazie.
 
 ---
 
-## ⚠️ Priorytet 0 — Trwałość zmian vs generator danych
+## ✅ Priorytet 0 — Trwałość zmian vs generator danych — ROZWIĄZANE
 
-**Problem:** `task generate-sql-and-sync` uruchamia `wms-data-generator/generate-and-sync.sh`, które w linii 15 robi:
+**Pierwotny problem:** `task generate-sql-and-sync` (`generate-and-sync.sh`) robi `rm -rf ../postgres/init-scripts/wms-*.sql` → **kasuje `wms-latest.sql`** i odtwarza go z `create-wms-schema.sql` + wygenerowanych `INSERT`-ów. Ręczne edycje w `wms-latest.sql` zostałyby wymazane.
 
+**Rozwiązanie (Krok 6 — generator jako źródło prawdy):**
+- `create-wms-schema.sql` zawiera **tylko DDL** modułu cargo (DROP-y, CREATE TABLE/INDEX, funkcja, trigger). Zero seedów.
+- Dane wszystkich 3 tabel produkuje generator (patrz Krok 6). `generate-and-sync` regeneruje `wms-latest.sql` z DDL + świeżych INSERT-ów → moduł cargo jest **odtwarzany, nie kasowany**.
+
+> Zwalidowane: cały wygenerowany plik (SMALL) puszczony na żywym Postgresie w `BEGIN … ROLLBACK` — 4/12/17 (kategorie/towary/audyt), zero błędów, baza nietknięta.
+
+### Aktywacja schematu w działającej bazie — ✅ ZROBIONE (LARGE)
+
+Init-scripty odpalają się tylko na pustym wolumenie, więc zrobiony pełny re-init na `MODE=LARGE`:
 ```sh
-rm -rf ../postgres/init-scripts/wms-*.sql
+task generate-sql-and-sync MODE=LARGE   # regeneruje wms-latest.sql (115 MB) z generatora
+task wms-down-and-clear                  # down --remove-orphans -v (kasuje wolumen)
+task run-wms                             # świeży init ładuje wms-latest.sql
 ```
 
-→ **kasuje `wms-latest.sql`** i odtwarza go z szablonu `wms-data-generator/schema/create-wms-schema.sql` + wygenerowanych `INSERT`-ów. Moje ręczne edycje w `wms-latest.sql` zostaną **wymazane** przy najbliższym `generate-sql-and-sync`.
+> ⚠️ **Mina przy re-init (kolejność init-scriptów):** Postgres ładuje pliki z `init-scripts/` **alfabetycznie**. `add-indexes.sql` ('a') ładował się **przed** `wms-latest.sql` ('w') i robił `CREATE INDEX ON public.shelf/...` na tabelach, których jeszcze nie ma → init by się wywalił. Dotąd nie bolało, bo `add-indexes.sql` powstał po inicjalizacji wolumenu (nigdy się nie wykonał). **Fix:** `git mv postgres/init-scripts/add-indexes.sql postgres/add-indexes.sql` (poza katalog init). Te indeksy to artefakt innego zadania (optymalizacja M8), nie są częścią schematu cargo — w razie potrzeby: `psql ... < postgres/add-indexes.sql`.
 
-**Ścieżka „durable" (poprawna docelowo) — ✅ ZROBIONE:**
-  0. ✅ Komentarze w SQL po angielsku (cały moduł cargo w `wms-latest.sql`).
-  1. ✅ DDL modułu cargo (tabele + indeksy + funkcja + trigger) zmirrorowany do `wms-data-generator/schema/create-wms-schema.sql` (plik, który README wskazuje jako *„Edit the create-wms-schema.sql file instead"*) wraz z `DROP TABLE`/`DROP FUNCTION`. `diff` potwierdza identyczność bloku w obu plikach.
-  2. ✅ Seedy (4 kategorie + 5 towarów + `setval`) jako stałe `INSERT`-y w `create-wms-schema.sql` (wariant 2a — bez generatora; Krok 6 nadal opcjonalny).
-
-> Zwalidowane: cały `create-wms-schema.sql` puszczony na żywym Postgresie w `BEGIN … ROLLBACK` — wszystkie obiekty cargo powstają, seedy 4/5/5 (kategorie/towary/audyt), zero błędów, baza nietknięta.
-
-### Aktywacja schematu w działającej bazie — ⏳ pozostało
-
-Kontener `wms-postgres-container` zainicjował się starym schematem (init-scripty odpalają się tylko na pustym wolumenie) — **nowych tabel nie ma jeszcze w żywej bazie** (potwierdzone: `to_regclass('public.cargo')` → NULL). **To jedyna niezrobiona część Priorytetu 0.**
-
-- **Nieniszcząco** (zachowuje istniejące dane — moduł cargo to *nowe* tabele):
-  ```sh
-  # wpuść sam blok CARGO MODULE z wms-latest.sql (sekcja między
-  # "STORAGE / CARGO MODULE (JSONB)" a "-- Locations")
-  awk '/STORAGE \/ CARGO MODULE \(JSONB\)/,/^-- Locations/' \
-    postgres/init-scripts/wms-latest.sql | grep -v '^-- Locations' \
-    | docker exec -i -e PGPASSWORD=strongpassword123 wms-postgres-container \
-        psql -U admin -d deliveroo -v ON_ERROR_STOP=1
-  ```
-- **Pełny re-init** (CZYŚCI wszystkie dane): `task wms-down-and-clear` → `task run-wms`.
+**Stan po re-init (żywa baza, `deliveroo`):** `cargo_category=4`, `cargo=5000`, `cargo_metadata_audit=7000` (5000 insert `old=NULL` + 2000 update `changed_by` set) — całość audytu z triggera. Pozostałe domeny: `storage_event_history=600000`, `payment=45000`, …
 
 ---
 
@@ -254,9 +245,9 @@ EXECUTE FUNCTION cargo_metadata_audit_fn();
 - ✅ jawne „kto" bez GUC. ❌ omijalne, jeśli ktoś zmodyfikuje `cargo` poza aplikacją.
 - **Rekomendacja:** trigger + GUC (gwarancja kompletności audytu).
 
-**Umiejscowienie w pliku:**
-- `wms-latest.sql`: dodać `DROP FUNCTION IF EXISTS cargo_metadata_audit_fn() CASCADE;` przy blokach `DROP` na górze; funkcję+trigger zdefiniować **po** `CREATE TABLE cargo`, a **przed** seedami `INSERT INTO cargo (...)`, jeśli chcemy żeby 5 przykładowych towarów też trafiło do audytu (5 wpisów INSERT z `old=NULL`). Jeśli seedy mają być „ciche" — trigger po seedach.
-- (Ścieżka B) to samo mirror w `create-wms-schema.sql`.
+**Umiejscowienie (stan faktyczny):**
+- Funkcja + trigger są w DDL (`create-wms-schema.sql`), **po** `CREATE TABLE cargo`. `DROP FUNCTION IF EXISTS cargo_metadata_audit_fn() CASCADE;` jest w bloku `DROP` na górze pliku.
+- INSERT-ów cargo w schemacie **już nie ma** — produkuje je generator i `create_file.py` dokleja je **po** całym DDL. Trigger istnieje, zanim te INSERT-y poleci → każdy z 5000 towarów trafia do audytu (`old=NULL`), a wygenerowane `UPDATE cargo` dają wpisy `old→new`.
 
 ---
 
@@ -404,17 +395,19 @@ def cargo_history(cargo_id):
 
 ---
 
-## Krok 6 (opcjonalny) — Generator danych (ścieżka B / „durable")
+## Krok 6 — Generator danych — ✅ ZROBIONE
 
-Generator (`wms-data-generator/src/`) ma per-domenowe generatory (`generators/warehouse`, `…/storage`, …) składane w `result_composite.py`, ilości w `config.py`. **Nie ma generatora cargo.**
+Cargo jest generowane jak każda inna domena i przeżywa `generate-sql-and-sync`. Zrealizowane pliki:
 
-Aby cargo było generowane (i przeżyło `generate-sql-and-sync`):
-1. **DDL** → dopisać tabele/indeksy/trigger do `wms-data-generator/schema/create-wms-schema.sql` (mirror tego, co w `wms-latest.sql`).
-2. **Generator** → nowy `src/generators/storage/cargo.py`: losuje N towarów, miesza kategorie (Electronics/Chemicals/Food/Textiles) i kształty `metadata` (electronics: `serial_number`, `firmware_version`, `fragile`, `volume`; chemicals: `adr_class`, `un_number`, `expiry_date`, …).
-3. **Ilości** → dodać `NUM_CARGO_CATEGORIES`, `NUM_CARGO` do `DATA_QUANTITIES_SMALL` / `…_LARGE` w `config.py`.
-4. **Wpięcie** → zarejestrować w `run.py` / `result_composite.py` (kolejność: kategorie przed cargo; cargo przed audytem).
-
-Jeśli zostajemy przy ścieżce A — pomiń Krok 6, ale **nie odpalaj** `generate-sql-and-sync` (skasuje `wms-latest.sql`).
+1. **DDL** (`schema/create-wms-schema.sql`) — tabele/indeksy/funkcja/trigger cargo + `DROP`-y na górze. **Czyste DDL, bez INSERT-ów.**
+2. **Słownik kategorii** (`src/generators/enums.py`) — `CARGO_CATEGORIES` (stała, jak `ROLES`) + `cargo_categories_insert_sql()` (z `setval`). Stałe ID 1–4 (Electronics/Chemicals/Food/Textiles), bo `.http` się na nie powołuje.
+3. **Generator cargo** (`src/generators/storage/cargo.py`):
+   - `generate_cargo(n)` — **hybryda**: 5 kuratorowanych próbek pierwsze (stabilne `cargo_id` 1–5, gwarantują wartości z `.http` jak `firmware_version "1.2.1"`, `fragile`, `volume`), reszta losowa z `metadata` wg kategorii.
+   - `cargo_insert_sql(...)` — INSERT z jawnym `cargo_id` + `setval('cargo_cargo_id_seq', …)` (sekwencja zdrowa pod inserty z API).
+   - `generate_cargo_metadata_updates(...)` / `cargo_metadata_updates_sql(...)` — zaudytowane `UPDATE cargo` (każdy patch ma unikalny `inspection_no` → zawsze zmienia metadane → trigger loguje **każdy** `old→new`, brak no-opów). `changed_by` ustawiane przez `set_config('app.current_user_id', <employee_id>, false)` przed UPDATE, reset na końcu.
+4. **Audyt = trigger.** Generator **nie** emituje jawnych `INSERT INTO cargo_metadata_audit` — wypełnia go trigger z insertów cargo (`old=NULL`) i z UPDATE-ów (`old→new`). To celowo demonstruje mechanizm z Kroku 4.
+5. **Ilości** (`src/config.py`) — `NUM_CARGO`, `NUM_CARGO_METADATA_UPDATES` w `DATA_QUANTITIES_SMALL` (12/5) i `…_LARGE` (5000/2000). Kategorie = stała, bez `NUM_`. → `cargo_metadata_audit = NUM_CARGO + NUM_CARGO_METADATA_UPDATES` deterministycznie.
+6. **Wpięcie** (`src/generate_sql_inserts.py`) — po employees (FK `changed_by→employee`): słownik kategorii → `generate_cargo_data(result.data['employees'])`. `src/generators/storage/__init__.py` wystawia `generate_cargo_data`; `result_composite.py` ma mapowanie `cargo_categories`→`cargo_category`, `cargo`→`cargo`.
 
 ---
 
@@ -423,24 +416,28 @@ Jeśli zostajemy przy ścieżce A — pomiń Krok 6, ale **nie odpalaj** `genera
 DoD zadania: *„parametry z requesta HTTP da się zmapować na parametry w query SQL, uruchamiasz — działa (+ są indeksy)."*
 
 **Checklist:**
-- [ ] Schemat aktywny w żywej bazie (Priorytet 0 — aktywacja).
-- [~] Trigger audytu działa — zwalidowany SQL-owo (INSERT/UPDATE) w `ROLLBACK`; w żywej bazie po aktywacji + przez `PATCH`/`DELETE` gdy będzie Flask.
-- [ ] Każdy z 6 requestów z `.http` zwraca oczekiwany rezultat (jeśli robimy Flask).
-- [ ] Indeksy faktycznie używane — sprawdzić `EXPLAIN ANALYZE`.
+- [x] Schemat aktywny w żywej bazie — re-init na LARGE (Priorytet 0 ✅).
+- [x] Trigger audytu działa — żywa baza LARGE: 7000 wpisów (5000 `old=NULL` + 2000 `old→new` z `changed_by`), w 100% z triggera.
+- [ ] Każdy z 6 requestów z `.http` zwraca oczekiwany rezultat — **zależne od Kroku 5 (Flask, opcjonalny)**.
+- [x] Indeksy faktycznie używane — `EXPLAIN ANALYZE` na LARGE, **bez** `enable_seqscan=off`.
 
-**Dowód użycia indeksów (na małym datasecie wymuś, by zobaczyć plan):**
+**Dowód użycia indeksów — żywa baza LARGE (planner wybiera je naturalnie):**
 ```sql
-SET enable_seqscan = off;  -- tylko do demonstracji na małej tabeli
-EXPLAIN ANALYZE SELECT cargo_id FROM cargo WHERE (metadata->>'fragile')::boolean = true;
---   -> Bitmap Index Scan on idx_cargo_fragile
-EXPLAIN ANALYZE SELECT * FROM cargo WHERE metadata @> '{"firmware_version":"1.2.1"}';
---   -> Bitmap Index Scan on idx_cargo_metadata_gin
-EXPLAIN ANALYZE SELECT sum(weight) FROM cargo
+-- GIN: search/stats po dowolnym kluczu (containment @>)
+EXPLAIN (ANALYZE, COSTS off) SELECT SUM(weight), COUNT(*) FROM cargo
+  WHERE metadata @> jsonb_build_object('firmware_version','1.2.1');
+--   -> Bitmap Index Scan on idx_cargo_metadata_gin  (actual rows=311)
+
+-- Partial: błyskawiczne fragile=true
+EXPLAIN (ANALYZE, COSTS off) SELECT cargo_id FROM cargo
+  WHERE (metadata->>'fragile')::boolean = true;
+--   -> Index Only Scan using idx_cargo_fragile  (actual rows=609)
+
+-- Expression+partial: analityka po volume (predykat `metadata ? 'volume'` OBOWIĄZKOWY — Appendix #1)
+EXPLAIN (ANALYZE, COSTS off) SELECT SUM(weight) FROM cargo
   WHERE metadata ? 'volume' AND (metadata->>'volume')::numeric > 10;
 --   -> Bitmap Index Scan on idx_cargo_volume
-RESET enable_seqscan;
 ```
-Realny dowód wartości indeksów: na **dużym** datasecie (`MODE=LARGE`) bez wymuszania — ale to wymaga generatora cargo (Krok 6) albo masowego seeda.
 
 **Szybki test audytu (bez API):**
 ```sql
@@ -464,3 +461,5 @@ FROM cargo_metadata_audit WHERE cargo_id = 1 ORDER BY changed_at DESC;
 6. **`setval` po seedach z jawnym `category_id`** — żeby SERIAL nie kolidował przy `INSERT`-ach z API. Towary (`cargo`) seedowane **bez** jawnego `cargo_id` (sekwencja zostaje zdrowa).
 7. **`generate-sql-and-sync` KASUJE `wms-latest.sql`** (Priorytet 0) — ✅ zaadresowane: moduł cargo jest już w `create-wms-schema.sql`, więc regeneracja go **odtworzy** zamiast skasować.
 8. **Init-scripty odpalają się tylko na pustym wolumenie** — istniejący kontener nie „złapie" nowego schematu bez re-initu lub ręcznego wpuszczenia DDL.
+9. **Kolejność init-scriptów jest alfabetyczna.** Wiele plików w `init-scripts/` Postgres ładuje wg nazwy — `add-indexes.sql` ('a') szedł przed `wms-latest.sql` ('w') i robił `CREATE INDEX` na nieistniejących jeszcze tabelach → init failuje. Fix: trzymać tylko `wms-latest.sql` w katalogu (artefakty innych zadań wynieść poza `init-scripts/`), albo prefiksować nazwy (`01-`, `02-`).
+10. **Audyt zasila trigger, nie generator.** `cargo_metadata_audit` celowo nie ma jawnych INSERT-ów w generatorze — jawne wpisy dublowałyby się z triggerem i podkopywały sens Kroku 4. Historię `old→new` budują wygenerowane `UPDATE cargo` (z unikalnym `inspection_no`, żeby `IS DISTINCT FROM` nie odsiał ich jako no-op).
