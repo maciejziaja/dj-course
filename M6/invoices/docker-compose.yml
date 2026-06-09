@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # --- Baza Danych MongoDB ---
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secretpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  # --- Panel UI dla MongoDB ---
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    environment:
+      # Połączenie z kontenerem mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: secretpassword
+      ME_CONFIG_MONGODB_URL: mongodb://admin:secretpassword@mongodb:27017/
+      # Dane logowania do samego panelu mongo-express (Basic Auth)
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - "8081:8081"
+    networks:
+      - app-network
+
+  # --- Redis Cache ---
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # --- Serwer Node.js/TS API ---
+  api-server:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api-server
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://admin:secretpassword@mongodb:27017/invoices_db?authSource=admin
+      - REDIS_URI=redis://redis:6379
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  app-network:
+    driver: bridge
