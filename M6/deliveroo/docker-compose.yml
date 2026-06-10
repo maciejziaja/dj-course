@@ -20,6 +20,15 @@ services:
       interval: 2s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============ MongoDB (customer-portal) ============
   mongodb:
@@ -41,6 +50,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============ WMS ============
   wms-api:
@@ -48,6 +66,7 @@ services:
     build:
       context: ./wms-api
       dockerfile: Dockerfile
+    init: true
     environment:
       PORT: ${WMS_API_PORT:-3001}
       SERVICE_NAME: wms-api
@@ -60,6 +79,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect(('localhost', 3001))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   wms-frontend:
     container_name: wms-frontend
@@ -67,6 +100,7 @@ services:
       context: ./wms-frontend
       dockerfile: Dockerfile
       target: development
+    init: true
     environment:
       API_URL: http://localhost:${WMS_API_PORT:-3001}
     ports:
@@ -77,7 +111,18 @@ services:
     networks:
       - deliveroo-network
     depends_on:
-      - wms-api
+      wms-api:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============ TMS ============
   tms-api:
@@ -85,6 +130,7 @@ services:
     build:
       context: ./tms-api
       dockerfile: Dockerfile
+    init: true
     environment:
       PORT: ${TMS_API_PORT:-3030}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
@@ -92,12 +138,28 @@ services:
       - "${TMS_API_PORT:-3030}:3030"
     networks:
       - deliveroo-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.connect(('localhost', 3030))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   tms-frontend:
     container_name: tms-frontend
     build:
       context: ./tms-frontend
       dockerfile: Dockerfile
+      target: development
+    init: true
     environment:
       VITE_PROXY_TARGET: http://tms-api:${TMS_API_PORT:-3030}
       VITE_PORT: ${TMS_FRONTEND_PORT:-5173}
@@ -109,7 +171,18 @@ services:
     networks:
       - deliveroo-network
     depends_on:
-      - tms-api
+      tms-api:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============ Customer Portal ============
   customer-portal:
@@ -118,9 +191,11 @@ services:
       context: ./customer-portal
       dockerfile: Dockerfile
       target: development
+    init: true
     environment:
       NUXT_PUBLIC_API_URL: http://localhost:${CUSTOMER_PORTAL_PORT:-3000}
       MONGODB_URI: mongodb://${MONGO_ROOT_USER:-root}:${MONGO_ROOT_PASSWORD:-example}@mongodb:27017/cp-db?authSource=admin
+      NODE_OPTIONS: "--max-old-space-size=1536"
     ports:
       - "${CUSTOMER_PORTAL_PORT:-3000}:3000"
     volumes:
@@ -131,6 +206,16 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============ pgAdmin (optional) ============
   pgadmin:
@@ -147,8 +232,18 @@ services:
     networks:
       - deliveroo-network
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   deliveroo-network:

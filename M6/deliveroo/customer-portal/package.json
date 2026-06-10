@@ -50,7 +50,12 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "latest",
+    "@rollup/rollup-linux-arm64-gnu": "latest",
     "@tailwindcss/oxide-linux-x64-gnu": "latest",
-    "lightningcss-linux-x64-gnu": "latest"
+    "@tailwindcss/oxide-linux-arm64-gnu": "latest",
+    "lightningcss-linux-x64-gnu": "latest",
+    "lightningcss-linux-arm64-gnu": "latest",
+    "@oxc-parser/binding-linux-x64-gnu": "latest",
+    "@oxc-parser/binding-linux-arm64-gnu": "latest"
   }
 }
