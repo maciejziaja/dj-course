@@ -28,6 +28,26 @@ services:
       - "3001:3001"
     networks:
       - deliveroo-network
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./wms-api/src
+          target: /app/src
+        - action: rebuild
+          path: ./wms-api/requirements.txt
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-container
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - deliveroo-network
+    depends_on:
+      - wms-api
+    restart: unless-stopped
 
   pgadmin:
     image: dpage/pgadmin4:9.4
