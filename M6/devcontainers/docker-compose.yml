@@ -15,11 +15,17 @@ services:
       - deliveroo-network
     restart: unless-stopped
 
-  wms-api:
-    container_name: wms-api-container
+  # --- WERSJA DEVELOPERSKA -------------------------------------------------
+  # Uruchamiana profilem `dev`. Wbudowany serwer Flaska + hot-reload (watch).
+  # Alias sieciowy `wms-api` sprawia, że nginx (proxy_pass http://wms-api:3001)
+  # działa niezależnie od tego, czy aktywny jest profil dev czy prod.
+  wms-api-dev:
+    container_name: wms-api-dev-container
+    profiles: ["dev"]
     build:
       context: ./wms-api
       dockerfile: Dockerfile
+      target: dev
     environment:
       - PORT=3001
       - SERVICE_NAME=wms-api
@@ -27,7 +33,9 @@ services:
     ports:
       - "3001:3001"
     networks:
-      - deliveroo-network
+      deliveroo-network:
+        aliases:
+          - wms-api
     develop:
       watch:
         - action: sync+restart
@@ -35,6 +43,29 @@ services:
           target: /app/src
         - action: rebuild
           path: ./wms-api/requirements.txt
+
+  # --- WERSJA PRODUKCYJNA --------------------------------------------------
+  # Uruchamiana profilem `prod`. Produkcyjny serwer WSGI Gunicorn (4 workery).
+  # Brak `watch` - kod jest "zapieczony" w obrazie. Restart automatyczny.
+  wms-api-prod:
+    container_name: wms-api-prod-container
+    profiles: ["prod"]
+    build:
+      context: ./wms-api
+      dockerfile: Dockerfile
+      target: prod
+    environment:
+      - PORT=3001
+      - SERVICE_NAME=wms-api
+      - GUNICORN_WORKERS=4
+      - POSTGRES_URL=postgresql+psycopg2://admin:strongpassword123@wms-postgres:5432/deliveroo
+    ports:
+      - "3001:3001"
+    networks:
+      deliveroo-network:
+        aliases:
+          - wms-api
+    restart: unless-stopped
 
   nginx:
     image: nginx:alpine
@@ -45,8 +76,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - deliveroo-network
-    depends_on:
-      - wms-api
+    # Brak depends_on: serwis API (dev lub prod) zależy od aktywnego profilu,
+    # więc twarda zależność powodowałaby błąd przy starcie pojedynczego profilu.
     restart: unless-stopped
 
   pgadmin:
