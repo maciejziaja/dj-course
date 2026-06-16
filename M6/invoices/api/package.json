@@ -4,7 +4,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node server.ts"
+    "dev": "ts-node server.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "express": "^5.2.1",
@@ -12,9 +13,14 @@
     "redis": "^6.0.0"
   },
   "devDependencies": {
+    "@testcontainers/mongodb": "^12.0.2",
+    "@testcontainers/redis": "^12.0.2",
     "@types/express": "^5.0.6",
     "@types/node": "^24.13.1",
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }
