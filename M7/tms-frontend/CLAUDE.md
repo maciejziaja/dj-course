@@ -72,7 +72,13 @@ Domain types + mocks for shipments/drivers/vehicles/documents/expenses, separate
 `src/lib/broker/` is a lightweight pub/sub. A single shared `MessageBroker` instance backs the `useSubscribe(topic, listener)` / `usePublish(topic)` hooks for cross-component eventing.
 
 ### Other libs of note
-`src/lib/pdf/` (jsPDF/html2canvas generators for receipts, documents, shipment routes), `src/lib/date/`, Leaflet/react-leaflet maps in route planning, recharts for dashboard KPIs.
+`src/lib/pdf/` (jsPDF/html2canvas generators for receipts, documents, shipment routes) follows a dedicated convention, imported here so it stays in context:
+
+@.claude/rules/pdf-generation.md
+
+To perform a migration onto that pipeline, use the **`pdf-refactor`** subagent.
+
+`src/lib/date/`, Leaflet/react-leaflet maps in route planning, recharts for dashboard KPIs.
 
 ## Conventions & gotchas
 
