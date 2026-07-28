@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { RoutePoint, Vehicle, Coordinates } from '../../model/shipments';
+import { RoutePoint, Vehicle, Coordinates } from './route-planner.model';
 import { createCustomIcon, getPointColor, defaultMapCenter, defaultZoom } from './mapUtils';
 import { PointTooltip } from './PointTooltip';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';

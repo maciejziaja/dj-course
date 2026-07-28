@@ -1,7 +1,7 @@
 import React from 'react';
-import { Vehicle } from '../../model/vehicles';
+import { FleetVehicle as Vehicle } from './route-planner.model';
 import { Truck, User, Hash, MapPin, Clock, ExternalLink } from 'lucide-react';
-import { formatDateTime } from '../../lib/date/dateUtils';
+import { formatDateTime } from '@/lib/date/dateUtils';
 
 interface VehicleStatusProps {
   vehicle: Vehicle;

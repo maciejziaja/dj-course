@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RoutePoint } from '../../model/shipments';
+import { RoutePoint } from './route-planner.model';
 import { DraggableRoutePoint } from './DraggableRoutePoint';
 import { MapPin, ArrowUpDown } from 'lucide-react';
 

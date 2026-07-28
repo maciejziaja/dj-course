@@ -1,7 +1,7 @@
 import React from 'react';
-import { RouteData } from '../../model/shipments';
+import { RouteData } from './route-planner.model';
 import { Clock, MapPin, Calendar, AlertTriangle } from 'lucide-react';
-import { formatDateTime, formatTime } from '../../lib/date/dateUtils';
+import { formatDateTime, formatTime } from '@/lib/date/dateUtils';
 import { DraggableRouteList } from './DraggableRouteList';
 
 interface RouteSummaryProps {

@@ -1,4 +1,4 @@
-import { RoutePoint, Coordinates } from '../../model/shipments';
+import { RoutePoint, Coordinates } from './route-planner.model';
 import { calculateDistance } from './mapUtils';
 
 export const calculateRouteDistance = (points: RoutePoint[]): number => {
