@@ -1,6 +1,6 @@
 import React from 'react';
-import { RoutePoint } from '../../model/shipments';
-import { formatDateTime } from '../../lib/date/dateUtils';
+import { RoutePoint } from './route-planner.model';
+import { formatDateTime } from '@/lib/date/dateUtils';
 import { Clock, MapPin, FileText, Timer, X } from 'lucide-react';
 
 interface PointTooltipProps {

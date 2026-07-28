@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { UnifiedRoutePlanner } from '@/pages/route-planner';
+import { UnifiedRoutePlanner } from './UnifiedRoutePlanner';
 import { LoadingPage, ErrorMessage } from '@/components';
-import { useShipmentsList, useDriversList, useVehiclesList } from '@/hooks/queries';
-import { Shipment } from '@/model/shipments';
+import { useShipmentsList, useDriversList, useVehiclesList } from './route-planner.queries';
+import { Shipment } from './route-planner.model';
 
-export const RoutePlanner: React.FC = () => {
+export const RoutePlannerPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   // Get context from URL params
@@ -98,4 +98,4 @@ export const RoutePlanner: React.FC = () => {
       onShipmentUpdate={handleShipmentUpdate}
     />
   );
-}; 
+};

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shipment } from '../../model/shipments';
+import { Shipment } from './route-planner.model';
 import { Package, Clock, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
 
 interface ShipmentSelectorProps {

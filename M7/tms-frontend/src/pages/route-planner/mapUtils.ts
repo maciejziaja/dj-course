@@ -1,5 +1,5 @@
 import L from 'leaflet';
-import { Coordinates, RoutePoint } from '../model/shipments';
+import { Coordinates, RoutePoint } from './route-planner.model';
 
 export const defaultMapCenter: Coordinates = { lat: 52.520008, lng: 13.404954 }; // Berlin
 export const defaultZoom = 6;

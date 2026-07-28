@@ -3,9 +3,16 @@ import { LogisticsMap } from './LogisticsMap';
 import { RouteControls } from './RouteControls';
 import { RouteSummary } from './RouteSummary';
 import { VehicleStatus } from './VehicleStatus';
-import { RouteData, RoutePoint, Vehicle, Coordinates, Shipment } from '../../model/shipments';
-import { Driver, DriverRoute } from '../../model/drivers';
-import { Vehicle as VehicleType } from '../../model/vehicles';
+import {
+  RouteData,
+  RoutePoint,
+  Vehicle,
+  Coordinates,
+  Shipment,
+  Driver,
+  DriverRoute,
+  FleetVehicle as VehicleType,
+} from './route-planner.model';
 import { calculateRouteDistance, estimateTravelTime, generateOptimizedRoute, addRestStops } from './routeUtils';
 import { ArrowLeft, Filter, Route as RouteIcon, User, Truck, MapPin, Clock, Search, X, Navigation, AlertTriangle, CheckCircle } from 'lucide-react';
 

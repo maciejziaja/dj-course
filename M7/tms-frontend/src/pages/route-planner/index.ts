@@ -1,10 +1,1 @@
-export * from './LogisticsMap';
-export * from './PointTooltip';
-export * from './DeleteConfirmationModal';
-export * from './RouteControls';
-export * from './RouteSummary';
-export * from './VehicleStatus';
-export * from './ShipmentSelector';
-export * from './UnifiedRoutePlanner';
-export * from './DraggableRoutePoint';
-export * from './DraggableRouteList';
+export { RoutePlannerPage } from './RoutePlannerPage';

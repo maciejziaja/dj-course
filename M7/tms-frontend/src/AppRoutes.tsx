@@ -3,7 +3,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/layout/Layout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
-import { RoutePlanner } from '@/pages/RoutePlanner';
+import { RoutePlannerPage } from '@/pages/route-planner';
 import Orders from "@/pages/orders/Orders";
 import OrderDetails from "@/pages/orders/OrderDetails";
 import NewOrderForm from "@/pages/orders/NewOrderForm";
@@ -40,8 +40,8 @@ export const AppRoutes = () => {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route element={<ProtectedLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/routes" element={<RoutePlanner />} />
-                <Route path="/routes/:id" element={<RoutePlanner />} />
+                <Route path="/routes" element={<RoutePlannerPage />} />
+                <Route path="/routes/:id" element={<RoutePlannerPage />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/orders/new" element={<NewOrderForm />} />
                 <Route path="/orders/:id" element={<OrderDetails />} />
