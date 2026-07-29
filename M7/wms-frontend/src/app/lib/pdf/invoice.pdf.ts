@@ -1,7 +1,7 @@
 import { Invoice } from '../../features/billing-payments/billing.model'
 import { PdfDocumentSpec } from './pdf.model'
 import { formatCurrency, formatDate, sanitizeFilenamePart } from './pdf.format'
-import { InvoiceTotals } from './invoice.pdf.helpers'
+import { InvoiceTotals } from '../../features/billing-payments/invoice.util'
 
 export interface InvoiceCompanyInfo {
   name: string
@@ -32,7 +32,7 @@ const DEFAULT_NOTES =
   'For any questions regarding this invoice, please contact our billing department at billing@wms.com.'
 
 export interface InvoiceForPdf extends Invoice {
-  /** Already-computed subtotal/tax/total — aggregation lives in invoice.pdf.helpers.ts */
+  /** Already-computed subtotal/tax/total — aggregation lives in features/billing-payments/invoice.util.ts */
   totals: InvoiceTotals
   companyInfo?: InvoiceCompanyInfo
   contractorInfo?: InvoiceContractorInfo

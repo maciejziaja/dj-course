@@ -1,7 +1,7 @@
 import { BillingOverview, Invoice } from '../../features/billing-payments/billing.model'
 import { PdfDocumentSpec } from './pdf.model'
 import { formatCurrency, formatDate, sanitizeFilenamePart } from './pdf.format'
-import { FinancialRevenueMetrics, FinancialStatusBreakdownRow, FinancialTopContractor } from './financial-report.pdf.helpers'
+import { FinancialRevenueMetrics, FinancialStatusBreakdownRow, FinancialTopContractor } from '../../features/billing-payments/financial-report.util'
 
 const REPORT_NOTES =
   'This financial report provides a comprehensive overview of billing and payment activities. ' +
@@ -10,7 +10,7 @@ const REPORT_NOTES =
 export interface FinancialReportForPdf {
   overview: BillingOverview
   reportPeriod?: string
-  /** Already-computed aggregates — see financial-report.pdf.helpers.ts */
+  /** Already-computed aggregates — see features/billing-payments/financial-report.util.ts */
   revenue: FinancialRevenueMetrics
   statusBreakdown: FinancialStatusBreakdownRow[]
   topContractors: FinancialTopContractor[]
