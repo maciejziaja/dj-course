@@ -451,11 +451,13 @@ const downloadPDF = async () => {
   if (process.server) return
   
   try {
-    // Dynamically import PDF generator only on client side
-    const { generateWarehousingRequestPDF } = await import('~/lib/pdf/warehousingRequestPdfGenerator')
-    
+    // Dynamically import PDF mapper + renderer only on client side
+    const { warehousingRequestToPdfSpec } = await import('../warehousing-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
     // Ensure form data is properly formatted
-    const formData = {
+    const pdfData = {
+      requestNumber: generatedRequestNumber.value,
       storageType: form.storageType || '',
       securityLevel: form.securityLevel || 'STANDARD',
       estimatedVolume: form.estimatedVolume || 0,
@@ -479,13 +481,11 @@ const downloadPDF = async () => {
         value: form.cargo?.value || 0,
         currency: form.cargo?.currency || 'EUR'
       },
-      priority: form.priority || 'NORMAL'
-    }
-    
-    await generateWarehousingRequestPDF(formData, {
-      requestNumber: generatedRequestNumber.value,
+      priority: form.priority || 'NORMAL',
       createdAt: new Date()
-    })
+    }
+
+    await renderPdf(warehousingRequestToPdfSpec(pdfData))
   } catch (error) {
     console.error('Error generating PDF:', error)
     console.error('Error details:', error instanceof Error ? error.message : error)

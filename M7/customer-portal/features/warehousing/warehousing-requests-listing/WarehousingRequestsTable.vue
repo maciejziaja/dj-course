@@ -147,25 +147,27 @@ const downloadPDF = async (item: WarehousingRequestItem) => {
     const { getWarehousingRequestDetails } = await import('~/features/warehousing/warehousing-request-details/warehousing-request-details-api')
     const fullRequest = await getWarehousingRequestDetails(item.id)
     
-    // Dynamically import PDF generator only on client side
-    const { generateWarehousingRequestPDF } = await import('~/lib/pdf/warehousingRequestPdfGenerator')
-    
-    // Convert WarehousingRequest to form data structure
-    const formData = {
+    // Dynamically import PDF mapper + renderer only on client side
+    const { warehousingRequestToPdfSpec } = await import('../warehousing-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
+    // Convert WarehousingRequest to PDF spec data
+    const pdfData = {
+      requestNumber: fullRequest.requestNumber,
       storageType: String(fullRequest.storageType || ''),
       securityLevel: String(fullRequest.securityLevel || ''),
       estimatedVolume: fullRequest.estimatedVolume || 0,
       estimatedWeight: fullRequest.estimatedWeight || 0,
       estimatedStorageDuration: {
         value: fullRequest.estimatedStorageDuration?.value || 0,
-        unit: (fullRequest.estimatedStorageDuration?.unit || 'months') as 'days' | 'weeks' | 'months' | 'years'
+        unit: fullRequest.estimatedStorageDuration?.unit || 'months'
       },
-      plannedStartDate: fullRequest.plannedStartDate instanceof Date 
-        ? fullRequest.plannedStartDate 
+      plannedStartDate: fullRequest.plannedStartDate instanceof Date
+        ? fullRequest.plannedStartDate
         : new Date(fullRequest.plannedStartDate),
-      plannedEndDate: fullRequest.plannedEndDate 
-        ? (fullRequest.plannedEndDate instanceof Date 
-          ? fullRequest.plannedEndDate 
+      plannedEndDate: fullRequest.plannedEndDate
+        ? (fullRequest.plannedEndDate instanceof Date
+          ? fullRequest.plannedEndDate
           : new Date(fullRequest.plannedEndDate))
         : undefined,
       handlingServices: (fullRequest.handlingServices || []).map(s => String(s)),
@@ -184,16 +186,14 @@ const downloadPDF = async (item: WarehousingRequestItem) => {
         value: fullRequest.cargo?.value || 0,
         currency: fullRequest.cargo?.currency || 'EUR'
       },
-      priority: String(fullRequest.priority || '')
-    }
-    
-    await generateWarehousingRequestPDF(formData, {
-      requestNumber: fullRequest.requestNumber,
-      createdAt: fullRequest.createdAt instanceof Date 
-        ? fullRequest.createdAt 
+      priority: String(fullRequest.priority || ''),
+      createdAt: fullRequest.createdAt instanceof Date
+        ? fullRequest.createdAt
         : new Date(fullRequest.createdAt),
       storageLocation: fullRequest.storageLocation || undefined
-    })
+    }
+
+    await renderPdf(warehousingRequestToPdfSpec(pdfData))
   } catch (error) {
     console.error('Error generating PDF:', error)
     console.error('Error details:', error instanceof Error ? error.message : error)

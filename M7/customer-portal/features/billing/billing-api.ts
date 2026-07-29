@@ -20,10 +20,11 @@ export async function getPaymentMethods(): Promise<PaymentMethod[]> {
 export async function downloadInvoice(invoice: Invoice) {
   // Only run on client side
   if (process.server) return
-  
-  // Dynamically import PDF generator only on client side
-  const { generateInvoicePDF } = await import('~/lib/pdf/invoicePdfGenerator')
-  await generateInvoicePDF(invoice)
+
+  // Dynamically import the PDF pipeline only on client side
+  const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+  const { invoiceToPdfSpec } = await import('./invoice.pdf')
+  await renderPdf(invoiceToPdfSpec(invoice))
 }
 
 export async function payInvoice(invoiceId: string) {

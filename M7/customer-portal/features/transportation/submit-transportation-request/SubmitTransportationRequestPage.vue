@@ -857,13 +857,14 @@ const downloadPDF = async () => {
   if (process.server) return
   
   try {
-    // Dynamically import PDF generator only on client side
-    const { generateTransportationRequestPDF } = await import('~/lib/pdf/transportationRequestPdfGenerator')
-    
-    await generateTransportationRequestPDF(store.form, {
+    // Dynamically import PDF mapper + renderer only on client side
+    const { transportationRequestToPdfSpec } = await import('../transportation-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
+    await renderPdf(transportationRequestToPdfSpec(store.form, {
       requestNumber: store.requestNumber,
       createdAt: new Date()
-    })
+    }))
   } catch (error) {
     console.error('Error generating PDF:', error)
     alert('Error generating PDF. Please try again.')

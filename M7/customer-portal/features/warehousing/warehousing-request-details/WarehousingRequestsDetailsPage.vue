@@ -362,13 +362,50 @@ const downloadPDF = async () => {
   pdfLoading.value = true
   
   try {
-    // Dynamically import PDF generator only on client side
-    const { PDFGenerator } = await import('~/lib/pdf/pdfGenerator')
-    
+    // Dynamically import PDF mapper + renderer only on client side
+    const { warehousingRequestToPdfSpec } = await import('../warehousing-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
     // Small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 500))
-    
-    await PDFGenerator.generateWarehousingRequestPDF(request.value)
+
+    const req = request.value
+
+    await renderPdf(warehousingRequestToPdfSpec({
+      requestNumber: req.requestNumber,
+      status: req.status,
+      priority: req.priority,
+      storageType: req.storageType,
+      createdAt: req.createdAt,
+      estimatedVolume: req.estimatedVolume,
+      estimatedWeight: req.estimatedWeight,
+      securityLevel: req.securityLevel,
+      storageLocation: req.storageLocation,
+      plannedStartDate: req.plannedStartDate,
+      plannedEndDate: req.plannedEndDate,
+      estimatedStorageDuration: req.estimatedStorageDuration,
+      billingType: req.billingType,
+      cargo: {
+        description: req.cargo.description,
+        cargoType: req.cargo.cargoType,
+        packaging: req.cargo.packaging,
+        quantity: req.cargo.quantity,
+        unitType: req.cargo.unitType,
+        value: req.cargo.value,
+        currency: req.cargo.currency,
+        weight: req.cargo.weight,
+        dimensions: req.cargo.dimensions
+      },
+      handlingServices: req.handlingServices.map((s) => String(s)),
+      valueAddedServices: req.valueAddedServices.map((s) => String(s)),
+      requiresTemperatureControl: req.requiresTemperatureControl,
+      requiresHumidityControl: req.requiresHumidityControl,
+      requiresSpecialHandling: req.requiresSpecialHandling,
+      specialInstructions: req.specialInstructions,
+      estimatedCost: req.estimatedCost,
+      finalCost: req.finalCost,
+      currency: req.currency
+    }))
   } catch (error) {
     console.error('Error generating PDF:', error)
     alert('Error generating PDF. Please try again.')

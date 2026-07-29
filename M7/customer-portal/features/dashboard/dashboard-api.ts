@@ -1,18 +1,17 @@
-import { 
-  mockDashboardStats, 
-  mockQuickActions, 
-  mockRecentRequests, 
-  mockMetrics, 
-  mockRoutePerformance 
+import {
+  mockDashboardStats,
+  mockQuickActions,
+  mockRecentRequests,
+  mockMetrics,
+  mockRoutePerformance
 } from './dashboard.mocks'
-import type { 
-  DashboardStat, 
-  QuickAction, 
-  RecentRequest, 
-  Metrics, 
-  RoutePerformance 
+import type {
+  DashboardStat,
+  QuickAction,
+  RecentRequest,
+  Metrics,
+  RoutePerformance
 } from './dashboard.model'
-
 export async function getDashboardStats(): Promise<DashboardStat[]> {
   await new Promise(resolve => setTimeout(resolve, 500))
   return mockDashboardStats
@@ -48,14 +47,15 @@ export async function generateReports(dateRange: { from: string; to: string }) {
     getRoutePerformance()
   ])
   
-  // Dynamically import PDF generator only on client side
-  const { generateReportsPDF } = await import('~/lib/pdf/reportsPdfGenerator')
-  
-  await generateReportsPDF({
+  // Dynamically import PDF pipeline only on client side
+  const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+  const { reportsToPdfSpec } = await import('./reports.pdf')
+
+  await renderPdf(reportsToPdfSpec({
     dateRange,
     metrics,
     routePerformance
-  })
+  }))
   
   return { success: true }
 }

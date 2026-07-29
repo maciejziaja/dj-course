@@ -130,9 +130,10 @@ const downloadPDF = async (item: TransportationRequest) => {
   if (process.server) return
   
   try {
-    // Dynamically import PDF generator only on client side
-    const { generateTransportationRequestPDF } = await import('~/lib/pdf/transportationRequestPdfGenerator')
-    
+    // Dynamically import PDF mapper + renderer only on client side
+    const { transportationRequestToPdfSpec } = await import('../transportation-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
     // Convert TransportationRequest to form data structure
     const formData = {
       serviceType: item.serviceType,
@@ -179,10 +180,10 @@ const downloadPDF = async (item: TransportationRequest) => {
       currency: item.currency || 'EUR'
     }
     
-    await generateTransportationRequestPDF(formData, {
+    await renderPdf(transportationRequestToPdfSpec(formData, {
       requestNumber: item.requestNumber,
       createdAt: item.createdAt
-    })
+    }))
   } catch (error) {
     console.error('Error generating PDF:', error)
     alert('Error generating PDF. Please try again.')

@@ -306,20 +306,77 @@ const trackShipment = () => {
 
 const downloadPDF = async () => {
   if (!request.value) return
-  
+
   // Only run on client side
   if (process.server) return
-  
+
   pdfLoading.value = true
-  
+
   try {
-    // Dynamically import PDF generator only on client side
-    const { PDFGenerator } = await import('~/lib/pdf/pdfGenerator')
-    
+    // Dynamically import PDF mapper + renderer only on client side
+    const { transportationRequestToPdfSpec } = await import('~/features/transportation/transportation-request.pdf')
+    const { renderPdf } = await import('~/lib/pdf/pdf.renderer')
+
     // Small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 500))
-    
-    await PDFGenerator.generateTransportationRequestPDF(request.value)
+
+    const req = request.value
+
+    await renderPdf(transportationRequestToPdfSpec({
+      serviceType: req.serviceType,
+      pickupLocation: {
+        address: {
+          street: req.pickupLocation.address.street,
+          city: req.pickupLocation.address.city,
+          postalCode: req.pickupLocation.address.postalCode,
+          country: req.pickupLocation.address.country
+        },
+        contactPerson: req.pickupLocation.contactPerson,
+        contactPhone: req.pickupLocation.contactPhone,
+        contactEmail: req.pickupLocation.contactEmail,
+        loadingType: req.pickupLocation.loadingType
+      },
+      deliveryLocation: {
+        address: {
+          street: req.deliveryLocation.address.street,
+          city: req.deliveryLocation.address.city,
+          postalCode: req.deliveryLocation.address.postalCode,
+          country: req.deliveryLocation.address.country
+        },
+        contactPerson: req.deliveryLocation.contactPerson,
+        contactPhone: req.deliveryLocation.contactPhone,
+        contactEmail: req.deliveryLocation.contactEmail,
+        loadingType: req.deliveryLocation.loadingType
+      },
+      cargo: {
+        description: req.cargo.description,
+        cargoType: req.cargo.cargoType,
+        weight: req.cargo.weight,
+        dimensions: req.cargo.dimensions,
+        packaging: req.cargo.packaging,
+        quantity: req.cargo.quantity,
+        unitType: req.cargo.unitType,
+        value: req.cargo.value,
+        currency: req.cargo.currency,
+        fragile: req.cargo.fragile,
+        stackable: req.cargo.stackable
+      },
+      vehicleRequirements: req.vehicleRequirements,
+      requestedPickupDate: req.requestedPickupDate,
+      requestedDeliveryDate: req.requestedDeliveryDate,
+      specialInstructions: req.specialInstructions,
+      requiresInsurance: req.requiresInsurance,
+      requiresCustomsClearance: req.requiresCustomsClearance,
+      priority: req.priority,
+      currency: req.currency,
+      estimatedCost: req.estimatedCost,
+      finalCost: req.finalCost,
+      trackingNumber: req.trackingNumber
+    }, {
+      requestNumber: req.requestNumber,
+      status: req.status,
+      createdAt: req.createdAt
+    }))
   } catch (error) {
     console.error('Error generating PDF:', error)
     alert('Error generating PDF. Please try again.')
