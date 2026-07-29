@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Document } from '../../model/documents';
 import { FileText, Eye, Edit, Building, User, Truck, Download } from 'lucide-react';
 import { formatDate } from '../../lib/date/dateUtils';
-import { generateDocumentPDF, generateDocumentPDFBlob } from '../../lib/pdf/documentPdfGenerator';
+import { documentToPdfSpec } from '../../lib/pdf/document.pdf';
+import { renderPdf } from '../../lib/pdf/pdf.renderer';
 import { ActionTile } from '../../components/ui/action-tile';
 
 interface DocumentTileProps {
@@ -109,7 +110,7 @@ export const DocumentTile: React.FC<DocumentTileProps> = ({
   const handleViewPDF = async () => {
     try {
       setIsGeneratingPDF(true);
-      const pdfBlob = await generateDocumentPDFBlob(document);
+      const pdfBlob = await renderPdf(documentToPdfSpec(document), { output: 'blob' }) as Blob;
       const pdfUrl = URL.createObjectURL(pdfBlob);
       window.open(pdfUrl, '_blank');
       
@@ -127,7 +128,7 @@ export const DocumentTile: React.FC<DocumentTileProps> = ({
   const handleDownloadPDF = async () => {
     try {
       setIsGeneratingPDF(true);
-      await generateDocumentPDF(document);
+      await renderPdf(documentToPdfSpec(document));
     } catch (error) {
       console.error('Error downloading PDF:', error);
     } finally {

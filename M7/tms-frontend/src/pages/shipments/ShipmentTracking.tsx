@@ -8,7 +8,8 @@ import { useShipmentDetailsQuery, useShipmentTrackingEventsQuery } from '@/http/
 import { FleetMap } from '../vehicles/FleetMap';
 import { mockVehicles } from '@/model/vehicles/vehicles.mocks'; // Keep for now
 import { getMockShipments } from '@/model/shipments/shipments.mocks'; // Keep for now
-import { generateShipmentRoutePDF } from '@/lib/pdf/shipmentRoutePdfGenerator'
+import { renderPdf } from '@/lib/pdf/pdf.renderer'
+import { shipmentRouteToPdfSpec } from '@/lib/pdf/shipment-route.pdf'
 import { useDriversQuery } from '@/http/drivers.queries';
 import { Link } from 'react-router-dom';
 
@@ -161,14 +162,14 @@ const ShipmentTracking = () => {
             ))}
           </div>
           <div className="flex justify-end mt-6">
-            <Button onClick={() => generateShipmentRoutePDF({
+            <Button onClick={() => renderPdf(shipmentRouteToPdfSpec({
               id: shipment.id,
               origin: shipment.origin,
               destination: shipment.destination,
               driver: shipment.driver,
               eta: shipment.eta,
               status: shipment.status
-            }, trackingEvents)}>
+            }, trackingEvents))}>
               Generate Route PDF
             </Button>
           </div>
