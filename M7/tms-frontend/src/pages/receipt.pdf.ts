@@ -1,5 +1,5 @@
-import { PdfDocumentSpec } from './pdf.model'
-import { sanitizeFilenamePart } from './pdf.format'
+import { PdfDocumentSpec } from '@/lib/pdf/pdf.model'
+import { sanitizeFilenamePart } from '@/lib/pdf/pdf.format'
 
 export interface PaymentReceiptData {
   id: string | number

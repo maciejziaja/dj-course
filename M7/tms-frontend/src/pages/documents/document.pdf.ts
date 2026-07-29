@@ -1,6 +1,6 @@
 import { Document } from '@/model/documents'
-import { PdfDocumentSpec } from './pdf.model'
-import { formatDateTime, sanitizeFilenamePart } from './pdf.format'
+import { PdfDocumentSpec } from '@/lib/pdf/pdf.model'
+import { formatDateTime, sanitizeFilenamePart } from '@/lib/pdf/pdf.format'
 
 export interface DocumentPdfOptions {
   includeWatermark?: boolean

@@ -7,7 +7,7 @@ import { LucideAngularModule, ArrowLeft, FileText, Calendar, DollarSign, User, D
 import { MOCK_INVOICE_ITEMS } from '../../mock/invoice-items.mock';
 import { Heading1Component, Heading2Component, Heading3Component, Heading4Component } from '../../ui-library/Typography/Typography.component';
 import { renderPdf } from '../../lib/pdf/pdf.renderer';
-import { invoiceToPdfSpec } from '../../lib/pdf/invoice.pdf';
+import { invoiceToPdfSpec } from './invoice.pdf';
 import { computeInvoiceTotals } from './invoice.util';
 
 @Component({

@@ -10,7 +10,7 @@ import { DropdownComponent } from '../../ui-library/Dropdown.component';
 import { StatsComponent } from '../../ui-library/Stats.component';
 import { Heading1Component, Heading3Component, Heading4Component, SubtitleComponent } from '../../ui-library/Typography/Typography.component';
 import { renderPdf } from '../../lib/pdf/pdf.renderer';
-import { financialReportToPdfSpec } from '../../lib/pdf/financial-report.pdf';
+import { financialReportToPdfSpec } from './financial-report.pdf';
 import {
   computeRevenueByStatus,
   computeStatusBreakdown,

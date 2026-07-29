@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Document } from '../../model/documents';
 import { FileText, Eye, Edit, Building, User, Truck, Download } from 'lucide-react';
 import { formatDate } from '../../lib/date/dateUtils';
-import { documentToPdfSpec } from '../../lib/pdf/document.pdf';
+import { documentToPdfSpec } from './document.pdf';
 import { renderPdf } from '../../lib/pdf/pdf.renderer';
 import { ActionTile } from '../../components/ui/action-tile';
 
