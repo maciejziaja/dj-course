@@ -16,9 +16,17 @@ export function formatDateTime(date: string | Date): string {
   }).format(new Date(date))
 }
 
-export function formatCurrency(amount: number | string, currency = 'USD'): string {
+export function formatCurrency(
+  amount: number | string,
+  currency = 'USD',
+  options: { maximumFractionDigits?: number } = {}
+): string {
   const numeric = typeof amount === 'string' ? parseFloat(amount) : amount
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(numeric)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, ...options }).format(numeric)
+}
+
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat('en-US').format(value)
 }
 
 export function humanize(value: string): string {
