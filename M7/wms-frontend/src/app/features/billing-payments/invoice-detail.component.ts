@@ -6,7 +6,9 @@ import { Invoice, InvoiceItem } from './billing.model';
 import { LucideAngularModule, ArrowLeft, FileText, Calendar, DollarSign, User, Download, Send, Edit } from 'lucide-angular';
 import { MOCK_INVOICE_ITEMS } from '../../mock/invoice-items.mock';
 import { Heading1Component, Heading2Component, Heading3Component, Heading4Component } from '../../ui-library/Typography/Typography.component';
-import { generateInvoicePDF } from '../../lib/pdf/invoicePdfGenerator';
+import { renderPdf } from '../../lib/pdf/pdf.renderer';
+import { invoiceToPdfSpec } from '../../lib/pdf/invoice.pdf';
+import { computeInvoiceTotals } from '../../lib/pdf/invoice.pdf.helpers';
 
 @Component({
   selector: 'app-invoice-detail',
@@ -243,9 +245,9 @@ export class InvoiceDetailComponent implements OnInit {
   async downloadPDF(): Promise<void> {
     if (!this.invoice) return;
 
-    await generateInvoicePDF({
+    await renderPdf(invoiceToPdfSpec({
       ...this.invoice,
-      taxRate: 0.085
-    });
+      totals: computeInvoiceTotals(this.invoice)
+    }));
   }
 }

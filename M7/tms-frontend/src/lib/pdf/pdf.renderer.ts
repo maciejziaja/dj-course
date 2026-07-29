@@ -9,7 +9,7 @@ async function loadLogo(logoPath: string): Promise<string | null> {
   try {
     const response = await fetch(logoPath)
     const blob = await response.blob()
-    cachedLogoDataUrl = await new Promise((resolve) => {
+    cachedLogoDataUrl = await new Promise<string | null>((resolve) => {
       const reader = new FileReader()
       reader.onloadend = () => resolve(reader.result as string)
       reader.readAsDataURL(blob)
@@ -116,25 +116,31 @@ class PdfBuilder {
   drawTable(columns: PdfColumn[], rows: string[][]) {
     const { left } = this.theme.margins
     const colWidths = columns.map((col) => col.width ?? this.contentWidth / columns.length)
+    const colLeft: number[] = []
+    columns.reduce((x, _col, i) => {
+      colLeft[i] = x
+      return x + colWidths[i]
+    }, left)
+    const textX = (i: number, align: PdfColumn['align']) => {
+      if (align === 'right') return colLeft[i] + colWidths[i]
+      if (align === 'center') return colLeft[i] + colWidths[i] / 2
+      return colLeft[i]
+    }
     const rowHeight = 7
 
     this.ensureSpace(rowHeight)
     this.doc.setFontSize(this.theme.fonts.body)
     this.doc.setFont('helvetica', 'bold')
-    let x = left
     columns.forEach((col, i) => {
-      this.doc.text(col.header, x, this.y, { align: col.align ?? 'left' })
-      x += colWidths[i]
+      this.doc.text(col.header, textX(i, col.align), this.y, { align: col.align ?? 'left' })
     })
     this.y += rowHeight
 
     this.doc.setFont('helvetica', 'normal')
     for (const row of rows) {
       this.ensureSpace(rowHeight)
-      x = left
       row.forEach((cell, i) => {
-        this.doc.text(cell, x, this.y, { align: columns[i]?.align ?? 'left' })
-        x += colWidths[i]
+        this.doc.text(cell, textX(i, columns[i]?.align), this.y, { align: columns[i]?.align ?? 'left' })
       })
       this.y += rowHeight
     }
