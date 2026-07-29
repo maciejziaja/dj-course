@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
-import { PdfBlock, PdfColumn, PdfDocumentSpec, PdfTimelineEvent } from './pdf.model'
-import { defaultTheme, PdfTheme } from './pdf.theme'
+import type { PdfBlock, PdfColumn, PdfDocumentSpec, PdfTimelineEvent } from './pdf.model'
+import { defaultTheme } from './pdf.theme'
+import type { PdfTheme } from './pdf.theme'
 
 let cachedLogoDataUrl: string | null | undefined
 
