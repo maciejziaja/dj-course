@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePaymentsQuery } from '@/http/payments.queries';
-import { generateReceiptPDF } from '@/lib/pdf/receiptPdfGenerator'
+import { renderPdf } from '@/lib/pdf/pdf.renderer'
+import { receiptToPdfSpec } from '@/lib/pdf/receipt.pdf'
 
 const Payments = () => {
   const { data: payments = [], isLoading } = usePaymentsQuery();
@@ -66,7 +67,7 @@ const Payments = () => {
                     <td className="py-3 px-4 font-mono text-sm">{payment.invoice}</td>
                     <td className="py-3 px-4 text-gray-600">{payment.date}</td>
                     <td className="py-3 px-4">
-                      <Button variant="outline" size="sm" onClick={() => generateReceiptPDF(payment)}>View Receipt</Button>
+                      <Button variant="outline" size="sm" onClick={() => renderPdf(receiptToPdfSpec(payment))}>View Receipt</Button>
                     </td>
                   </tr>
                 ))}
