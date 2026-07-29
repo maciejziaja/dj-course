@@ -9,7 +9,8 @@ import { CargoDetailDocumentationComponent } from './cargo-detail-documentation.
 import { LucideAngularModule, ArrowLeft, Clock, MapPin, FileText, Package } from 'lucide-angular';
 import { CargoService } from './cargo.service';
 import { Heading1Component, Heading3Component } from '../../ui-library/Typography/Typography.component';
-import { generateCargoReportPDF } from '../../lib/pdf/cargoReportPdfGenerator';
+import { renderPdf } from '../../lib/pdf/pdf.renderer';
+import { cargoReportToPdfSpec } from '../../lib/pdf/cargo-report.pdf';
 
 @Component({
   selector: 'app-cargo-detail',
@@ -147,6 +148,6 @@ export class CargoDetailComponent implements OnInit {
   async generateReport(): Promise<void> {
     if (!this.cargoItem) return;
 
-    await generateCargoReportPDF(this.cargoItem);
+    await renderPdf(cargoReportToPdfSpec(this.cargoItem));
   }
 }

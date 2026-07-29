@@ -9,7 +9,15 @@ import { LucideAngularModule, DollarSign, FileText, CheckCircle, AlertCircle, Se
 import { DropdownComponent } from '../../ui-library/Dropdown.component';
 import { StatsComponent } from '../../ui-library/Stats.component';
 import { Heading1Component, Heading3Component, Heading4Component, SubtitleComponent } from '../../ui-library/Typography/Typography.component';
-import { generateFinancialReportPDF } from '../../lib/pdf/financialReportPdfGenerator';
+import { renderPdf } from '../../lib/pdf/pdf.renderer';
+import { financialReportToPdfSpec } from '../../lib/pdf/financial-report.pdf';
+import {
+  computeRevenueByStatus,
+  computeStatusBreakdown,
+  computeTopContractors,
+  computeRecentInvoices,
+  computeTotalAccounts
+} from '../../lib/pdf/financial-report.pdf.helpers';
 
 @Component({
   selector: 'app-billing-payments',
@@ -405,10 +413,16 @@ export class BillingPaymentsComponent implements OnInit {
   async downloadFinancialReportPDF(): Promise<void> {
     if (!this.overview || !this.invoices.length) return;
 
-    await generateFinancialReportPDF({
+    const revenue = computeRevenueByStatus(this.invoices);
+
+    await renderPdf(financialReportToPdfSpec({
       overview: this.overview,
-      invoices: this.invoices,
-      reportPeriod: `Financial Period: ${new Date().getFullYear()}`
-    });
+      reportPeriod: `Financial Period: ${new Date().getFullYear()}`,
+      revenue,
+      statusBreakdown: computeStatusBreakdown(this.invoices, revenue),
+      topContractors: computeTopContractors(this.invoices),
+      recentInvoices: computeRecentInvoices(this.invoices),
+      totalAccounts: computeTotalAccounts(this.invoices)
+    }));
   }
 }
