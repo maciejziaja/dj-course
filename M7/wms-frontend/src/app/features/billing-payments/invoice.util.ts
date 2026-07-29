@@ -1,4 +1,4 @@
-import { Invoice } from '../../features/billing-payments/billing.model'
+import { Invoice } from './billing.model'
 
 export const DEFAULT_INVOICE_TAX_RATE = 0.085 // 8.5%
 

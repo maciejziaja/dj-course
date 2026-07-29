@@ -17,7 +17,7 @@ import {
   computeTopContractors,
   computeRecentInvoices,
   computeTotalAccounts
-} from '../../lib/pdf/financial-report.pdf.helpers';
+} from './financial-report.util';
 
 @Component({
   selector: 'app-billing-payments',

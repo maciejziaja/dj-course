@@ -8,7 +8,7 @@ import { MOCK_INVOICE_ITEMS } from '../../mock/invoice-items.mock';
 import { Heading1Component, Heading2Component, Heading3Component, Heading4Component } from '../../ui-library/Typography/Typography.component';
 import { renderPdf } from '../../lib/pdf/pdf.renderer';
 import { invoiceToPdfSpec } from '../../lib/pdf/invoice.pdf';
-import { computeInvoiceTotals } from '../../lib/pdf/invoice.pdf.helpers';
+import { computeInvoiceTotals } from './invoice.util';
 
 @Component({
   selector: 'app-invoice-detail',

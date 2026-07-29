@@ -1,4 +1,4 @@
-import { Invoice } from '../../features/billing-payments/billing.model'
+import { Invoice } from './billing.model'
 
 export interface FinancialStatusBreakdownRow {
   label: string
