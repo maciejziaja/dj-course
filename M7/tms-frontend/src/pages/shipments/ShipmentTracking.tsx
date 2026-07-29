@@ -9,7 +9,7 @@ import { FleetMap } from '../vehicles/FleetMap';
 import { mockVehicles } from '@/model/vehicles/vehicles.mocks'; // Keep for now
 import { getMockShipments } from '@/model/shipments/shipments.mocks'; // Keep for now
 import { renderPdf } from '@/lib/pdf/pdf.renderer'
-import { shipmentRouteToPdfSpec } from '@/lib/pdf/shipment-route.pdf'
+import { shipmentRouteToPdfSpec } from './shipment-route.pdf'
 import { useDriversQuery } from '@/http/drivers.queries';
 import { Link } from 'react-router-dom';
 

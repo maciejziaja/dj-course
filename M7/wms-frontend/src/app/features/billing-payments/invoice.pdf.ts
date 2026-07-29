@@ -1,7 +1,7 @@
-import { Invoice } from '../../features/billing-payments/billing.model'
-import { PdfDocumentSpec } from './pdf.model'
-import { formatCurrency, formatDate, sanitizeFilenamePart } from './pdf.format'
-import { InvoiceTotals } from '../../features/billing-payments/invoice.util'
+import { Invoice } from './billing.model'
+import { PdfDocumentSpec } from '../../lib/pdf/pdf.model'
+import { formatCurrency, formatDate, sanitizeFilenamePart } from '../../lib/pdf/pdf.format'
+import { InvoiceTotals } from './invoice.util'
 
 export interface InvoiceCompanyInfo {
   name: string

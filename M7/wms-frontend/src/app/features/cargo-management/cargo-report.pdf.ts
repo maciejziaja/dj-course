@@ -1,7 +1,7 @@
-import { InventoryItem } from '../../features/inventory/inventory.model'
-import { CargoEvent, CargoLocationHistory, CargoDocument } from '../../features/cargo-management/cargo.model'
-import { PdfDocumentSpec } from './pdf.model'
-import { formatCurrency, formatDate, formatDateTime, sanitizeFilenamePart } from './pdf.format'
+import { InventoryItem } from '../inventory/inventory.model'
+import { CargoEvent, CargoLocationHistory, CargoDocument } from './cargo.model'
+import { PdfDocumentSpec } from '../../lib/pdf/pdf.model'
+import { formatCurrency, formatDate, formatDateTime, sanitizeFilenamePart } from '../../lib/pdf/pdf.format'
 
 export interface CargoReportData extends InventoryItem {
   events?: CargoEvent[]

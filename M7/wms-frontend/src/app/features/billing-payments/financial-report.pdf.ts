@@ -1,7 +1,7 @@
-import { BillingOverview, Invoice } from '../../features/billing-payments/billing.model'
-import { PdfDocumentSpec } from './pdf.model'
-import { formatCurrency, formatDate, sanitizeFilenamePart } from './pdf.format'
-import { FinancialRevenueMetrics, FinancialStatusBreakdownRow, FinancialTopContractor } from '../../features/billing-payments/financial-report.util'
+import { BillingOverview, Invoice } from './billing.model'
+import { PdfDocumentSpec } from '../../lib/pdf/pdf.model'
+import { formatCurrency, formatDate, sanitizeFilenamePart } from '../../lib/pdf/pdf.format'
+import { FinancialRevenueMetrics, FinancialStatusBreakdownRow, FinancialTopContractor } from './financial-report.util'
 
 const REPORT_NOTES =
   'This financial report provides a comprehensive overview of billing and payment activities. ' +

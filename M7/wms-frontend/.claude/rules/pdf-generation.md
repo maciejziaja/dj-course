@@ -1,19 +1,26 @@
 # PDF generation — conventions for this repo
 
-All PDFs are produced by a 3-layer pipeline in `src/app/lib/pdf/` (per app). **Never call jsPDF
-directly outside the renderer.** A "generator" is a pure mapper from a domain object to a
-declarative `PdfDocumentSpec`; the renderer draws it.
+All PDFs are produced by a 3-layer pipeline: a generic **engine** in `src/app/lib/pdf/` (per app)
+plus per-domain **mappers** that live inside the feature module that uses them, not in
+`lib/pdf/`. **Never call jsPDF directly outside the renderer.** A "generator" (mapper) is a pure
+function from a domain object to a declarative `PdfDocumentSpec`; the renderer draws it.
 
-## Layout of `lib/pdf/`
+## Layout
 
 ```
-src/app/lib/pdf/
+src/app/lib/pdf/              # engine — generic, no domain knowledge, shared infra
   pdf.model.ts      # PdfDocumentSpec + PdfBlock union (section/field/paragraph/table/timeline/spacer)
   pdf.theme.ts      # PdfTheme: logo path, company/footer lines, margins, font sizes + default theme
   pdf.renderer.ts   # renderPdf(spec, { theme?, output? }) — the ONLY file importing 'jspdf'
   pdf.format.ts     # formatDate, formatDateTime, formatCurrency, humanize (SNAKE_CASE → Title Case)
-  <domain>.pdf.ts   # e.g. invoice.pdf.ts — exports <domain>ToPdfSpec(data): PdfDocumentSpec
+
+src/app/features/<feature>/<domain>.pdf.ts   # mapper, e.g. features/billing-payments/invoice.pdf.ts
 ```
+
+Mappers are domain code, not infra: they import feature model/util types and are used by exactly
+one feature, so they live in `src/app/features/<feature>/` next to the component that calls them,
+named `<domain>.pdf.ts` and exporting `<domain>ToPdfSpec(data): PdfDocumentSpec`. Import the
+engine from there via a relative path into `../../lib/pdf/...`.
 
 ## The three layers
 
@@ -49,8 +56,8 @@ src/app/lib/pdf/
 
 1. Check whether existing blocks cover the layout. Missing block kind? Extend the union +
    renderer once — do NOT hand-roll drawing in the mapper.
-2. Create `<domain>.pdf.ts` with `<domain>ToPdfSpec()`. Optional data ⇒ pass `undefined` to
-   `field`, don't wrap in `if`.
+2. Create `<domain>.pdf.ts` in the feature module that uses it, with `<domain>ToPdfSpec()`.
+   Optional data ⇒ pass `undefined` to `field`, don't wrap in `if`.
 3. Unit-test the mapper as plain data: assert sections/labels/filename. No jsPDF mock needed.
 4. Wire the trigger in the component with `renderPdf(...)`.
 
@@ -65,7 +72,10 @@ src/app/lib/pdf/
 - This app is Angular (strict TypeScript: `strict`, `noPropertyAccessFromIndexSignature`,
   `noImplicitReturns` are all on) — the engine already compiles clean under this config, but
   keep that in mind if you port further changes from a looser sibling app.
-- `src/app/lib/pdf/` is shared infra — feature modules import it, never fork it.
+- `src/app/lib/pdf/` (engine only) is shared infra — feature modules import it, never fork it.
+  Mappers are the opposite: domain code owned by a single feature, living in that feature's
+  folder, not in `lib/pdf/`. Deleting a feature should take its `<domain>.pdf.ts` with it and
+  leave the engine untouched.
 
 ## Anti-patterns (all present in the legacy code — remove on touch)
 

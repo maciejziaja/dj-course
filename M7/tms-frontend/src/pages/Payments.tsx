@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePaymentsQuery } from '@/http/payments.queries';
 import { renderPdf } from '@/lib/pdf/pdf.renderer'
-import { receiptToPdfSpec } from '@/lib/pdf/receipt.pdf'
+import { receiptToPdfSpec } from './receipt.pdf'
 
 const Payments = () => {
   const { data: payments = [], isLoading } = usePaymentsQuery();

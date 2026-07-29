@@ -10,7 +10,7 @@ import { LucideAngularModule, ArrowLeft, Clock, MapPin, FileText, Package } from
 import { CargoService } from './cargo.service';
 import { Heading1Component, Heading3Component } from '../../ui-library/Typography/Typography.component';
 import { renderPdf } from '../../lib/pdf/pdf.renderer';
-import { cargoReportToPdfSpec } from '../../lib/pdf/cargo-report.pdf';
+import { cargoReportToPdfSpec } from './cargo-report.pdf';
 
 @Component({
   selector: 'app-cargo-detail',
