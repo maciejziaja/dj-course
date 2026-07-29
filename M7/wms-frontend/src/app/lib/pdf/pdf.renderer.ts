@@ -88,14 +88,17 @@ class PdfBuilder {
 
   drawField(label: string, value: string) {
     const { left } = this.theme.margins
-    const lines: string[] = this.doc.splitTextToSize(value, this.contentWidth - 40)
-    this.ensureSpace(lines.length * 4 + 6)
+    const labelColumnWidth = 40
     this.doc.setFontSize(this.theme.fonts.body)
     this.doc.setFont('helvetica', 'bold')
-    this.doc.text(label, left, this.y)
+    const labelLines: string[] = this.doc.splitTextToSize(label, labelColumnWidth - 2)
+    const valueLines: string[] = this.doc.splitTextToSize(value, this.contentWidth - labelColumnWidth)
+    const rowLines = Math.max(labelLines.length, valueLines.length)
+    this.ensureSpace(rowLines * 4 + 6)
+    this.doc.text(labelLines, left, this.y)
     this.doc.setFont('helvetica', 'normal')
-    this.doc.text(lines, left + 40, this.y)
-    this.y += Math.max(lines.length * 4, 6) + 2
+    this.doc.text(valueLines, left + labelColumnWidth, this.y)
+    this.y += Math.max(rowLines * 4, 6) + 2
   }
 
   drawParagraph(text: string) {
