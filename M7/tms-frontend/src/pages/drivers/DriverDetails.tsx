@@ -5,12 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ProgressRing } from '@/components/ui/progress-ring';
 import { ArrowLeft, User, Mail, Phone, MapPin, CreditCard, FileText, AlertCircle } from 'lucide-react';
 import { useDriverDetailsQuery, useDriverShipmentsQuery } from '@/http/drivers.queries';
 import { useAtom } from 'jotai';
 import { selectedDriverAtom } from './drivers.store';
 import { Driver } from '@/model/drivers';
 import { formatDateTime, formatDate } from '@/lib/date/dateUtils';
+
+const TOTAL_DELIVERIES_TARGET = 30;
+const INCIDENTS_TARGET = 10;
 
 const DriverDetails = () => {
   const { id } = useParams();
@@ -244,19 +248,25 @@ const DriverDetails = () => {
           <CardTitle>Performance Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{driver.routes.filter(r => r.status === 'completed').length}</p>
-              <p className="text-sm text-gray-600">Total Deliveries</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">98%</p>
-              <p className="text-sm text-gray-600">On-Time Rate</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-orange-600">2</p>
-              <p className="text-sm text-gray-600">Incidents</p>
-            </div>
+          <div className="flex flex-wrap justify-center gap-10">
+            <ProgressRing
+              value={driver.routes.filter(r => r.status === 'completed').length}
+              percentage={Math.min(100, (driver.routes.filter(r => r.status === 'completed').length / TOTAL_DELIVERIES_TARGET) * 100)}
+              label="Total Deliveries"
+              color="#2563eb"
+            />
+            <ProgressRing
+              value="98%"
+              percentage={98}
+              label="On-Time Rate"
+              color="#16a34a"
+            />
+            <ProgressRing
+              value={2}
+              percentage={Math.min(100, (2 / INCIDENTS_TARGET) * 100)}
+              label="Incidents"
+              color="#ea580c"
+            />
           </div>
         </CardContent>
       </Card>
