@@ -1,0 +1,30 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "__VUE_DEVTOOLS_NEXT_PLUGIN_SETTINGS__dev.esm.pinia__",
+          "value": "{\"logStoreChanges\":true}"
+        },
+        {
+          "name": "auth_isAuthenticated",
+          "value": "true"
+        },
+        {
+          "name": "auth_company",
+          "value": "{\"id\":\"1\",\"name\":\"Example Logistics Ltd.\",\"registrationNumber\":\"PL1234567890\",\"vatNumber\":\"PL1234567890\",\"address\":{\"street\":\"ul. Logistyczna 123\",\"city\":\"Warsaw\",\"postalCode\":\"00-001\",\"country\":\"Poland\"},\"contactInfo\":{\"primaryEmail\":\"contact@example.com\",\"primaryPhone\":\"+48123456789\",\"emergencyContact\":{\"name\":\"Emergency Contact\",\"phone\":\"+48987654321\",\"email\":\"emergency@example.com\",\"relationship\":\"Manager\"}},\"billingAddress\":{\"street\":\"ul. Logistyczna 123\",\"city\":\"Warsaw\",\"postalCode\":\"00-001\",\"country\":\"Poland\"},\"creditLimit\":50000,\"creditUsed\":15000,\"industryType\":\"Manufacturing\",\"employees\":[],\"paymentTerms\":\"30 days\",\"isActive\":true,\"createdAt\":\"2026-07-30T15:27:01.544Z\"}"
+        },
+        {
+          "name": "nuxt-color-mode",
+          "value": "system"
+        },
+        {
+          "name": "auth_user",
+          "value": "{\"id\":\"1\",\"email\":\"john.doe@example.com\",\"firstName\":\"John\",\"lastName\":\"Doe\",\"phone\":\"+48123456789\",\"role\":\"COMPANY_ADMIN\",\"companyId\":\"1\",\"permissions\":[\"CREATE_REQUEST\",\"VIEW_REQUEST\",\"EDIT_REQUEST\",\"MANAGE_TEAM\"],\"isActive\":true,\"createdAt\":\"2026-07-30T15:27:01.544Z\",\"updatedAt\":\"2026-07-30T15:27:01.544Z\"}"
+        }
+      ]
+    }
+  ]
+}
