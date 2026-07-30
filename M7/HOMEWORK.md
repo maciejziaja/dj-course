@@ -77,6 +77,9 @@ przykładowa struktura drzewiasta:
     - delikatne przedmioty
     - dokumenty prawne
 ```
+Rozwiązanie:
+- https://stitch.withgoogle.com/projects/16539016807663827328?pli=1
+- https://stitch.withgoogle.com/projects/14643211834076667389?pli=1
 
 # Zadanie 6
 
