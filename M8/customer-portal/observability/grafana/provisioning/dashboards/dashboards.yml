@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'customer-portal'
+    orgId: 1
+    folder: 'Customer Portal'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

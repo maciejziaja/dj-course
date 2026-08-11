@@ -1,6 +1,17 @@
 // Logowanie rozpoczęcia procesu
 print('STARTING MONGO INITIALIZATION FOR CUSTOMER PORTAL');
 
+// Dedykowany, ograniczony user dla mongodb_exporter (observability) —
+// zamiast używać roota do monitoringu
+db.getSiblingDB('admin').createUser({
+  user: 'exporter',
+  pwd: 'exporter_pw',
+  roles: [
+    { role: 'clusterMonitor', db: 'admin' },
+    { role: 'read', db: 'customer_portal' }
+  ]
+});
+
 // Przełączenie na bazę docelową (zgodną z MONGO_INITDB_DATABASE)
 db = db.getSiblingDB('customer_portal');
 

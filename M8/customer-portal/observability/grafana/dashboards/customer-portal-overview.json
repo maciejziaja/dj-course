@@ -1,0 +1,129 @@
+{
+  "uid": "cp-overview",
+  "title": "Customer Portal - Overview",
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "HTTP req/s (per route)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (route) (rate(cp_http_requests_total[1m]))",
+        "legendFormat": "{{route}}"
+      }]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Latency p95 (per route)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (route, le) (rate(cp_http_request_duration_seconds_bucket[5m])))",
+        "legendFormat": "{{route}}"
+      }]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Responses by status code",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (status) (rate(cp_http_requests_total[1m]))",
+        "legendFormat": "HTTP {{status}}"
+      }]
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "HTTP error rate (4xx/5xx per second)",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "targets": [{
+        "expr": "sum(rate(cp_http_requests_total{status=~\"4..|5..\"}[5m]))",
+        "legendFormat": "errors/s"
+      }]
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "HTTP error ratio %",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "color": { "mode": "fixed", "fixedColor": "orange" } }, "overrides": [] },
+      "targets": [{
+        "expr": "100 * sum(rate(cp_http_requests_total{status=~\"4..|5..\"}[5m])) / sum(rate(cp_http_requests_total[5m]))",
+        "legendFormat": "error ratio"
+      }]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Node CPU usage %",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100 }, "overrides": [] },
+      "targets": [{
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
+        "legendFormat": "CPU"
+      }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Node memory used",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [{
+        "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+        "legendFormat": "used"
+      }]
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Node disk usage",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        {
+          "expr": "node_filesystem_size_bytes{mountpoint=~\"^/$|^/var/lib/docker$\"} - node_filesystem_avail_bytes{mountpoint=~\"^/$|^/var/lib/docker$\"}",
+          "legendFormat": "used"
+        },
+        {
+          "expr": "node_filesystem_avail_bytes{mountpoint=~\"^/$|^/var/lib/docker$\"}",
+          "legendFormat": "available"
+        }
+      ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "MongoDB opcounters",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "rate(mongodb_ss_opcounters[1m])",
+        "legendFormat": "{{legacy_op_type}}"
+      }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "MongoDB connections",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "mongodb_ss_connections{conn_type=\"current\"}",
+        "legendFormat": "current"
+      }]
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "MongoDB errors (asserts)",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" } }, "overrides": [] },
+      "targets": [{
+        "expr": "rate(mongodb_ss_asserts[1m])",
+        "legendFormat": "{{assert_type}}"
+      }]
+    },
+    {
+      "id": 8, "type": "logs", "title": "Application logs",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 32 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": { "showTime": true, "wrapLogMessage": true },
+      "targets": [{ "expr": "{container=\"cp-container\"}" }]
+    }
+  ]
+}

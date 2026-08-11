@@ -1,0 +1,51 @@
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # stdout/stderr wszystkich kontenerów ze stacku (przez Docker API).
+  # Aplikacja (cp) pisze structured JSON logi bezpośrednio na stdout
+  # (server/middleware/metrics.ts) - to jedyne źródło prawdy dla logów w Loki.
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: stream
+    pipeline_stages:
+      # Rozpakowuje envelope docker json-file log drivera
+      - docker: {}
+      # Dla kontenera aplikacji: parsuje nasz JSON i wyciąga labelki
+      - match:
+          selector: '{container="cp-container"}'
+          stages:
+            # Skleja wieloliniowe wpisy (stack trace'y): nowa linia loga
+            # zaczyna się od '{' (JSON) albo znaku niebiałego; linie zaczynające
+            # się od spacji/tabulacji doklejane są do poprzedniego wpisu.
+            - multiline:
+                firstline: '^[^\s]'
+                max_wait_time: 3s
+            # Wycina dev-owy szum Nuxt/Vite (HMR, restarty itp.)
+            - drop:
+                expression: '.*(Vite (server|client)|vite:|\[HMR\]|hmr update|✔|➜|ℹ|Nuxt (DevTools|project)).*'
+            - json:
+                expressions:
+                  level: level
+                  msg: msg
+                  route: route
+                  status: status
+            # Tylko level jako label (mała kardynalność). route/status celowo
+            # NIE są labelami - zostają w treści JSON i można je filtrować
+            # w query przez `| json | route="..."` (uniknięcie eksplozji
+            # kardynalności streamów w Loki).
+            - labels:
+                level:
