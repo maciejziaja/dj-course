@@ -16,15 +16,15 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@artmizu/nuxt-prometheus',
-    'nuxt3-winston-log',
     // '@nuxtjs/storybook',
   ],
 
-  nuxt3WinstonLog: {
-    maxSize: "1024m",
-    maxFiles: "14d",
+  prometheus: {
+    verbose: false,       // mniej szumu w dev
+    healthCheck: true,    // /health
+    prometheusPath: '/metrics',
   },
-  
+
   // Component auto-import configuration
   components: [
     {

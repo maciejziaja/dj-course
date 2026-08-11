@@ -1,8 +1,9 @@
-FROM --platform=linux/amd64 node:22-bullseye AS base
+FROM node:22-bullseye AS base
 WORKDIR /app
 COPY package*.json ./
-# Install oxc-parser native binding explicitly
-RUN npm install --save-dev @oxc-parser/binding-linux-x64-gnu lightningcss-linux-x64-gnu @rollup/rollup-linux-x64-gnu || true
+# Install native bindings explicitly for the current architecture (x64/arm64)
+RUN ARCH=$(node -p "process.arch === 'arm64' ? 'arm64' : 'x64'") \
+    && npm install --save-dev "@oxc-parser/binding-linux-${ARCH}-gnu" "lightningcss-linux-${ARCH}-gnu" "@rollup/rollup-linux-${ARCH}-gnu" || true
 RUN npm install
 COPY . .
 
@@ -18,7 +19,7 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # --- Production Stage ---
-FROM --platform=linux/amd64 node:22-bullseye AS production
+FROM node:22-bullseye AS production
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NITRO_HOST=0.0.0.0

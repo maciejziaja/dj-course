@@ -1,84 +1,50 @@
 /**
  * Logger utility for server-side logging
- * Uses winston through nuxt3-winston-log module
- * 
- * nuxt3-winston-log automatically creates winston logger instance
- * Logs are written to files in logs/ directory and console
+ *
+ * Emituje strukturalne logi JSON na stdout/stderr (12-factor),
+ * skąd zbiera je Promtail (pipeline parsuje pola level/msg).
+ * Format spójny z server/middleware/metrics.ts.
  */
 
-// Try to get winston logger from nuxt3-winston-log
-function getWinstonLogger() {
-  try {
-    // nuxt3-winston-log exposes logger through useLogger() or global
-    if (typeof useLogger !== 'undefined') {
-      return useLogger()
-    }
-    // Alternative: check if logger is available globally
-    if ((globalThis as any).winstonLogger) {
-      return (globalThis as any).winstonLogger
-    }
-  } catch (e) {
-    // Logger not available, will use fallback
+type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+
+function emit(level: LogLevel, message: string, meta?: Record<string, any>) {
+  const line = JSON.stringify({
+    level,
+    time: new Date().toISOString(),
+    msg: message,
+    ...meta,
+  })
+  // Piszemy bezpośrednio do stdout/stderr - Nuxt (consola) przechwytuje
+  // console.warn/error i dokleja prefiksy (np. "WARN "), co psułoby JSON.
+  if (level === 'error' || level === 'warn') {
+    process.stderr.write(line + '\n')
+  } else {
+    process.stdout.write(line + '\n')
   }
-  return null
 }
 
 export const logger = {
   info: (message: string, meta?: Record<string, any>) => {
-    const winstonLogger = getWinstonLogger()
-    if (winstonLogger) {
-      winstonLogger.info(message, meta || {})
-      return
-    }
-    // Fallback to structured console logging
-    if (meta) {
-      console.log(`[INFO] ${message}`, meta)
-    } else {
-      console.log(`[INFO] ${message}`)
-    }
+    emit('info', message, meta)
   },
 
   error: (message: string, error?: Error | any, meta?: Record<string, any>) => {
-    const winstonLogger = getWinstonLogger()
-    if (winstonLogger) {
-      winstonLogger.error(message, { error: error?.message || error, stack: error?.stack, ...meta })
-      return
-    }
-    // Fallback to structured console logging
-    if (error) {
-      console.error(`[ERROR] ${message}`, error, meta || '')
-    } else {
-      console.error(`[ERROR] ${message}`, meta || '')
-    }
+    emit('error', message, {
+      error: error?.message || error,
+      stack: error?.stack,
+      ...meta,
+    })
   },
 
   warn: (message: string, meta?: Record<string, any>) => {
-    const winstonLogger = getWinstonLogger()
-    if (winstonLogger) {
-      winstonLogger.warn(message, meta || {})
-      return
-    }
-    // Fallback to structured console logging
-    if (meta) {
-      console.warn(`[WARN] ${message}`, meta)
-    } else {
-      console.warn(`[WARN] ${message}`)
-    }
+    emit('warn', message, meta)
   },
 
   debug: (message: string, meta?: Record<string, any>) => {
-    const winstonLogger = getWinstonLogger()
-    if (winstonLogger) {
-      winstonLogger.debug(message, meta || {})
-      return
-    }
-    // Fallback to structured console logging (only in development)
+    // Debug tylko w development
     if (process.env.NODE_ENV === 'development') {
-      if (meta) {
-        console.debug(`[DEBUG] ${message}`, meta)
-      } else {
-        console.debug(`[DEBUG] ${message}`)
-      }
+      emit('debug', message, meta)
     }
   }
 }
@@ -89,16 +55,16 @@ export const logger = {
 export function createScopedLogger(scope: string) {
   return {
     info: (message: string, meta?: Record<string, any>) => {
-      logger.info(`[${scope}] ${message}`, meta)
+      logger.info(message, { scope, ...meta })
     },
     error: (message: string, error?: Error | any, meta?: Record<string, any>) => {
-      logger.error(`[${scope}] ${message}`, error, meta)
+      logger.error(message, error, { scope, ...meta })
     },
     warn: (message: string, meta?: Record<string, any>) => {
-      logger.warn(`[${scope}] ${message}`, meta)
+      logger.warn(message, { scope, ...meta })
     },
     debug: (message: string, meta?: Record<string, any>) => {
-      logger.debug(`[${scope}] ${message}`, meta)
+      logger.debug(message, { scope, ...meta })
     }
   }
 }

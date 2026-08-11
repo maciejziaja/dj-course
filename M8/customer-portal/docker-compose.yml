@@ -16,6 +16,11 @@ services:
     networks:
       - deliveroo-network
     restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/customer_portal --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   cp:
     container_name: cp-container
@@ -35,7 +40,104 @@ services:
     networks:
       - deliveroo-network
     depends_on:
-      - cp-mongodb
+      cp-mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------- OBSERVABILITY ----------------
+
+  prometheus:
+    image: prom/prometheus:v3.13.2
+    container_name: cp-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - deliveroo-network
+    depends_on:
+      - cp
+      - node-exporter
+      - mongodb-exporter
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: cp-node-exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    volumes:
+      - '/:/host:ro'
+    networks:
+      - deliveroo-network
+    restart: unless-stopped
+
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.52.0
+    container_name: cp-mongodb-exporter
+    command:
+      - '--mongodb.uri=mongodb://exporter:exporter_pw@cp-mongodb:27017/admin?authSource=admin'
+      - '--collect-all'
+      - '--compatible-mode'
+    ports:
+      - "9216:9216"
+    networks:
+      - deliveroo-network
+    depends_on:
+      cp-mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.7.6
+    container_name: cp-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    networks:
+      - deliveroo-network
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.6.11
+    container_name: cp-promtail
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      # Logi wszystkich kontenerów ze stacku (stdout/stderr, przez Docker API)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - deliveroo-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.1.3
+    container_name: cp-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      - deliveroo-network
+    depends_on:
+      - prometheus
+      - loki
     restart: unless-stopped
 
 networks:
@@ -44,3 +146,6 @@ networks:
 
 volumes:
   cp-mongodb_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
