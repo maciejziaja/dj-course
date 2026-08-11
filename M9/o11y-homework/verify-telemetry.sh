@@ -276,8 +276,8 @@ else
   while IFS=$'\t' read -r EXPR_B64 PANEL_TITLE; do
     EXPR=$(echo "$EXPR_B64" | base64 -d)
     # Substitute dashboard template variables the way Grafana would
-    # ($route/$method → All='.*', $__range → 15m)
-    QUERY=$(echo "$EXPR" | sed -e 's/\$route/.*/g' -e 's/\$method/.*/g' -e 's/\$__range/15m/g')
+    # ($route/$method → All='.*', $__range → 15m, $__interval → 1m)
+    QUERY=$(echo "$EXPR" | sed -e 's/\$route/.*/g' -e 's/\$method/.*/g' -e 's/\$__range/15m/g' -e 's/\$__interval/1m/g')
     RESULT=$(curl -s -u "$GRAFANA_AUTH" -G \
       "$GRAFANA_URL/api/datasources/proxy/uid/$PROM_UID/api/v1/query" \
       --data-urlencode "query=$QUERY")
