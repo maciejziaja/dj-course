@@ -24,7 +24,7 @@ scrape_configs:
     # scrape all metrics from otel-collector
     scrape_interval: 5s
     static_configs:
-      - targets: ['otel-collector:8890']
+      - targets: ['otel-collector:8891']
       
   - job_name: 'otel-collector-internal'
     # Diagnostic metrics (collector state, errors, processing times)
