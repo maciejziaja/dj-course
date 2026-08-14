@@ -31,7 +31,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "description": "Rozkład czasów trwania requestów obsługiwanych przez serwis (server-side), na bazie histogramu `http_server_duration_milliseconds`.",
+      "description": "Rozkład czasów trwania requestów obsługiwanych przez serwis (server-side), na bazie histogramu `http_server_duration_milliseconds`. Filtrowany przez `$route` i `$method`.",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -63,7 +63,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_duration_milliseconds_bucket[$__rate_interval])) by (le)",
+          "expr": "sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le)",
           "format": "time_series",
           "legendFormat": "{{le}} ms",
           "range": true,
@@ -75,7 +75,7 @@
     },
     {
       "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "description": "Rozkład czasów trwania wywołań wychodzących (client-side, np. do zewnętrznych usług), na bazie histogramu `http_client_duration_milliseconds`.",
+      "description": "Rozkład czasów trwania wywołań wychodzących (client-side, np. do zewnętrznych usług), na bazie histogramu `http_client_duration_milliseconds`.\n\nCelowo **nie** filtrowany przez `$route`/`$method`: metryka client nie ma etykiety `http_route` (jest tylko `net_peer_name`), a jedyne wychodzące wywołania to eksport OTLP do kolektora (POST na :4318) — filtr po metodzie wygasiłby panel przy każdym wyborze innym niż POST.",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -127,7 +127,7 @@
     },
     {
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "description": "Tempo przyrastania logów reprezentujących błędy (severity_text=\"error\"), zliczane w oknach czasowych. Wzrost tego panelu = rosnąca liczba błędów w jednostce czasu.",
+      "description": "Tempo przyrastania logów reprezentujących błędy (severity_text=\"error\"), zliczane w oknach czasowych. Wzrost tego panelu = rosnąca liczba błędów w jednostce czasu.\n\nZmienna `$search` zawęża po treści linii (LogQL `|=`); pusta wartość nie filtruje niczego, bo pusty substring zawiera się w każdej linii.",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -178,7 +178,7 @@
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
           "editorMode": "code",
-          "expr": "sum by (service_name) (count_over_time({service_name=~\".+\"} | severity_text=\"error\" [$__auto]))",
+          "expr": "sum by (service_name) (count_over_time({service_name=~\".+\"} |= \"$search\" | severity_text=\"error\" [$__auto]))",
           "legendFormat": "{{service_name}} errors",
           "queryType": "range",
           "refId": "A"
@@ -205,7 +205,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "p99 latency over time for the same top-5 endpoints — shows whether a slow endpoint is a spike or a trend.",
+      "description": "Latency over time dla `$topk_n` najwolniejszych endpointów — pokazuje, czy wolny endpoint to chwilowy spike, czy trend. Kwantyl przełączasz zmienną `$quantile` (p50 → p99): porównanie p50 z p99 na tym samym zakresie od razu pokazuje, ile requestów naprawdę cierpi.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -289,13 +289,13 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "topk(5,\n  histogram_quantile(0.99,\n    sum by (http_method, http_route, le) (\n      rate(http_server_duration_milliseconds_bucket[$__rate_interval])\n    )\n  ) > 0\n)",
+          "expr": "topk($topk_n,\n  histogram_quantile($quantile,\n    sum by (http_method, http_route, le) (\n      rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])\n    )\n  ) > 0\n)",
           "legendFormat": "{{http_method}} {{http_route}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "p99 Latency Over Time — Top 5 Endpoints",
+      "title": "${quantile:text} Latency Over Time — Top $topk_n Endpoints",
       "type": "timeseries"
     },
     {
@@ -528,6 +528,76 @@
   "templating": {
     "list": [
       {
+        "current": { "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "definition": "label_values(http_server_duration_milliseconds_count,http_route)",
+        "includeAll": true,
+        "label": "Route",
+        "name": "route",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(http_server_duration_milliseconds_count,http_route)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": { "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "definition": "label_values(http_server_duration_milliseconds_count,http_method)",
+        "includeAll": true,
+        "label": "Method",
+        "name": "method",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(http_server_duration_milliseconds_count,http_method)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": { "text": "p99", "value": "0.99" },
+        "description": "Kwantyl liczony z histogramu `http_server_duration_milliseconds_bucket`. Przełączaj, żeby zobaczyć, jak p50 ukrywa problemy widoczne dopiero w p99.",
+        "label": "Quantile",
+        "name": "quantile",
+        "options": [
+          { "selected": false, "text": "p50", "value": "0.5" },
+          { "selected": false, "text": "p90", "value": "0.9" },
+          { "selected": false, "text": "p95", "value": "0.95" },
+          { "selected": true, "text": "p99", "value": "0.99" }
+        ],
+        "query": "p50 : 0.5, p90 : 0.9, p95 : 0.95, p99 : 0.99",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": { "text": "5", "value": "5" },
+        "description": "Ile najwolniejszych endpointów pokazać w panelu latency.",
+        "label": "Top N endpoints",
+        "name": "topk_n",
+        "options": [
+          { "selected": false, "text": "3", "value": "3" },
+          { "selected": true, "text": "5", "value": "5" },
+          { "selected": false, "text": "10", "value": "10" },
+          { "selected": false, "text": "20", "value": "20" }
+        ],
+        "query": "3,5,10,20",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": { "text": "", "value": "" },
+        "description": "Filtr treści logu (LogQL `|=`). Pusty = bez filtrowania, bo pusty substring zawiera się w każdej linii. Wpisz np. `ECONNREFUSED`, żeby zawęzić panel błędów.",
+        "label": "Log search",
+        "name": "search",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
         "current": { "text": "10", "value": "10" },
         "description": "Maksymalny rozmiar puli pg.Pool w products-api. Instrumentacja OTel nie eksportuje db.client.connection.max, więc limit trzymamy tutaj — zmień, jeśli zmieni się konfiguracja Pool w products-api/src/database.ts (obecnie brak jawnego `max`, czyli domyślne 10 z node-postgres).",
         "hide": 2,
@@ -544,6 +614,6 @@
   "timezone": "",
   "title": "(OTLP) Performance & Errors Dashboard",
   "uid": "otlp-perf-errors-dash",
-  "version": 15,
+  "version": 16,
   "weekStart": "monday"
 }
