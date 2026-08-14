@@ -5,6 +5,12 @@ vars:
   PYTHON: python3
   PIP: "{{.VENV_DIR}}/bin/pip"
   BZT: "{{.VENV_DIR}}/bin/bzt"
+  # Obraz Taurusa z wbudowaną Javą i JMeterem - pozwala uruchomić testy
+  # bez instalowania JDK na hoście. Obraz jest tylko amd64 (na Apple Silicon
+  # chodzi przez emulację Rosetty - wolniej, czasy odpowiedzi zawyżone).
+  TAURUS_IMAGE: blazemeter/taurus:latest
+  # Z wnętrza kontenera "localhost" to sam kontener, nie host - stąd podmiana adresu.
+  DOCKER_TARGET: http://host.docker.internal:3000
 
 tasks:
   default:
@@ -50,6 +56,12 @@ tasks:
     cmds:
       - "{{.BZT}} scenarios/product-minimal-test.yml"
 
+  test-lite:
+    desc: Run "Lite" smoke test - 7 phases, 6.5 min, 80/20 read/write mix
+    deps: [setup]
+    cmds:
+      - "{{.BZT}} scenarios/product-lite-test.yml"
+
   test-load:
     desc: Run full product lifecycle test (GET, POST, DELETE)
     deps: [setup]
@@ -73,6 +85,29 @@ tasks:
     deps: [setup]
     cmds:
       - "{{.BZT}} scenarios/product-massive-test.yml"
+
+  test-lite-docker:
+    desc: Run "Lite" smoke test in Docker (no local Java/JDK required)
+    cmds:
+      - task: test-docker
+        vars:
+          FILE: scenarios/product-lite-test.yml
+          SCENARIO: lite-smoke-traffic
+
+  test-docker:
+    desc: "Run any scenario in Docker, no local Java (usage: task test-docker FILE=scenarios/x.yml SCENARIO=scenario-name)"
+    preconditions:
+      - sh: docker info >/dev/null 2>&1
+        msg: "Docker nie działa. Uruchom Docker Desktop i spróbuj ponownie."
+    cmds:
+      # Katalog projektu montowany jako /bzt-configs (workdir obrazu). Ustawiony
+      # w scenariuszu `artifacts-dir: reports/...` jest względny, więc raporty
+      # lądują bezpośrednio w reports/ na hoście.
+      - |
+        docker run --rm --platform linux/amd64 \
+          -v "$PWD:/bzt-configs" \
+          {{.TAURUS_IMAGE}} {{.FILE}} \
+          -o scenarios.{{.SCENARIO}}.default-address={{.DOCKER_TARGET}}
 
   test-custom:
     desc: "Run load tests with a custom YAML file (usage: task test-custom FILE=scenarios/your_test.yml)"
