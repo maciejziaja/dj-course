@@ -1,0 +1,206 @@
+# Profil "Lite" (Smoke Test) - bliźniak scenariusza Artillery:
+# ../../load-testing-artillery/scenarios/product-lite-test.yml
+#
+# Cel: szybka walidacja skryptu + sprawdzenie, czy Grafana poprawnie przechwytuje
+# i wizualizuje metryki (kształt fali, błędy, czasy odpowiedzi) bez obciążania
+# lokalnej maszyny. Łączny czas trwania: 390 s (6,5 minuty).
+#
+# UWAGA - dwie różnice względem Artillery, wymuszone modelem Taurusa/JMetera:
+#  1. Wszystkie bloki `execution` startują RÓWNOCZEŚNIE, dlatego kolejne fazy
+#     są przesunięte w czasie polem `delay`.
+#  2. Taurus nie ma odpowiednika `rampTo` (rampa od N do M) - `ramp-up` zawsze
+#     narasta od 0 do `throughput`. Rampy 1->3 i 3->10 są więc składane z dwóch
+#     nakładających się bloków (płaska baza + narastająca nadwyżka), a zjazd
+#     10->2 z krótkich schodków. Suma daje ten sam kształt wykresu RPS.
+#
+# `throughput` = liczba żądań na sekundę (w Artillery arrivalRate = nowe VU/s;
+# przy tym profilu obie miary schodzą się w okolicach oczekiwanych 3 i 10 RPS).
+
+execution:
+# ---------------------------------------------------------------------------
+# Faza 1: Szybka rozgrzewka (Warm-up), 0-60 s, 1 -> 3 RPS
+# Grafana: delikatny start, pierwsze punkty danych na wykresie.
+# ---------------------------------------------------------------------------
+- concurrency: 10       # Baza: płaskie 1 RPS przez całą fazę.
+  throughput: 1
+  ramp-up: 0s
+  hold-for: 60s
+  delay: 0s
+  scenario: lite-smoke-traffic
+
+- concurrency: 10       # Nadwyżka: 0 -> 2 RPS (razem z bazą daje 1 -> 3 RPS).
+  throughput: 2
+  ramp-up: 60s
+  hold-for: 0s
+  delay: 0s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 2: Ruch bazowy (Cruise), 60-150 s, stałe 3 RPS
+# Grafana: stabilne plateau na poziomie ok. 3 zapytań/s.
+# ---------------------------------------------------------------------------
+- concurrency: 20
+  throughput: 3
+  ramp-up: 0s
+  hold-for: 90s         # 1,5 minuty
+  delay: 60s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 3: Skok obciążenia (Ramp-up), 150-210 s, 3 -> 10 RPS
+# Grafana: wyraźny skos w górę na wykresie RPS.
+# ---------------------------------------------------------------------------
+- concurrency: 20       # Baza: utrzymanie 3 RPS z fazy 2.
+  throughput: 3
+  ramp-up: 0s
+  hold-for: 60s
+  delay: 150s
+  scenario: lite-smoke-traffic
+
+- concurrency: 30       # Nadwyżka: 0 -> 7 RPS (razem z bazą daje 3 -> 10 RPS).
+  throughput: 7
+  ramp-up: 60s
+  hold-for: 0s
+  delay: 150s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 4: "Ciężkie" obciążenie lokalne (Sustained Load), 210-270 s, stałe 10 RPS
+# Grafana: płaska linia na poziomie 10 RPS.
+# ---------------------------------------------------------------------------
+- concurrency: 40
+  throughput: 10
+  ramp-up: 0s
+  hold-for: 60s
+  delay: 210s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 5: Wyciszenie (Scale Down), 270-300 s, zjazd 10 -> 2 RPS
+# Zamiast płynnej rampy w dół - trzy schodki: 10 -> 6 -> 2 RPS.
+# Grafana: zauważalny spadek w dół przed spike'iem.
+# ---------------------------------------------------------------------------
+- concurrency: 15       # Baza: płaskie 2 RPS przez całą fazę.
+  throughput: 2
+  ramp-up: 0s
+  hold-for: 30s
+  delay: 270s
+  scenario: lite-smoke-traffic
+
+- concurrency: 30       # Schodek 1: +8 RPS przez 10 s (razem 10 RPS).
+  throughput: 8
+  ramp-up: 0s
+  hold-for: 10s
+  delay: 270s
+  scenario: lite-smoke-traffic
+
+- concurrency: 20       # Schodek 2: +4 RPS przez kolejne 10 s (razem 6 RPS).
+  throughput: 4
+  ramp-up: 0s
+  hold-for: 10s
+  delay: 280s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 6: Mini-strzał uderzeniowy (Spike), 300-330 s, nagłe 30 RPS (10x bazy)
+# Grafana: ostry, "iglicowy" pik. Tu warto sztucznie zepsuć jeden z endpointów
+# w kodzie API, żeby zobaczyć, czy na wykresie wyrysują się błędy 5xx.
+# ---------------------------------------------------------------------------
+- concurrency: 100
+  throughput: 30
+  ramp-up: 0s           # Bez rampy - uderzenie ma być natychmiastowe.
+  hold-for: 30s
+  delay: 300s
+  scenario: lite-smoke-traffic
+
+# ---------------------------------------------------------------------------
+# Faza 7: Odzyskiwanie (Recovery), 330-390 s, stałe 1 RPS
+# Grafana: powrót wykresów do zera/minimalnych wartości.
+# ---------------------------------------------------------------------------
+- concurrency: 10
+  throughput: 1
+  ramp-up: 0s
+  hold-for: 60s         # 1 minuta
+  delay: 330s
+  scenario: lite-smoke-traffic
+
+settings:
+  artifacts-dir: reports/%Y-%m-%d_%H-%M-%S.%f
+  # Każdy blok `execution` to osobny proces JMetera, a startowy skrypt JMetera
+  # ustawia na sztywno -Xms1g -Xmx1g. Przy 11 blokach dałoby to ~11 GB pamięci
+  # zaklepanej od razu (-Xms commituje z góry) - czyli dokładnie to, czego profil
+  # "Lite" miał unikać. Przy 30 RPS 512 MB na proces jest z dużym zapasem.
+  env:
+    JVM_ARGS: "-Xms128m -Xmx512m"
+
+scenarios:
+  lite-smoke-traffic:
+    default-address: http://localhost:3000
+    # Proporcje ruchu 80/20 realizowane liczbą żądań w iteracji:
+    # 8 x odczyt (GET) + 2 x zapis (POST create, DELETE cleanup) = 10 żądań.
+    # ID produktu losowane funkcją JMetera (odpowiednik listy `variables` w Artillery).
+    requests:
+    # --- 80% ruchu: Read-heavy, najprostsze GET-y, minimalne I/O dysku ---
+    - url: /health
+      method: GET
+      label: Health check
+      think-time: 2s
+
+    - url: /products/${__Random(1,5)}
+      method: GET
+      label: Get product by ID
+      think-time: 1s
+
+    - url: /health
+      method: GET
+      label: Health check
+      think-time: 1s
+
+    - url: /products
+      method: GET
+      label: Get all products
+      think-time: 2s
+
+    - url: /health
+      method: GET
+      label: Health check
+      think-time: 1s
+
+    # --- 20% ruchu: Write - weryfikacja nagłówków i body ---
+    # Alternatywa dla pary POST+DELETE: POST /client_metrics
+    # (body: name/value/page_path/device_type/connection_type, odpowiedź 204).
+    - url: /products
+      method: POST
+      label: Create product
+      headers:
+        Content-Type: application/json
+      body:
+        name: "Lite Smoke Test Product"
+        price: 9.99
+        stock: 1
+      extract-jsonpath:
+        createdProductId:
+          jsonpath: $.id
+          default: 1
+      think-time: 2s
+
+    - url: /health
+      method: GET
+      label: Health check
+      think-time: 1s
+
+    - url: /products/${__Random(1,5)}
+      method: GET
+      label: Get product by ID
+      think-time: 1s
+
+    # Sprzątanie, żeby nie zapychać lokalnej bazy tysiącami rekordów.
+    - url: /products/${createdProductId}
+      method: DELETE
+      label: Delete product
+      think-time: 1s
+
+    - url: /health
+      method: GET
+      label: Health check
+      think-time: 1s

@@ -1,0 +1,127 @@
+# Profil "Lite" (Smoke Test)
+# Cel: szybka walidacja skryptu Artillery + sprawdzenie, czy Grafana poprawnie
+# przechwytuje i wizualizuje metryki (kształt fali, błędy, czasy odpowiedzi)
+# bez obciążania lokalnej maszyny.
+# Łączny czas trwania: 390 s (6,5 minuty).
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Faza 1: Szybka rozgrzewka (Warm-up)
+    # Grafana: delikatny start, pierwsze punkty danych na wykresie.
+    - name: "1. Warm-up"
+      duration: 60 # 1 minuta
+      arrivalRate: 1 # Start: 1 nowy wirtualny użytkownik na sekundę.
+      rampTo: 3 # Liniowy wzrost do 3 VU/s.
+      maxVusers: 200 # Hard limit dla równolegle aktywnych VU (ochrona lokalnej maszyny).
+
+    # Faza 2: Ruch bazowy (Cruise)
+    # Grafana: stabilne plateau na poziomie ok. 3 zapytań/s.
+    - name: "2. Cruise (ruch bazowy)"
+      duration: 90 # 1,5 minuty
+      arrivalRate: 3
+      maxVusers: 200
+
+    # Faza 3: Skok obciążenia (Ramp-up)
+    # Grafana: wyraźny skos w górę na wykresie RPS.
+    - name: "3. Ramp-up"
+      duration: 60 # 1 minuta
+      arrivalRate: 3
+      rampTo: 10
+      maxVusers: 200
+
+    # Faza 4: "Ciężkie" obciążenie lokalne (Sustained Load)
+    # Grafana: płaska linia na poziomie ok. 10 RPS.
+    - name: "4. Sustained load"
+      duration: 60 # 1 minuta
+      arrivalRate: 10
+      maxVusers: 200
+
+    # Faza 5: Wyciszenie (Scale Down) - oddech przed spike'iem.
+    # Grafana: zauważalny spadek w dół.
+    - name: "5. Scale down"
+      duration: 30
+      arrivalRate: 10
+      rampTo: 2
+      maxVusers: 200
+
+    # Faza 6: Mini-strzał uderzeniowy (Spike) - 10x ruchu bazowego.
+    # Grafana: ostry, "iglicowy" pik (tu warto sztucznie zepsuć endpoint,
+    # żeby zobaczyć błędy 5xx na wykresie).
+    - name: "6. Spike"
+      duration: 30
+      arrivalRate: 30
+      maxVusers: 500
+
+    # Faza 7: Odzyskiwanie (Recovery) - czy serwer i Artillery wygaszają połączenia.
+    # Grafana: powrót wykresów do zera/minimalnych wartości.
+    - name: "7. Recovery"
+      duration: 60 # 1 minuta
+      arrivalRate: 1
+      maxVusers: 200
+
+  variables:
+    productId:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+
+# Proporcje ruchu: 80% odczyty (GET), 20% zapis/złożone (POST).
+scenarios:
+  # --- 80% ruchu: Read-heavy, najprostsze GET-y, minimalne I/O dysku ---
+  - name: "Health check (najtańszy odczyt)"
+    weight: 5
+    flow:
+      - get:
+          url: "/health"
+      - think: 2
+
+  - name: "Prosty odczyt produktu po ID"
+    weight: 2
+    flow:
+      - get:
+          url: "/products/{{ productId }}"
+      - think: 2
+
+  - name: "Lista produktów"
+    weight: 1
+    flow:
+      - get:
+          url: "/products"
+      - think: 3
+
+  # --- 20% ruchu: Write / złożone - weryfikacja headerów i body w Artillery ---
+  - name: "Utworzenie produktu (POST + sprzątanie)"
+    weight: 1
+    flow:
+      - post:
+          url: "/products"
+          headers:
+            Content-Type: "application/json"
+          json:
+            name: "Lite Smoke Test Product"
+            price: 9.99
+            stock: 1
+          capture:
+            - json: "$.id"
+              as: createdProductId
+      - think: 2
+      # DELETE, żeby nie zapychać lokalnej bazy tysiącami rekordów.
+      - delete:
+          url: "/products/{{ createdProductId }}"
+
+  - name: "Wysyłka metryk klienckich (prosty payload POST)"
+    weight: 1
+    flow:
+      - post:
+          url: "/client_metrics"
+          headers:
+            Content-Type: "application/json"
+          json:
+            name: "LCP"
+            value: 1234
+            page_path: "/products"
+            device_type: "desktop"
+            connection_type: "4g"
+      - think: 2
