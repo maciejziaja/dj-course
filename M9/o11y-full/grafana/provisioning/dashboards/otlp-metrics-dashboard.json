@@ -137,7 +137,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "Calculates the average request rate(requests per second, RPS) for a specific set of HTTP routes and methods over the defined time range (`$__range`).\n\nIt uses the `sum(rate(...))` combination to aggregate the increase in the `http_server_duration_milliseconds_count` counter, dividing the result into distinct time series based on the `http_route` and `http_method` labels. This provides a clear breakdown of the load each unique route and method combination is currently experiencing.",
+      "description": "Calculates the average request rate(requests per second, RPS) for a specific set of HTTP routes and methods over a rolling window that adapts to the dashboard resolution (`$__rate_interval`).\n\nIt uses the `sum(rate(...))` combination to aggregate the increase in the `http_server_duration_milliseconds_count` counter, dividing the result into distinct time series based on the `http_route` and `http_method` labels. This provides a clear breakdown of the load each unique route and method combination is currently experiencing.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -222,7 +222,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "# http_server_duration_milliseconds_count\n# http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}\n# rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__range])\n\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (http_route, http_method)",
+          "expr": "# http_server_duration_milliseconds_count\n# http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}\n# rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])\n\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (http_route, http_method)",
           "legendFormat": "{{http_method}} {{http_route}}",
           "range": true,
           "refId": "A"
@@ -287,7 +287,7 @@
               "mode": "off"
             }
           },
-          "decimals": 3,
+          "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -305,7 +305,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -337,7 +337,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.5, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le, http_route))",
+          "expr": "histogram_quantile(0.5, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le, http_route))",
           "legendFormat": "p50 {{http_route}}",
           "range": true,
           "refId": "A"
@@ -348,7 +348,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le, http_route))",
+          "expr": "histogram_quantile(0.90, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le, http_route))",
           "legendFormat": "p90 {{route}}",
           "range": true,
           "refId": "B"
@@ -359,7 +359,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le, http_route))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le, http_route))",
           "format": "time_series",
           "legendFormat": "p95 {{http_route}}",
           "range": true,
@@ -371,7 +371,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le, http_route))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le, http_route))",
           "legendFormat": "p99 {{http_route}}",
           "range": true,
           "refId": "D"
@@ -452,7 +452,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "# sum(increase(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le)\nsum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (le)",
+          "expr": "# sum(increase(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le)\nsum(rate(http_server_duration_milliseconds_bucket{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (le)",
           "format": "time_series",
           "legendFormat": "{{le}} ",
           "range": true,
@@ -550,7 +550,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "# STEP BY STEP TRIAL:\n# http_server_duration_milliseconds_bucket\n# http_server_duration_milliseconds_bucket{le=\"50.0\"}\n# http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}\n# rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__range])\n\n(\n  # Satisfied: Requests <= 50ms (counted as 1.0)\n  sum(rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__range]))\n  +\n  # Tolerating: Requests in (50ms, 250ms] (counted as 0.5)\n  (\n    sum(rate(http_server_duration_milliseconds_bucket{le=\"250.0\", http_route=~\"$route\"}[$__range]))\n    -\n    sum(rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__range]))\n  ) * 0.5\n)\n/\n# Total: All requests (Satisfied + Tolerating + Frustrated)\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\"}[$__range]))",
+          "expr": "# STEP BY STEP TRIAL:\n# http_server_duration_milliseconds_bucket\n# http_server_duration_milliseconds_bucket{le=\"50.0\"}\n# http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}\n# rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__rate_interval])\n\n(\n  # Satisfied: Requests <= 50ms (counted as 1.0)\n  sum(rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__rate_interval]))\n  +\n  # Tolerating: Requests in (50ms, 250ms] (counted as 0.5)\n  (\n    sum(rate(http_server_duration_milliseconds_bucket{le=\"250.0\", http_route=~\"$route\"}[$__rate_interval]))\n    -\n    sum(rate(http_server_duration_milliseconds_bucket{le=\"50.0\", http_route=~\"$route\"}[$__rate_interval]))\n  ) * 0.5\n)\n/\n# Total: All requests (Satisfied + Tolerating + Frustrated)\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\"}[$__rate_interval]))",
           "format": "time_series",
           "legendFormat": "{{http_route}}",
           "range": true,
@@ -637,47 +637,7 @@
           },
           "unit": "percent"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "# http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}\n# rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s])\n# sum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n/\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n*\n100"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "# http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}\n# rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s])\n# sum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n/\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"(/inject-error|/metrics|/products|/products/:id|/top/customers-by-total-spent|/top/products-by-category/:categoryId)\", http_method=~\"(DELETE|GET)\"}[1800s]))\n*\n100"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -707,7 +667,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "# http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}\n# rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__range])\n# sum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__range]))\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__range]))\n/\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__range]))\n*\n100",
+          "expr": "# http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}\n# rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])\n# sum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval]))\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~'[45]..', http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval]))\n/\nsum(rate(http_server_duration_milliseconds_count{http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval]))\n*\n100",
           "format": "time_series",
           "legendFormat": "__auto",
           "range": true,
@@ -804,8 +764,8 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"5..\", http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (http_route)",
-          "legendFormat": "{{route}}",
+          "expr": "sum(rate(http_server_duration_milliseconds_count{http_status_code=~\"5..\", http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (http_route)",
+          "legendFormat": "{{http_route}}",
           "range": true,
           "refId": "A"
         }
@@ -900,7 +860,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "# STEP BY STEP TUTORIAL\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\"}[$__range])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\"}[$__range])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__range])\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (http_status_code)",
+          "expr": "# STEP BY STEP TUTORIAL\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\"}[$__rate_interval])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\"}[$__rate_interval])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (http_status_code)",
           "legendFormat": "{{http_status_code}}",
           "range": true,
           "refId": "A"
@@ -997,7 +957,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# STEP BY STEP TUTORIAL\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\"}[$__range])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\"}[$__range])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__range])\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__range])) by (http_route, http_status_code)",
+          "expr": "# STEP BY STEP TUTORIAL\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\"}[$__rate_interval])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\"}[$__rate_interval])\n# rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])\n\nsum(rate(http_server_duration_milliseconds_count{http_status_code=~\"[45]..\", http_route=~\"$route\", http_method=~\"$method\"}[$__rate_interval])) by (http_route, http_status_code)",
           "legendFormat": "{{http_route}} {{http_status_code}}",
           "range": true,
           "refId": "A"
@@ -1140,7 +1100,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 44
+        "y": 52
       },
       "id": 12,
       "options": {
@@ -1242,7 +1202,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 44
+        "y": 52
       },
       "id": 13,
       "options": {

@@ -1,14 +1,15 @@
 import express, { Request, Response } from 'express';
 import logger from './logger';
 import { getProducts, getProductById, pool } from './database';
+import { shedIfOverloaded } from './overload';
 
 const router = express.Router();
 
 // Route to get all products
-router.get('/products', async (req: Request, res: Response) => {
+router.get('/products', shedIfOverloaded, async (req: Request, res: Response) => {
   try {
     logger.info('Fetching all products');
-    const products = await getProducts();
+    const products = await getProducts(Number(req.query.limit));
     logger.info('Retrieved products', { 
       product_count: products.length,
       operation: 'get_all_products'
@@ -27,7 +28,7 @@ router.get('/products', async (req: Request, res: Response) => {
 });
 
 // Route to get product by ID
-router.get('/products/:id', async (req: Request, res: Response) => {
+router.get('/products/:id', shedIfOverloaded, async (req: Request, res: Response) => {
   try {
     if (!req.params.id) {
       return res.status(400).json({ error: 'Product ID is required' });
@@ -52,7 +53,7 @@ router.get('/products/:id', async (req: Request, res: Response) => {
 });
 
 // Route to create a new product
-router.post('/products', async (req: Request, res: Response) => {
+router.post('/products', shedIfOverloaded, async (req: Request, res: Response) => {
   try {
     logger.debug('Creating product', { body: req.body });
     const {
@@ -79,7 +80,7 @@ router.post('/products', async (req: Request, res: Response) => {
 });
 
 // Route to delete a product
-router.delete('/products/:id', async (req: Request, res: Response) => {
+router.delete('/products/:id', shedIfOverloaded, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     logger.debug('Deleting product', { id });
