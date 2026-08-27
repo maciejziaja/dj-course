@@ -32,15 +32,35 @@ tasks:
       - cd wms-api && ./run-local.sh
 
   setup-wms-api:
-    desc: Create venv and install wms-api dependencies (pip install -e .)
+    desc: Create venv and install wms-api dependencies, including the contract tooling
     dir: wms-api
     cmds:
       - |
+        # openapi-core needs >= 3.10; the Docker image is already python:3.13-slim.
         if [ ! -d .venv ]; then
-          python3 -m venv .venv
-          echo "📦 Created virtual environment"
+          PY=$(command -v python3.13 || command -v python3.12 || command -v python3.11 \
+               || command -v python3.10 || command -v python3)
+          "$PY" -m venv .venv
+          echo "📦 Created virtual environment with $("$PY" --version)"
         fi
-      - . .venv/bin/activate && pip install -e . --root-user-action=ignore
+      - |
+        if ! .venv/bin/python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; then
+          echo "❌ wms-api/.venv runs $(.venv/bin/python --version), but openapi-core needs >= 3.10."
+          echo "   Delete it and re-run:  rm -rf wms-api/.venv && task setup-wms-api"
+          exit 1
+        fi
+      # `[dev]` brings pytest, openapi-spec-validator and schemathesis. The Docker
+      # image installs the runtime dependencies only.
+      #
+      # `uv` if it is on the path (it is much faster, and a venv it created has no
+      # pip of its own), otherwise the venv's own pip.
+      - |
+        if command -v uv >/dev/null 2>&1; then
+          uv pip install --quiet --python .venv/bin/python -e ".[dev]"
+        else
+          .venv/bin/python -m pip install -q -e ".[dev]" --root-user-action=ignore
+        fi
+      - echo "✅ wms-api environment ready"
 
   run-only-local-api:
     desc: Run wms-api locally (requires postgres running, e.g. via run-wms-with-local-api)
@@ -59,3 +79,80 @@ tasks:
     dir: wms-data-generator
     cmds:
       - './generate-and-sync.sh {{.MODE | default "SMALL"}} {{.VERBOSE | default "FALSE"}}'
+
+  # ==========================================================================
+  # API contract (openapi.yaml)
+  #
+  # The contract is enforced at runtime by src/openapi_guard.py, so these tasks
+  # are not a separate documentation chore - they are the tests for the thing the
+  # service already does on every request.
+  # ==========================================================================
+
+  contract:
+    desc: "The full contract gate: lint the spec, test it against the API, render the docs"
+    cmds:
+      - task: contract-lint
+      - task: contract-test
+      - task: contract-docs
+
+  contract-lint:
+    desc: Validate openapi.yaml and check it still describes every Flask route
+    dir: wms-api
+    deps: [setup-wms-api]
+    cmds:
+      # Two different questions: is the document valid OpenAPI and does it match
+      # the app (lint_spec.py), and is it good OpenAPI (redocly).
+      - .venv/bin/python scripts/lint_spec.py
+      - npx --yes @redocly/cli@latest lint openapi.yaml
+
+  contract-test:
+    desc: Run the contract test suite (guard in strict mode - a drifted response fails)
+    dir: wms-api
+    deps: [setup-wms-api]
+    cmds:
+      - .venv/bin/python -m pytest {{.CLI_ARGS}}
+
+  contract-docs:
+    desc: Render openapi.yaml to a self-contained wms-api/docs/api.html
+    dir: wms-api
+    cmds:
+      - mkdir -p docs
+      - npx --yes @redocly/cli@latest build-docs openapi.yaml -o docs/api.html
+      - echo "📖 wms-api/docs/api.html"
+
+  contract-docs-open:
+    desc: Render the contract and open it in a browser
+    dir: wms-api
+    cmds:
+      - task: contract-docs
+      - open docs/api.html || xdg-open docs/api.html
+
+  contract-fuzz:
+    desc: "Property-based contract testing against a running API (reads only; safe)"
+    dir: wms-api
+    deps: [setup-wms-api]
+    preconditions:
+      - sh: curl -sf -m 5 -o /dev/null {{.API_URL | default "http://localhost:3001"}}/health
+        msg: "The API is not answering on {{.API_URL | default \"http://localhost:3001\"}} - start it with `task run-wms`."
+    cmds:
+      # GET only, so it can run against any environment without changing it.
+      - .venv/bin/st run ./openapi.yaml --url {{.API_URL | default "http://localhost:3001"}} --include-method GET {{.CLI_ARGS}}
+
+  contract-fuzz-all:
+    desc: "Property-based testing of every operation - WRITES to the database (snapshotted and restored)"
+    dir: wms-api
+    deps: [setup-wms-api]
+    vars:
+      SNAPSHOT: '{{.SNAPSHOT | default ".fuzz-snapshot.sql"}}'
+    preconditions:
+      - sh: curl -sf -m 5 -o /dev/null {{.API_URL | default "http://localhost:3001"}}/health
+        msg: "The API is not answering - start it with `task run-wms`."
+      - sh: docker ps --format '{{`{{.Names}}`}}' | grep -q wms-postgres-container
+        msg: "wms-postgres-container is not running; this task needs it to snapshot the database."
+    cmds:
+      # The generator sends valid writes as well as invalid ones, so it will
+      # create and delete rows. Dump first, restore afterwards whatever happens.
+      - docker exec wms-postgres-container pg_dump -U "${POSTGRES_USER:-admin}" -d "${POSTGRES_DB:-deliveroo}" --clean --if-exists > "{{.SNAPSHOT}}"
+      - echo "💾 database snapshotted to wms-api/{{.SNAPSHOT}}"
+      - defer: docker exec -i wms-postgres-container psql -q -U "${POSTGRES_USER:-admin}" -d "${POSTGRES_DB:-deliveroo}" < "{{.SNAPSHOT}}" > /dev/null && echo "♻️  database restored from the snapshot"
+      - .venv/bin/st run ./openapi.yaml --url {{.API_URL | default "http://localhost:3001"}} {{.CLI_ARGS}}

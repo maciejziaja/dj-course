@@ -96,8 +96,6 @@ src/routes/       locations.py, warehouses.py, zones.py, aisles.py, racks.py, sh
 
 `src/topology/` is hand-written, unlike `src/contract/`, which is generated from
 `openapi.yaml` — nothing there collides with a future `openapi-generator` run.
-`openapi.yaml` does not describe these endpoints yet; `schemas.py` is the source to
-transcribe from when it does.
 
 ### Checks
 
@@ -108,4 +106,48 @@ its own self-check:
 cd src && python -m topology.labels    # mismatched prefixes, reversed ranges, padding, limits
 ```
 
-Everything else is verified by running `topology.http` against the seeded database.
+Everything else is covered by the contract suite below, and by `topology.http` against
+the seeded database.
+
+## The API contract
+
+`openapi.yaml` describes all 41 operations — the topology endpoints above *and* the
+older `/employees`, `/contractors`, `/payments`, `/storage` and `/warehouse/{id}` ones.
+It is not documentation that sits beside the code: `src/openapi_guard.py` loads it at
+start-up and enforces it on every request and every response.
+
+```bash
+task contract            # lint the spec, run the suite against it, render the docs
+task contract-lint       # valid OpenAPI + still describes every Flask route
+task contract-test       # pytest, guard in strict mode
+task contract-docs       # -> wms-api/docs/api.html (self-contained, no server needed)
+task contract-fuzz       # property-based testing against a running API (reads only)
+task contract-fuzz-all   # every operation; snapshots and restores the database
+```
+
+### Validation modes
+
+`OPENAPI_VALIDATION` picks how much the guard does:
+
+| mode | requests | responses |
+| --- | --- | --- |
+| `off` | — | — |
+| `request` | 400 on violation | — |
+| `observe` *(default)* | 400 on violation | validated, violations logged |
+| `strict` | 400 on violation | validated, violation becomes a 500 |
+
+`observe` is what `docker-compose.yml` sets: a response that stopped matching the
+contract is worth an alert, not worth breaking a client that is coping with it. The
+test suite runs `strict`, so drift fails the build instead of the alerting.
+
+### Two things the contract deliberately does not say
+
+* **Timestamps are not `format: date-time`.** The legacy endpoints render them through
+  Flask's JSON encoder as RFC 1123 (`Wed, 11 Dec 2024 06:50:57 GMT`) and the topology
+  ones as naive ISO with no offset. Neither is RFC 3339, so both are pinned with an
+  explicit `pattern` instead of a format that would be a lie — and would fail at
+  runtime, since the guard actually checks it.
+* **`payment.amount` is a string.** It is a Postgres `NUMERIC`, and Flask serialises it
+  as `"1814.73"` rather than a JSON number.
+
+Both were found by turning response validation on, not by reading the code.

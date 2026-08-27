@@ -5,7 +5,7 @@ from database import db_engine
 
 payments_bp = Blueprint('payments_bp', __name__)
 
-@payments_bp.route('/', methods=['GET'])
+@payments_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_payments_list():
     status = request.args.get('status', None)
     party_id = request.args.get('party_id', None)

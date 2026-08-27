@@ -1,0 +1,45 @@
+# Redocly does two jobs here: it renders openapi.yaml as a static HTML page
+# (`task contract-docs`) and it lints it for style (`task contract-lint`).
+#
+# The default `recommended` ruleset is kept, with four rules turned off. Each is
+# off for a stated reason rather than to make the output green - a suppressed
+# rule with no reason is just a lie with a config file around it.
+
+apis:
+  wms@v2:
+    root: openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # This API has no authentication at all - it sits behind the compose network
+  # and the Angular frontend talks to it directly. Declaring a `securityScheme`
+  # nothing enforces would describe an API that does not exist. Turn this back on
+  # the day authn lands; it will correctly flag all 41 operations.
+  security-defined: off
+
+  # Fires on `GET /health`, `GET /employees` and `GET /contractors`: three
+  # operations with no parameters, no request body and no addressable id. There
+  # is no request a client can make to those URLs that produces a 4xx, so
+  # documenting one would be fiction. Every operation that *can* 4xx does declare
+  # it - tests/test_spec.py enforces exactly that, and more strictly than this
+  # rule, because it derives the requirement from the parameters.
+  operation-4xx-response: off
+
+  # False positive on `WarehouseCreate`. The `oneOf` there expresses "exactly one
+  # of location_id or location" with `not: { required: [...] }`; the rule looks
+  # for those properties inside each `not` subschema instead of on the parent,
+  # where they are in fact defined.
+  no-required-schema-properties-undefined: off
+
+  # The licence is the repository's, not the API document's.
+  info-license: off
+
+openapi:
+  # The two error envelopes and the three measure shapes are the things a reader
+  # most needs spelled out, so schemas start expanded rather than collapsed.
+  schemaExpansionLevel: 2
+  jsonSampleExpandLevel: 3
+  hideDownloadButton: false
+  sortTagsAlphabetically: false
