@@ -32,6 +32,13 @@ dev = [
     # Property-based contract testing: generates requests from the contract and
     # checks every response back against it.
     "schemathesis>=4.25,<5",
+    # Round-trip YAML: assembles openapi/ into openapi.yaml with the comments and
+    # the formatting intact. See scripts/bundle_spec.py.
+    "ruamel.yaml>=0.18",
+    # openapi.yaml -> src/contract/models.py. See scripts/generate_models.py.
+    "datamodel-code-generator>=0.25",
+    # The static half of the type-safety story; the guard is the runtime half.
+    "mypy>=1.11",
 ]
 
 [tool.pytest.ini_options]
@@ -48,3 +55,20 @@ filterwarnings = [
     # without it openapi-core rejects the empty value the frontend sends.
     "default:Use of allowEmptyValue property is deprecated:DeprecationWarning",
 ]
+
+[tool.mypy]
+# `src` is flat on sys.path at runtime, so mypy has to see it the same way.
+mypy_path = "src"
+files = ["src", "scripts", "tests"]
+# Most of this codebase has no annotations on its handlers, and none of it would
+# be checked at all without this: mypy skips unannotated function bodies by
+# default. Turning it on is what makes the check worth running here - it is how
+# `body.width.value` on an `Optional[Length]` gets caught.
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Every dependency here ships its own types (flask, sqlalchemy, pydantic,
+# openapi-core, werkzeug), so nothing needs `ignore_missing_imports`. If that
+# stops being true, add a per-module override with a reason rather than a
+# blanket one.

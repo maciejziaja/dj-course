@@ -12,7 +12,8 @@ rm -rf .venv
 "$PY" -m venv .venv
 echo "📦 Created .venv with $("$PY" --version)"
 
-# `[dev]` adds pytest, openapi-spec-validator and schemathesis; see pyproject.toml.
+# `[dev]` adds pytest, openapi-spec-validator, schemathesis, mypy, ruamel.yaml
+# and datamodel-code-generator; see pyproject.toml.
 if command -v uv >/dev/null 2>&1; then
   uv pip install --python .venv/bin/python -e ".[dev]"
 else

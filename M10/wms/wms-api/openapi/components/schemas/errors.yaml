@@ -1,0 +1,122 @@
+# The error envelopes: the legacy `{"error": "..."}` and the topology one.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+LegacyOrGuardError:
+  description: |
+    A failure on a legacy endpoint comes from one of two places, and they do
+    not share a shape: the handler answers with `LegacyError`, while the
+    contract guard - which runs before the handler and rejects bad
+    parameters, headers and bodies - answers with the `ApiError` envelope
+    used everywhere else.
+  anyOf:
+    - $ref: '#/components/schemas/LegacyError'
+    - $ref: '#/components/schemas/ApiError'
+
+LegacyError:
+  type: object
+  description: |
+    The legacy error shape - a single `error` key holding human-readable
+    text, not a machine-readable code.
+
+    `message` appears when the failure came from the router rather than the
+    handler - a URL that matched no rule at all answers with the same
+    envelope as the rest of the API.
+  required: [error]
+  additionalProperties: false
+  properties:
+    error:
+      type: string
+      example: 'Employee id 999 not found'
+    message:
+      type: string
+      description: Present only on router-level failures.
+
+ApiError:
+  type: object
+  description: |
+    The topology error envelope: a machine-readable `code` in `error`, human
+    text in `message`, plus whatever context the specific failure carries
+    (`details`, `constraint`, `hint`, ...).
+  required: [error, message]
+  additionalProperties: true
+  properties:
+    error:
+      type: string
+      description: Machine-readable error code.
+      example: invalid_body
+    message:
+      type: string
+      description: Human-readable explanation.
+      example: 'Request body failed validation.'
+    details:
+      type: array
+      description: Present on validation failures - one entry per offending field.
+      items:
+        type: object
+        required: [field, message]
+        additionalProperties: false
+        properties:
+          field:
+            type: string
+            example: 'width.value'
+          message:
+            type: string
+            example: 'Input should be greater than 0'
+    constraint:
+      type: string
+      nullable: true
+      description: Present on database conflicts - the index that collided.
+    hint:
+      type: string
+      description: Present when there is a concrete next step, e.g. retry with `?cascade=true`.
+
+BulkNotFoundError:
+  type: object
+  description: '`PATCH /shelves:bulk` with at least one unknown id.'
+  required: [error, message, missing]
+  additionalProperties: true
+  properties:
+    error: {type: string, enum: [not_found]}
+    message: {type: string}
+    missing:
+      type: array
+      description: Up to 100 of the ids that do not exist.
+      maxItems: 100
+      items: {type: integer, format: int32}
+DeleteBlockedError:
+  type: object
+  required: [error, message]
+  additionalProperties: true
+  properties:
+    error:
+      type: string
+      enum: [in_use, has_history, has_children]
+    message: {type: string}
+    blocked_count:
+      type: integer
+      description: How many shelves block the delete (`in_use` / `has_history`).
+      minimum: 0
+    blocked_by:
+      type: array
+      description: Up to 20 of the blocking shelves; `blocked_count` tells the whole truth.
+      maxItems: 20
+      items: {$ref: '#/components/schemas/BlockedShelf'}
+    would_delete: {$ref: '#/components/schemas/TopologyCounts'}
+    child_counts: {$ref: '#/components/schemas/TopologyCounts'}
+    hint: {type: string}
+BlockedShelf:
+  type: object
+  required: [shelf_id, code, reason, reservations, records]
+  additionalProperties: false
+  properties:
+    shelf_id: {type: integer, format: int32}
+    code: {type: string, example: 'BULK-A01-R001-L1'}
+    reason:
+      type: string
+      enum: [in_use, has_history]
+      description: |
+        `in_use` - a pending/active reservation or an open storage record.
+        `has_history` - only closed records remain, but the trace blocks the
+        delete all the same.
+    reservations: {type: integer, minimum: 0}
+    records: {type: integer, minimum: 0}

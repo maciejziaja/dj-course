@@ -1,0 +1,29 @@
+# Cargo event history (legacy shape).
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/storage/{record_id}/events:
+  get:
+    summary: Storage record event history
+    description: Returns the cargo event history for the given storage record, oldest first.
+    operationId: getStorageEventHistory
+    tags: [Storage]
+    parameters:
+      - name: record_id
+        in: path
+        required: true
+        description: Storage record ID (`storage_record_id`).
+        schema: {type: integer, format: int32}
+    responses:
+      '200':
+        description: List of storage events (empty when the record has none).
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/StorageEvent'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        description: No endpoint matches this URL (the path parameter did not parse).
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}

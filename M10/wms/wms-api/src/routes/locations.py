@@ -5,7 +5,7 @@ reading them and creating one inline with a warehouse (D3 of the plan).
 """
 from flask import Blueprint, jsonify, request
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.pagination import envelope, page_params
 from topology.repository import list_locations, location_out

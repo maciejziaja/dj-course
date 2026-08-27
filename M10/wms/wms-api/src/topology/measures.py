@@ -21,9 +21,9 @@ LengthUnit = Literal['mm', 'cm', 'm']
 WeightUnit = Literal['g', 'kg', 't']
 VolumeUnit = Literal['cm3', 'l', 'm3']
 
-BASE_LENGTH_UNIT = 'mm'
-BASE_WEIGHT_UNIT = 'kg'
-BASE_VOLUME_UNIT = 'm3'
+BASE_LENGTH_UNIT: LengthUnit = 'mm'
+BASE_WEIGHT_UNIT: WeightUnit = 'kg'
+BASE_VOLUME_UNIT: VolumeUnit = 'm3'
 
 TO_KG = {'g': Decimal('0.001'), 'kg': Decimal(1), 't': Decimal(1000)}
 TO_M3 = {'cm3': Decimal('0.000001'), 'l': Decimal('0.001'), 'm3': Decimal(1)}

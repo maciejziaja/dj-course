@@ -1,8 +1,7 @@
 from flask import Flask, request
 from flask_cors import CORS
 import os
-import re
-from env import assert_env_var
+from env import require_env
 from logger import logger
 
 # register blueprints
@@ -23,8 +22,7 @@ from routes.shelves import shelves_bp
 from topology.errors import register_topology_error_handlers
 from openapi_guard import init_openapi_guard
 
-assert_env_var('SERVICE_NAME')
-SERVICE_NAME = os.environ.get('SERVICE_NAME')
+SERVICE_NAME = require_env('SERVICE_NAME')
 
 app = Flask(SERVICE_NAME)
 

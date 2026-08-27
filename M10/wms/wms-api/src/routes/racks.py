@@ -1,7 +1,9 @@
 """/racks - and the shelves beneath them."""
+from typing import Any, Dict
+
 from flask import Blueprint, jsonify
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.building import check_collisions, check_shelf_budget, expand_levels, shelf_rows
 from topology.deletion import perform_delete
@@ -20,12 +22,13 @@ def _with_codes(conn, rows):
     return [dict(shelf_out(row), code=codes.get(row['shelf_id'])) for row in rows]
 
 
-def _rack_columns(body: RackPatch):
+def _rack_columns(body: RackPatch) -> Dict[str, Any]:
     changes = body.changes()
-    columns = {}
+    columns: Dict[str, Any] = {}
     if 'label' in changes:
         columns['label'] = body.label
-    if 'max_height' in changes:
+    # Not nullable in the contract: sent and not-None are the same condition.
+    if body.max_height is not None:
         columns['max_height'] = body.max_height.value
         columns['height_unit'] = body.max_height.unit
     return columns

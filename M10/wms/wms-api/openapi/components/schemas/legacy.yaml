@@ -1,0 +1,222 @@
+# Response shapes of the pre-topology endpoints, documented as they behave.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+StorageEvent:
+  type: object
+  required: [event_id, storage_record_id, event_type_id, event_time, party_id, details]
+  additionalProperties: false
+  properties:
+    event_id: {type: integer, format: int32}
+    storage_record_id: {type: integer, format: int32}
+    event_type_id: {type: integer, format: int32}
+    event_time: {$ref: '#/components/schemas/HttpDate'}
+    party_id:
+      type: integer
+      format: int32
+      nullable: true
+    details:
+      type: object
+      nullable: true
+      description: Free-form JSONB payload; the keys vary by event type.
+      additionalProperties: true
+
+    # --- legacy: employees ------------------------------------------------
+EmployeeListItem:
+  type: object
+  required: [employee_id, employee_name, email, phone, hire_date, roles]
+  additionalProperties: false
+  properties:
+    employee_id: {type: integer, format: int32}
+    employee_name: {type: string}
+    email:
+      type: string
+      nullable: true
+    phone:
+      type: string
+      nullable: true
+    hire_date:
+      type: string
+      nullable: true
+      description: See `HttpDate` - RFC 1123, not RFC 3339.
+      pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
+    roles:
+      type: string
+      nullable: true
+      description: Role names joined with `, `.
+      example: 'OPERATOR, SUPERVISOR'
+
+    # --- legacy: contractors ----------------------------------------------
+ContractorStatus:
+  type: string
+  enum: [ACTIVE, INACTIVE]
+Contact:
+  type: object
+  required: [type, details]
+  additionalProperties: false
+  properties:
+    type:
+      type: string
+      nullable: true
+      example: EMAIL
+    details:
+      type: string
+      nullable: true
+      example: 'info@example.com'
+
+ContractorSummary:
+  type: object
+  required: [id, name, status, tax_id_number, contacts]
+  additionalProperties: false
+  properties:
+    id:
+      type: string
+      description: '`party_id`, serialised as a string by the contract layer.'
+      example: '1'
+    name: {type: string}
+    status: {$ref: '#/components/schemas/ContractorStatus'}
+    tax_id_number:
+      type: string
+      nullable: true
+    contacts:
+      type: array
+      items: {$ref: '#/components/schemas/Contact'}
+AddressDetails:
+  type: object
+  required: [address_id, street_address, city, country, postal_code, address_type]
+  additionalProperties: false
+  properties:
+    address_id:
+      type: string
+      nullable: true
+    street_address:
+      type: string
+      nullable: true
+    city:
+      type: string
+      nullable: true
+    country:
+      type: string
+      nullable: true
+    postal_code:
+      type: string
+      nullable: true
+    address_type:
+      type: string
+      nullable: true
+
+EmployeeSummaryEmployeeData:
+  type: object
+  additionalProperties: true
+  properties:
+    type:
+      type: string
+      nullable: true
+    job_title:
+      type: string
+      nullable: true
+
+EmployeeSummary:
+  type: object
+  required: [employee_id, employee_name, employee_data, contacts]
+  additionalProperties: false
+  properties:
+    employee_id:
+      type: string
+      nullable: true
+    employee_name:
+      type: string
+      nullable: true
+    employee_data: {$ref: '#/components/schemas/EmployeeSummaryEmployeeData'}
+    contacts:
+      type: array
+      nullable: true
+      items: {$ref: '#/components/schemas/Contact'}
+ContractorDetails:
+  type: object
+  required: [id, name, status, tax_id_number, created_at, updated_at, contacts, addresses, employees]
+  additionalProperties: false
+  properties:
+    id:
+      type: string
+      example: '1'
+    name: {type: string}
+    status: {$ref: '#/components/schemas/ContractorStatus'}
+    tax_id_number:
+      type: string
+      nullable: true
+    created_at:
+      type: string
+      nullable: true
+      description: See `HttpDate` - RFC 1123, not RFC 3339.
+      pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
+    updated_at:
+      type: string
+      nullable: true
+      description: See `HttpDate` - RFC 1123, not RFC 3339.
+      pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
+    contacts:
+      type: array
+      items: {$ref: '#/components/schemas/Contact'}
+    addresses:
+      type: array
+      items: {$ref: '#/components/schemas/AddressDetails'}
+    employees:
+      type: array
+      items: {$ref: '#/components/schemas/EmployeeSummary'}
+ContractorStatusUpdate:
+  type: object
+  required: [status]
+  additionalProperties: false
+  properties:
+    status: {$ref: '#/components/schemas/ContractorStatus'}
+ContractorStatusUpdateResponse:
+  type: object
+  required: [message]
+  additionalProperties: false
+  properties:
+    message:
+      type: string
+      example: 'Contractor 1 status updated successfully to ACTIVE'
+
+    # --- legacy: payments -------------------------------------------------
+Payment:
+  type: object
+  required: [payment_id, storage_record_id, party_id, amount, currency, status, payment_date, external_reference]
+  additionalProperties: false
+  properties:
+    payment_id: {type: integer, format: int32}
+    storage_record_id:
+      type: integer
+      format: int32
+      nullable: true
+    party_id:
+      type: integer
+      format: int32
+      nullable: true
+    amount:
+      type: string
+      nullable: true
+      description: |
+        A Postgres `NUMERIC` column, serialised by Flask as a **string** so no
+        precision is lost on the wire. Clients must not assume a JSON number.
+      pattern: '^-?\d+(\.\d+)?$'
+      example: '1814.73'
+    currency:
+      type: string
+      nullable: true
+      example: EUR
+    status:
+      type: string
+      nullable: true
+      example: PAID
+    payment_date:
+      type: string
+      nullable: true
+      description: See `HttpDate` - RFC 1123, not RFC 3339.
+      pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
+    external_reference:
+      type: string
+      nullable: true
+      example: 'PAY-20260827-0031'
+
+    # --- topology: measures (input) ---------------------------------------

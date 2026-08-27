@@ -1,0 +1,209 @@
+# The five topology entities and their paginated envelopes.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+Location:
+  type: object
+  required: [id, address, city, postal_code, country]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    address: {type: string}
+    city: {type: string}
+    postal_code: {type: string}
+    country: {type: string}
+Warehouse:
+  type: object
+  required: [id, name, description, location, created_at, updated_at]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    name: {type: string}
+    description:
+      type: string
+      nullable: true
+    location: {$ref: '#/components/schemas/Location'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+Zone:
+  type: object
+  required: [id, warehouse_id, code, name, description, created_at, updated_at]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    warehouse_id: {type: integer, format: int32}
+    code:
+      type: string
+      description: First segment of the composed shelf path, unique per warehouse.
+      example: BULK
+    name: {type: string}
+    description:
+      type: string
+      nullable: true
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+Aisle:
+  type: object
+  required: [id, zone_id, label, width, created_at, updated_at]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    zone_id: {type: integer, format: int32}
+    label:
+      type: string
+      example: A01
+    width: {$ref: '#/components/schemas/LengthOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+Rack:
+  type: object
+  required: [id, aisle_id, label, max_height, created_at, updated_at]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    aisle_id: {type: integer, format: int32}
+    label:
+      type: string
+      example: R001
+    max_height: {$ref: '#/components/schemas/LengthOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+Shelf:
+  type: object
+  description: A shelf addressed within its rack. See `ShelfWithPath` for the catalogue shape.
+  required: [id, rack_id, level, code, max_weight, max_volume, created_at, updated_at]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    rack_id: {type: integer, format: int32}
+    level:
+      type: string
+      example: '1'
+    code:
+      type: string
+      nullable: true
+      description: |
+        The composed path `{zone}-{aisle}-{rack}-L{level}`. Never stored - it
+        is composed on read and is unique by construction.
+      example: 'BULK-A01-R001-L1'
+    max_weight: {$ref: '#/components/schemas/WeightOutput'}
+    max_volume: {$ref: '#/components/schemas/VolumeOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+ShelfWithPath:
+  type: object
+  description: |
+    The `GET /shelves` shape - a shelf plus the chain up to its warehouse, so
+    the catalogue is readable without a second call.
+  required: [id, rack_id, level, code, max_weight, max_volume, created_at, updated_at, warehouse_id, zone, aisle, rack]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    rack_id: {type: integer, format: int32}
+    level: {type: string}
+    code:
+      type: string
+      nullable: true
+      example: 'BULK-A01-R001-L1'
+    max_weight: {$ref: '#/components/schemas/WeightOutput'}
+    max_volume: {$ref: '#/components/schemas/VolumeOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    warehouse_id: {type: integer, format: int32}
+    zone:
+      type: object
+      required: [id, code]
+      additionalProperties: false
+      properties:
+        id: {type: integer, format: int32}
+        code: {type: string}
+    aisle:
+      type: object
+      required: [id, label]
+      additionalProperties: false
+      properties:
+        id: {type: integer, format: int32}
+        label: {type: string}
+    rack:
+      type: object
+      required: [id, label]
+      additionalProperties: false
+      properties:
+        id: {type: integer, format: int32}
+        label: {type: string}
+LocationPage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Location'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+WarehousePage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Warehouse'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+ZonePage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Zone'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+AislePage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Aisle'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+RackPage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Rack'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+ShelfPage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Shelf'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}
+ShelfWithPathPage:
+  type: object
+  required: [items, page, limit, total]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/ShelfWithPath'}
+    page: {type: integer, minimum: 1}
+    limit: {type: integer, minimum: 1}
+    total: {type: integer, minimum: 0}

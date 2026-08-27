@@ -1,9 +1,10 @@
 import time
 import os
+from typing import Any, Dict
 from flask import Blueprint, jsonify
 from sqlalchemy import text
 
-from application import logger
+from logger import logger
 from database import db_engine
 
 health_bp = Blueprint('health_bp', __name__)
@@ -14,7 +15,7 @@ START_TIME = time.time()
 def health():
     logger.debug('Health check requested')
 
-    health_status = {
+    health_status: Dict[str, Any] = {
         "status": "UP",
         "timestamp": time.time(),
         "uptime_seconds": int(time.time() - START_TIME),

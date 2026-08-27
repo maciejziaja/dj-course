@@ -1,0 +1,47 @@
+# Reusable responses - the failures every operation of a kind answers with.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+InvalidBody:
+  description: The request body failed validation.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+InvalidPath:
+  description: |
+    A path parameter is outside the range the contract allows. Every id in
+    this schema is a 32-bit Postgres `SERIAL`, so an id larger than that is
+    refused here rather than at the database.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+
+InvalidQuery:
+  description: A query parameter failed validation.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+UnsupportedMediaType:
+  description: |
+    The `Content-Type` is not one this operation accepts. Every write in this
+    API takes `application/json` and nothing else.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+
+NotFound:
+  description: The addressed row, or a row it refers to, does not exist.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+Conflict:
+  description: The request conflicts with the current state of the data.
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/ApiError'}
+DeleteBlocked:
+  description: |
+    The delete was refused - either the subtree still holds children and
+    `?cascade=true` was not given (`has_children`), or shelves underneath
+    carry reservations or storage records (`in_use` / `has_history`).
+  content:
+    application/json:
+      schema: {$ref: '#/components/schemas/DeleteBlockedError'}

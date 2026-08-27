@@ -3,7 +3,7 @@
 Thin on purpose: SQL in, dicts out. Anything that decides *whether* something may
 happen lives in the routes (validation) or in `deletion.py` (blocking rules).
 """
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from sqlalchemy import text
 
@@ -373,7 +373,7 @@ def counts_by_parent(conn, level: str, warehouse_id: int) -> Dict[int, Dict[str,
             LEFT JOIN shelf s ON s.rack_id = r.rack_id
             WHERE z.warehouse_id = :id GROUP BY z.zone_id
         """
-        keys = ('aisles', 'racks', 'shelves')
+        keys: Tuple[str, ...] = ('aisles', 'racks', 'shelves')
     elif level == 'aisle':
         sql = """
             SELECT a.aisle_id AS parent_id,

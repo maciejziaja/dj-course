@@ -1,12 +1,15 @@
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
-from application import logger
+from logger import logger
 from sqlalchemy import text
+from werkzeug.http import http_date
 from database import db_engine
 from pydantic import ValidationError
 
-from contract.contractor_details import ContractorDetails
-from contract.contractor_summary import ContractorSummary
-from contract.contractor_status_update import ContractorStatusUpdate
+# Generated from openapi.yaml by `task contract-models`; regenerating is what
+# keeps these in step with the contract the guard enforces.
+from contract.models import ContractorDetails, ContractorStatusUpdate, ContractorSummary
 
 contractors_bp = Blueprint('contractors_bp', __name__)
 
@@ -41,8 +44,8 @@ def get_contractors():
                 'tax_id_number': raw_contractor['tax_id_number'],
                 'contacts': raw_contractor['contacts'] or []
             }
-            validated_contractor = ContractorSummary.from_dict(contractor_data)
-            contractors.append(validated_contractor.to_dict())
+            validated_contractor = ContractorSummary.model_validate(contractor_data)
+            contractors.append(validated_contractor.model_dump(mode='json'))
         except ValidationError as e:
             logger.error(f"Data validation error for contractor data: {raw_contractor}. Error: {e}")
             return jsonify({'error': 'Internal server error: data validation failed'}), 500
@@ -139,11 +142,19 @@ def get_contractor_details(id):
         response['employees'] = response.get('employees') or []
         response['addresses'] = response.get('addresses') or []
 
+        # The contract types these as RFC 1123 strings, because that is what the
+        # client sees: Flask's JSON encoder renders a datetime through
+        # `http_date`. Doing it here instead means the model validates the same
+        # bytes the client gets, rather than the datetime standing behind them.
+        for key in ('created_at', 'updated_at'):
+            if isinstance(response.get(key), datetime):
+                response[key] = http_date(response[key])
+
         for employee in response.get('employees', []):
             if 'employee_id' in employee:
                 employee['employee_id'] = str(employee['employee_id'])
 
-        contractor_details = ContractorDetails.from_dict(response).to_dict()
+        contractor_details = ContractorDetails.model_validate(response).model_dump(mode='json')
         logger.info(f"Contractor validation successful for {id}")
     except ValidationError as e:
         logger.error(f"Data validation error for contractor {id}: {e}, {response}")
@@ -156,8 +167,9 @@ def get_contractor_details(id):
 def update_contractor_status(id):
     data = request.get_json()
     try:
-        status_update = ContractorStatusUpdate.from_dict(data or {})
-        new_status = status_update.status.value
+        status_update = ContractorStatusUpdate.model_validate(data or {})
+        # A `Literal['ACTIVE', 'INACTIVE']`, so it is already the string.
+        new_status = status_update.status
     except ValidationError as e:
         return jsonify({'error': f"Invalid request body: {e}"}), 400
 

@@ -1,3 +1,20 @@
+# =============================================================================
+# GENERATED FILE - do not edit.
+#
+# Assembled from openapi/ by `task contract-bundle` (scripts/bundle_spec.py).
+# Edit the fragments under openapi/ instead; `task contract-lint` fails if this
+# file no longer matches them, and so does the test suite and app start-up.
+# =============================================================================
+# The API contract, split so that it can be worked on.
+#
+# This file is the index: what the API is, and where each operation and
+# schema is written down. `task contract-bundle` assembles it and the files
+# it points at into ../openapi.yaml, which is the document every tool reads -
+# the runtime guard, the test suite, schemathesis, Redocly and the generated
+# models. Editing ../openapi.yaml by hand is pointless: it is regenerated,
+# and `task contract-lint` fails when it stops matching these files.
+#
+# `~1` in a $ref is a literal `/` (JSON Pointer escaping, RFC 6901).
 openapi: 3.0.3
 info:
   title: WMS API (Warehouse Management System)
@@ -54,9 +71,7 @@ tags:
     description: The leaf level - flat catalogue, single-shelf CRUD and bulk patch.
 
 paths:
-  # ==========================================================================
-  # Health
-  # ==========================================================================
+  # Liveness and dependency status.
   /health:
     get:
       summary: Service health check
@@ -68,16 +83,13 @@ paths:
           description: Service is running correctly.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/HealthStatus' }
+              schema: {$ref: '#/components/schemas/HealthStatus'}
         '503':
           description: A dependency is down (e.g. PostgreSQL is unreachable).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/HealthStatus' }
-
-  # ==========================================================================
-  # Storage (legacy)
-  # ==========================================================================
+              schema: {$ref: '#/components/schemas/HealthStatus'}
+  # Cargo event history (legacy shape).
   /storage/{record_id}/events:
     get:
       summary: Storage record event history
@@ -89,7 +101,7 @@ paths:
           in: path
           required: true
           description: Storage record ID (`storage_record_id`).
-          schema: { type: integer, format: int32 }
+          schema: {type: integer, format: int32}
       responses:
         '200':
           description: List of storage events (empty when the record has none).
@@ -97,18 +109,15 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/StorageEvent' }
+                items: {$ref: '#/components/schemas/StorageEvent'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
           description: No endpoint matches this URL (the path parameter did not parse).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
-
-  # ==========================================================================
-  # Employees (legacy)
-  # ==========================================================================
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+  # Warehouse staff, and the employees of one warehouse (legacy shapes).
   /employees:
     get:
       summary: Employee list
@@ -122,8 +131,7 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/EmployeeListItem' }
-
+                items: {$ref: '#/components/schemas/EmployeeListItem'}
   /employees/{employee_id}:
     get:
       summary: Employee details
@@ -135,24 +143,20 @@ paths:
           in: path
           required: true
           description: Employee ID (`party_id`).
-          schema: { type: integer, format: int32 }
+          schema: {type: integer, format: int32}
       responses:
         '200':
           description: Employee data.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/EmployeeListItem' }
+              schema: {$ref: '#/components/schemas/EmployeeListItem'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
           description: Employee not found.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
-
-  # ==========================================================================
-  # Warehouse employees (legacy, singular - not the topology namespace)
-  # ==========================================================================
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
   /warehouse/{warehouse_id}:
     get:
       summary: Warehouse employees
@@ -168,7 +172,7 @@ paths:
           in: path
           required: true
           description: Warehouse ID.
-          schema: { type: integer, format: int32 }
+          schema: {type: integer, format: int32}
       responses:
         '200':
           description: List of warehouse employees (empty when none are assigned).
@@ -176,18 +180,15 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/EmployeeListItem' }
+                items: {$ref: '#/components/schemas/EmployeeListItem'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
           description: No endpoint matches this URL (the path parameter did not parse).
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
-
-  # ==========================================================================
-  # Contractors (legacy)
-  # ==========================================================================
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+  # Contractor companies and their representatives (legacy shape).
   /contractors:
     get:
       summary: Contractor list
@@ -201,13 +202,12 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/ContractorSummary' }
+                items: {$ref: '#/components/schemas/ContractorSummary'}
         '500':
           description: A stored row failed the server-side pydantic validation.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
-
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
   /contractors/{id}:
     get:
       summary: Contractor details
@@ -221,19 +221,19 @@ paths:
           description: Contractor details.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ContractorDetails' }
+              schema: {$ref: '#/components/schemas/ContractorDetails'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
           description: Contractor not found.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
         '500':
           description: A stored row failed the server-side pydantic validation.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
     patch:
       summary: Update contractor status
       description: Sets the contractor status to `ACTIVE` or `INACTIVE`.
@@ -246,29 +246,26 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ContractorStatusUpdate' }
+            schema: {$ref: '#/components/schemas/ContractorStatusUpdate'}
       responses:
         '200':
           description: Status updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ContractorStatusUpdateResponse' }
+              schema: {$ref: '#/components/schemas/ContractorStatusUpdateResponse'}
         '400':
           description: Invalid request body.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
         '415':
           $ref: '#/components/responses/UnsupportedMediaType'
         '404':
           description: Contractor not found.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LegacyOrGuardError' }
-
-  # ==========================================================================
-  # Payments (legacy)
-  # ==========================================================================
+              schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+  # Payments against storage records (legacy shape).
   /payments:
     get:
       summary: Payment list
@@ -281,12 +278,12 @@ paths:
           required: false
           description: Exact-match filter on payment status.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 50, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 50, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: party_id
           in: query
           required: false
           description: Exact-match filter on the paying party.
-          schema: { type: integer, format: int32 }
+          schema: {type: integer, format: int32}
       responses:
         '200':
           description: List of payments.
@@ -294,13 +291,14 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Payment' }
+                items: {$ref: '#/components/schemas/Payment'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
 
   # ==========================================================================
   # Locations (topology)
   # ==========================================================================
+  # Addresses a warehouse can be placed at.
   /locations:
     get:
       summary: List locations
@@ -317,29 +315,30 @@ paths:
           in: query
           description: Case-insensitive `ILIKE` filter on city.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: country
           in: query
           description: Case-insensitive `ILIKE` filter on country.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: q
           in: query
           description: Free-text `ILIKE` filter across address, city and postal code.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
       responses:
         '200':
           description: A page of locations.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LocationPage' }
+              schema: {$ref: '#/components/schemas/LocationPage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
 
   # ==========================================================================
   # Warehouses (topology)
   # ==========================================================================
+  # Root of the topology, its zones, and the declarative layout endpoints.
   /warehouses:
     get:
       summary: List warehouses
@@ -352,23 +351,23 @@ paths:
           in: query
           description: Case-insensitive `ILIKE` filter on the location's city.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: country
           in: query
           description: Case-insensitive `ILIKE` filter on the location's country.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: q
           in: query
           description: Free-text `ILIKE` filter on warehouse name and description.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
       responses:
         '200':
           description: A page of warehouses.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/WarehousePage' }
+              schema: {$ref: '#/components/schemas/WarehousePage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
     post:
@@ -384,13 +383,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/WarehouseCreate' }
+            schema: {$ref: '#/components/schemas/WarehouseCreate'}
       responses:
         '201':
           description: Warehouse created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Warehouse' }
+              schema: {$ref: '#/components/schemas/Warehouse'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -412,7 +411,7 @@ paths:
           description: The warehouse.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Warehouse' }
+              schema: {$ref: '#/components/schemas/Warehouse'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
@@ -429,13 +428,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/WarehousePatch' }
+            schema: {$ref: '#/components/schemas/WarehousePatch'}
       responses:
         '200':
           description: The updated warehouse.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Warehouse' }
+              schema: {$ref: '#/components/schemas/Warehouse'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -459,7 +458,7 @@ paths:
           description: A page of zones.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ZonePage' }
+              schema: {$ref: '#/components/schemas/ZonePage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
         '404':
@@ -475,13 +474,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ZoneCreate' }
+            schema: {$ref: '#/components/schemas/ZoneCreate'}
       responses:
         '201':
           description: Zone created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Zone' }
+              schema: {$ref: '#/components/schemas/Zone'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -514,7 +513,7 @@ paths:
           description: The layout tree.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Layout' }
+              schema: {$ref: '#/components/schemas/Layout'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
         '404':
@@ -539,18 +538,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/LayoutCreate' }
+            schema: {$ref: '#/components/schemas/LayoutCreate'}
       responses:
         '200':
           description: Dry run - nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LayoutDryRun' }
+              schema: {$ref: '#/components/schemas/LayoutDryRun'}
         '201':
           description: Layout created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LayoutCreated' }
+              schema: {$ref: '#/components/schemas/LayoutCreated'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -563,6 +562,7 @@ paths:
   # ==========================================================================
   # Zones (topology)
   # ==========================================================================
+  # Zones and the aisles beneath them.
   /zones/{zone_id}:
     get:
       summary: Get a zone
@@ -575,7 +575,7 @@ paths:
           description: The zone.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Zone' }
+              schema: {$ref: '#/components/schemas/Zone'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
@@ -591,13 +591,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ZonePatch' }
+            schema: {$ref: '#/components/schemas/ZonePatch'}
       responses:
         '200':
           description: The updated zone.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Zone' }
+              schema: {$ref: '#/components/schemas/Zone'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -624,7 +624,7 @@ paths:
           description: Dry run - nothing was deleted.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeleteDryRun' }
+              schema: {$ref: '#/components/schemas/DeleteDryRun'}
         '204':
           description: Deleted.
         '400':
@@ -648,7 +648,7 @@ paths:
           description: A page of aisles.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AislePage' }
+              schema: {$ref: '#/components/schemas/AislePage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
         '404':
@@ -664,13 +664,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AisleCreate' }
+            schema: {$ref: '#/components/schemas/AisleCreate'}
       responses:
         '201':
           description: Aisle created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Aisle' }
+              schema: {$ref: '#/components/schemas/Aisle'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -696,18 +696,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AisleGenerate' }
+            schema: {$ref: '#/components/schemas/AisleGenerate'}
       responses:
         '200':
           description: Dry run - nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/GenerateDryRun' }
+              schema: {$ref: '#/components/schemas/GenerateDryRun'}
         '201':
           description: Aisles created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AislesGenerated' }
+              schema: {$ref: '#/components/schemas/AislesGenerated'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -720,6 +720,7 @@ paths:
   # ==========================================================================
   # Aisles (topology)
   # ==========================================================================
+  # Aisles and the racks beneath them.
   /aisles/{aisle_id}:
     get:
       summary: Get an aisle
@@ -732,7 +733,7 @@ paths:
           description: The aisle.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Aisle' }
+              schema: {$ref: '#/components/schemas/Aisle'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
@@ -748,13 +749,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/AislePatch' }
+            schema: {$ref: '#/components/schemas/AislePatch'}
       responses:
         '200':
           description: The updated aisle.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Aisle' }
+              schema: {$ref: '#/components/schemas/Aisle'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -777,7 +778,7 @@ paths:
           description: Dry run - nothing was deleted.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeleteDryRun' }
+              schema: {$ref: '#/components/schemas/DeleteDryRun'}
         '204':
           description: Deleted.
         '400':
@@ -801,7 +802,7 @@ paths:
           description: A page of racks.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RackPage' }
+              schema: {$ref: '#/components/schemas/RackPage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
         '404':
@@ -817,13 +818,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RackCreate' }
+            schema: {$ref: '#/components/schemas/RackCreate'}
       responses:
         '201':
           description: Rack created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Rack' }
+              schema: {$ref: '#/components/schemas/Rack'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -846,18 +847,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RackGenerate' }
+            schema: {$ref: '#/components/schemas/RackGenerate'}
       responses:
         '200':
           description: Dry run - nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/GenerateDryRun' }
+              schema: {$ref: '#/components/schemas/GenerateDryRun'}
         '201':
           description: Racks created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RacksGenerated' }
+              schema: {$ref: '#/components/schemas/RacksGenerated'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -870,6 +871,7 @@ paths:
   # ==========================================================================
   # Racks (topology)
   # ==========================================================================
+  # Racks and the shelves beneath them.
   /racks/{rack_id}:
     get:
       summary: Get a rack
@@ -882,7 +884,7 @@ paths:
           description: The rack.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Rack' }
+              schema: {$ref: '#/components/schemas/Rack'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
@@ -898,13 +900,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RackPatch' }
+            schema: {$ref: '#/components/schemas/RackPatch'}
       responses:
         '200':
           description: The updated rack.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Rack' }
+              schema: {$ref: '#/components/schemas/Rack'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -927,7 +929,7 @@ paths:
           description: Dry run - nothing was deleted.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeleteDryRun' }
+              schema: {$ref: '#/components/schemas/DeleteDryRun'}
         '204':
           description: Deleted.
         '400':
@@ -951,7 +953,7 @@ paths:
           description: A page of shelves.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ShelfPage' }
+              schema: {$ref: '#/components/schemas/ShelfPage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
         '404':
@@ -967,13 +969,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ShelfCreate' }
+            schema: {$ref: '#/components/schemas/ShelfCreate'}
       responses:
         '201':
           description: Shelf created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Shelf' }
+              schema: {$ref: '#/components/schemas/Shelf'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -996,18 +998,18 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ShelfGenerate' }
+            schema: {$ref: '#/components/schemas/ShelfGenerate'}
       responses:
         '200':
           description: Dry run - nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/GenerateDryRun' }
+              schema: {$ref: '#/components/schemas/GenerateDryRun'}
         '201':
           description: Shelves created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ShelvesGenerated' }
+              schema: {$ref: '#/components/schemas/ShelvesGenerated'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -1020,6 +1022,7 @@ paths:
   # ==========================================================================
   # Shelves (topology)
   # ==========================================================================
+  # The leaf level: flat catalogue, single-shelf CRUD and bulk patch.
   /shelves:
     get:
       summary: The flat shelf catalogue
@@ -1035,46 +1038,46 @@ paths:
         - name: warehouse
           in: query
           description: Exact-match filter on warehouse id.
-          schema: { type: integer, format: int32 }
+          schema: {type: integer, format: int32}
         - name: zone
           in: query
           description: '`ILIKE` filter on zone code.'
           allowEmptyValue: true
-          schema: { type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: aisle
           in: query
           description: '`ILIKE` filter on aisle label.'
           allowEmptyValue: true
-          schema: { type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: rack
           in: query
           description: '`ILIKE` filter on rack label.'
           allowEmptyValue: true
-          schema: { type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: level
           in: query
           description: Exact-match filter on shelf level.
           allowEmptyValue: true
-          schema: { type: string, maxLength: 8, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 8, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: code
           in: query
           description: '`ILIKE` filter on the composed path, e.g. `BULK-A01-%`.'
           allowEmptyValue: true
-          schema: { type: string, maxLength: 64, pattern: '^[^\u0000-\u001F\u007F]*$' }
+          schema: {type: string, maxLength: 64, pattern: '^[^\u0000-\u001F\u007F]*$'}
         - name: max_weight_gte
           in: query
           description: Only shelves whose declared capacity in kg is at least this.
-          schema: { type: number, minimum: 0 }
+          schema: {type: number, minimum: 0}
         - name: max_volume_gte
           in: query
           description: Only shelves whose declared capacity in m3 is at least this.
-          schema: { type: number, minimum: 0 }
+          schema: {type: number, minimum: 0}
       responses:
         '200':
           description: A page of shelves, each with its full path.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ShelfWithPathPage' }
+              schema: {$ref: '#/components/schemas/ShelfWithPathPage'}
         '400':
           $ref: '#/components/responses/InvalidQuery'
 
@@ -1095,13 +1098,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ShelfBulkPatch' }
+            schema: {$ref: '#/components/schemas/ShelfBulkPatch'}
       responses:
         '200':
           description: The updated shelves.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ShelfBulkPatchResult' }
+              schema: {$ref: '#/components/schemas/ShelfBulkPatchResult'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -1110,7 +1113,7 @@ paths:
           description: At least one id does not exist; nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/BulkNotFoundError' }
+              schema: {$ref: '#/components/schemas/BulkNotFoundError'}
         '409':
           $ref: '#/components/responses/Conflict'
 
@@ -1126,7 +1129,7 @@ paths:
           description: The shelf, with its composed `code`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Shelf' }
+              schema: {$ref: '#/components/schemas/Shelf'}
         '400':
           $ref: '#/components/responses/InvalidPath'
         '404':
@@ -1142,13 +1145,13 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ShelfPatch' }
+            schema: {$ref: '#/components/schemas/ShelfPatch'}
       responses:
         '200':
           description: The updated shelf.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Shelf' }
+              schema: {$ref: '#/components/schemas/Shelf'}
         '400':
           $ref: '#/components/responses/InvalidBody'
         '415':
@@ -1171,7 +1174,7 @@ paths:
           description: Dry run - nothing was deleted.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeleteDryRun' }
+              schema: {$ref: '#/components/schemas/DeleteDryRun'}
         '204':
           description: Deleted.
         '400':
@@ -1183,9 +1186,9 @@ paths:
 
 # ============================================================================
 components:
-
-  # --------------------------------------------------------------------------
   parameters:
+# Query, path and header parameters shared across operations.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
     Page:
       name: page
       in: query
@@ -1193,22 +1196,22 @@ components:
         1-based page number. The upper bound exists so that `(page - 1) * limit`
         stays inside the integer range Postgres can take as an OFFSET - without
         it a large enough page number reaches the database and fails there.
-      schema: { type: integer, minimum: 1, maximum: 1000000, default: 1 }
+      schema: {type: integer, minimum: 1, maximum: 1000000, default: 1}
     Limit:
       name: limit
       in: query
       description: Page size.
-      schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+      schema: {type: integer, minimum: 1, maximum: 500, default: 50}
     Cascade:
       name: cascade
       in: query
       description: Delete the whole subtree instead of refusing when children exist.
-      schema: { $ref: '#/components/schemas/LooseBoolean' }
+      schema: {$ref: '#/components/schemas/LooseBoolean'}
     DryRun:
       name: dry_run
       in: query
       description: Report what would happen and write nothing.
-      schema: { $ref: '#/components/schemas/LooseBoolean' }
+      schema: {$ref: '#/components/schemas/LooseBoolean'}
     XRequestId:
       name: X-Request-Id
       in: header
@@ -1217,46 +1220,46 @@ components:
         Optional correlation id, echoed into the server log line for this
         request. Must be a UUID when present.
       allowEmptyValue: true
-      schema: { type: string, format: uuid }
+      schema: {type: string, format: uuid}
     ContractorId:
       name: id
       in: path
       required: true
       description: Contractor ID (`party_id`).
-      schema: { type: integer, format: int32 }
+      schema: {type: integer, format: int32}
     WarehouseId:
       name: warehouse_id
       in: path
       required: true
-      schema: { type: integer, format: int32 }
+      schema: {type: integer, format: int32}
     ZoneId:
       name: zone_id
       in: path
       required: true
-      schema: { type: integer, format: int32 }
+      schema: {type: integer, format: int32}
     AisleId:
       name: aisle_id
       in: path
       required: true
-      schema: { type: integer, format: int32 }
+      schema: {type: integer, format: int32}
     RackId:
       name: rack_id
       in: path
       required: true
-      schema: { type: integer, format: int32 }
+      schema: {type: integer, format: int32}
     ShelfId:
       name: shelf_id
       in: path
       required: true
-      schema: { type: integer, format: int32 }
-
-  # --------------------------------------------------------------------------
+      schema: {type: integer, format: int32}
   responses:
+# Reusable responses - the failures every operation of a kind answers with.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
     InvalidBody:
       description: The request body failed validation.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
     InvalidPath:
       description: |
         A path parameter is outside the range the contract allows. Every id in
@@ -1264,31 +1267,31 @@ components:
         refused here rather than at the database.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
 
     InvalidQuery:
       description: A query parameter failed validation.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
     UnsupportedMediaType:
       description: |
         The `Content-Type` is not one this operation accepts. Every write in this
         API takes `application/json` and nothing else.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
 
     NotFound:
       description: The addressed row, or a row it refers to, does not exist.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
     Conflict:
       description: The request conflicts with the current state of the data.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ApiError' }
+          schema: {$ref: '#/components/schemas/ApiError'}
     DeleteBlocked:
       description: |
         The delete was refused - either the subtree still holds children and
@@ -1296,12 +1299,9 @@ components:
         carry reservations or storage records (`in_use` / `has_history`).
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/DeleteBlockedError' }
-
-  # --------------------------------------------------------------------------
+          schema: {$ref: '#/components/schemas/DeleteBlockedError'}
   schemas:
-
-    # --- primitives -------------------------------------------------------
+    # primitives.yaml
     HttpDate:
       type: string
       description: |
@@ -1327,8 +1327,7 @@ components:
         A boolean query flag. Accepted spellings are `true`/`1`/`yes` and
         `false`/`0`/`no`; anything else is a `400 invalid_query`.
       enum: ['true', 'false', '1', '0', 'yes', 'no']
-
-    # --- errors -----------------------------------------------------------
+    # errors.yaml
     LegacyOrGuardError:
       description: |
         A failure on a legacy endpoint comes from one of two places, and they do
@@ -1404,14 +1403,13 @@ components:
       required: [error, message, missing]
       additionalProperties: true
       properties:
-        error: { type: string, enum: [not_found] }
-        message: { type: string }
+        error: {type: string, enum: [not_found]}
+        message: {type: string}
         missing:
           type: array
           description: Up to 100 of the ids that do not exist.
           maxItems: 100
-          items: { type: integer, format: int32 }
-
+          items: {type: integer, format: int32}
     DeleteBlockedError:
       type: object
       required: [error, message]
@@ -1420,7 +1418,7 @@ components:
         error:
           type: string
           enum: [in_use, has_history, has_children]
-        message: { type: string }
+        message: {type: string}
         blocked_count:
           type: integer
           description: How many shelves block the delete (`in_use` / `has_history`).
@@ -1429,18 +1427,17 @@ components:
           type: array
           description: Up to 20 of the blocking shelves; `blocked_count` tells the whole truth.
           maxItems: 20
-          items: { $ref: '#/components/schemas/BlockedShelf' }
-        would_delete: { $ref: '#/components/schemas/TopologyCounts' }
-        child_counts: { $ref: '#/components/schemas/TopologyCounts' }
-        hint: { type: string }
-
+          items: {$ref: '#/components/schemas/BlockedShelf'}
+        would_delete: {$ref: '#/components/schemas/TopologyCounts'}
+        child_counts: {$ref: '#/components/schemas/TopologyCounts'}
+        hint: {type: string}
     BlockedShelf:
       type: object
       required: [shelf_id, code, reason, reservations, records]
       additionalProperties: false
       properties:
-        shelf_id: { type: integer, format: int32 }
-        code: { type: string, example: 'BULK-A01-R001-L1' }
+        shelf_id: {type: integer, format: int32}
+        code: {type: string, example: 'BULK-A01-R001-L1'}
         reason:
           type: string
           enum: [in_use, has_history]
@@ -1448,10 +1445,9 @@ components:
             `in_use` - a pending/active reservation or an open storage record.
             `has_history` - only closed records remain, but the trace blocks the
             delete all the same.
-        reservations: { type: integer, minimum: 0 }
-        records: { type: integer, minimum: 0 }
-
-    # --- health -----------------------------------------------------------
+        reservations: {type: integer, minimum: 0}
+        records: {type: integer, minimum: 0}
+    # health.yaml
     HealthStatus:
       type: object
       required: [status, timestamp, uptime_seconds, dependencies]
@@ -1477,17 +1473,16 @@ components:
           additionalProperties:
             type: string
             enum: [UP, DOWN]
-
-    # --- legacy: storage --------------------------------------------------
+    # legacy.yaml
     StorageEvent:
       type: object
       required: [event_id, storage_record_id, event_type_id, event_time, party_id, details]
       additionalProperties: false
       properties:
-        event_id: { type: integer, format: int32 }
-        storage_record_id: { type: integer, format: int32 }
-        event_type_id: { type: integer, format: int32 }
-        event_time: { $ref: '#/components/schemas/HttpDate' }
+        event_id: {type: integer, format: int32}
+        storage_record_id: {type: integer, format: int32}
+        event_type_id: {type: integer, format: int32}
+        event_time: {$ref: '#/components/schemas/HttpDate'}
         party_id:
           type: integer
           format: int32
@@ -1504,8 +1499,8 @@ components:
       required: [employee_id, employee_name, email, phone, hire_date, roles]
       additionalProperties: false
       properties:
-        employee_id: { type: integer, format: int32 }
-        employee_name: { type: string }
+        employee_id: {type: integer, format: int32}
+        employee_name: {type: string}
         email:
           type: string
           nullable: true
@@ -1527,7 +1522,6 @@ components:
     ContractorStatus:
       type: string
       enum: [ACTIVE, INACTIVE]
-
     Contact:
       type: object
       required: [type, details]
@@ -1551,15 +1545,14 @@ components:
           type: string
           description: '`party_id`, serialised as a string by the contract layer.'
           example: '1'
-        name: { type: string }
-        status: { $ref: '#/components/schemas/ContractorStatus' }
+        name: {type: string}
+        status: {$ref: '#/components/schemas/ContractorStatus'}
         tax_id_number:
           type: string
           nullable: true
         contacts:
           type: array
-          items: { $ref: '#/components/schemas/Contact' }
-
+          items: {$ref: '#/components/schemas/Contact'}
     AddressDetails:
       type: object
       required: [address_id, street_address, city, country, postal_code, address_type]
@@ -1606,12 +1599,11 @@ components:
         employee_name:
           type: string
           nullable: true
-        employee_data: { $ref: '#/components/schemas/EmployeeSummaryEmployeeData' }
+        employee_data: {$ref: '#/components/schemas/EmployeeSummaryEmployeeData'}
         contacts:
           type: array
           nullable: true
-          items: { $ref: '#/components/schemas/Contact' }
-
+          items: {$ref: '#/components/schemas/Contact'}
     ContractorDetails:
       type: object
       required: [id, name, status, tax_id_number, created_at, updated_at, contacts, addresses, employees]
@@ -1620,8 +1612,8 @@ components:
         id:
           type: string
           example: '1'
-        name: { type: string }
-        status: { $ref: '#/components/schemas/ContractorStatus' }
+        name: {type: string}
+        status: {$ref: '#/components/schemas/ContractorStatus'}
         tax_id_number:
           type: string
           nullable: true
@@ -1637,21 +1629,19 @@ components:
           pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
         contacts:
           type: array
-          items: { $ref: '#/components/schemas/Contact' }
+          items: {$ref: '#/components/schemas/Contact'}
         addresses:
           type: array
-          items: { $ref: '#/components/schemas/AddressDetails' }
+          items: {$ref: '#/components/schemas/AddressDetails'}
         employees:
           type: array
-          items: { $ref: '#/components/schemas/EmployeeSummary' }
-
+          items: {$ref: '#/components/schemas/EmployeeSummary'}
     ContractorStatusUpdate:
       type: object
       required: [status]
       additionalProperties: false
       properties:
-        status: { $ref: '#/components/schemas/ContractorStatus' }
-
+        status: {$ref: '#/components/schemas/ContractorStatus'}
     ContractorStatusUpdateResponse:
       type: object
       required: [message]
@@ -1667,7 +1657,7 @@ components:
       required: [payment_id, storage_record_id, party_id, amount, currency, status, payment_date, external_reference]
       additionalProperties: false
       properties:
-        payment_id: { type: integer, format: int32 }
+        payment_id: {type: integer, format: int32}
         storage_record_id:
           type: integer
           format: int32
@@ -1703,6 +1693,7 @@ components:
           example: 'PAY-20260827-0031'
 
     # --- topology: measures (input) ---------------------------------------
+    # measures.yaml
     LengthInput:
       description: |
         A length. Either a bare integer - meaning millimetres, the base unit - or
@@ -1731,8 +1722,7 @@ components:
               type: string
               enum: [mm, cm, m]
               default: mm
-      example: { value: 500, unit: cm }
-
+      example: {value: 500, unit: cm}
     WeightInput:
       description: |
         A weight. A bare number means kilograms. Explicit units are **normalised
@@ -1756,8 +1746,7 @@ components:
               type: string
               enum: [g, kg, t]
               default: kg
-      example: { value: 700, unit: kg }
-
+      example: {value: 700, unit: kg}
     VolumeInput:
       description: |
         A volume. A bare number means cubic metres. Explicit units are
@@ -1781,36 +1770,30 @@ components:
               type: string
               enum: [cm3, l, m3]
               default: m3
-      example: { value: 6, unit: m3 }
-
-    # --- topology: measures (output) --------------------------------------
+      example: {value: 6, unit: m3}
     LengthOutput:
       type: object
       required: [value, unit]
       additionalProperties: false
       properties:
-        value: { type: number }
-        unit: { type: string, enum: [mm, cm, m] }
-
+        value: {type: number}
+        unit: {type: string, enum: [mm, cm, m]}
     WeightOutput:
       type: object
       description: Always kilograms - weights are normalised on write.
       required: [value, unit]
       additionalProperties: false
       properties:
-        value: { type: number }
-        unit: { type: string, enum: [kg] }
-
+        value: {type: number}
+        unit: {type: string, enum: [kg]}
     VolumeOutput:
       type: object
       description: Always cubic metres - volumes are normalised on write.
       required: [value, unit]
       additionalProperties: false
       properties:
-        value: { type: number }
-        unit: { type: string, enum: [m3] }
-
-    # --- topology: label specs --------------------------------------------
+        value: {type: number}
+        unit: {type: string, enum: [m3]}
     LabelSpec:
       description: |
         Either a range (`"01..08"`, zero-padding taken from the left operand, a
@@ -1856,85 +1839,81 @@ components:
           example: ['1', '2', '3']
 
     # --- topology: entities -----------------------------------------------
+    # topology.yaml
     Location:
       type: object
       required: [id, address, city, postal_code, country]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        address: { type: string }
-        city: { type: string }
-        postal_code: { type: string }
-        country: { type: string }
-
+        id: {type: integer, format: int32}
+        address: {type: string}
+        city: {type: string}
+        postal_code: {type: string}
+        country: {type: string}
     Warehouse:
       type: object
       required: [id, name, description, location, created_at, updated_at]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        name: { type: string }
+        id: {type: integer, format: int32}
+        name: {type: string}
         description:
           type: string
           nullable: true
-        location: { $ref: '#/components/schemas/Location' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-
+        location: {$ref: '#/components/schemas/Location'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
     Zone:
       type: object
       required: [id, warehouse_id, code, name, description, created_at, updated_at]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        warehouse_id: { type: integer, format: int32 }
+        id: {type: integer, format: int32}
+        warehouse_id: {type: integer, format: int32}
         code:
           type: string
           description: First segment of the composed shelf path, unique per warehouse.
           example: BULK
-        name: { type: string }
+        name: {type: string}
         description:
           type: string
           nullable: true
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
     Aisle:
       type: object
       required: [id, zone_id, label, width, created_at, updated_at]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        zone_id: { type: integer, format: int32 }
+        id: {type: integer, format: int32}
+        zone_id: {type: integer, format: int32}
         label:
           type: string
           example: A01
-        width: { $ref: '#/components/schemas/LengthOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-
+        width: {$ref: '#/components/schemas/LengthOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
     Rack:
       type: object
       required: [id, aisle_id, label, max_height, created_at, updated_at]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        aisle_id: { type: integer, format: int32 }
+        id: {type: integer, format: int32}
+        aisle_id: {type: integer, format: int32}
         label:
           type: string
           example: R001
-        max_height: { $ref: '#/components/schemas/LengthOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-
+        max_height: {$ref: '#/components/schemas/LengthOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
     Shelf:
       type: object
       description: A shelf addressed within its rack. See `ShelfWithPath` for the catalogue shape.
       required: [id, rack_id, level, code, max_weight, max_volume, created_at, updated_at]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        rack_id: { type: integer, format: int32 }
+        id: {type: integer, format: int32}
+        rack_id: {type: integer, format: int32}
         level:
           type: string
           example: '1'
@@ -1945,56 +1924,51 @@ components:
             The composed path `{zone}-{aisle}-{rack}-L{level}`. Never stored - it
             is composed on read and is unique by construction.
           example: 'BULK-A01-R001-L1'
-        max_weight: { $ref: '#/components/schemas/WeightOutput' }
-        max_volume: { $ref: '#/components/schemas/VolumeOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-
+        max_weight: {$ref: '#/components/schemas/WeightOutput'}
+        max_volume: {$ref: '#/components/schemas/VolumeOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
     ShelfWithPath:
       type: object
       description: |
         The `GET /shelves` shape - a shelf plus the chain up to its warehouse, so
         the catalogue is readable without a second call.
-      required:
-        [id, rack_id, level, code, max_weight, max_volume, created_at, updated_at,
-         warehouse_id, zone, aisle, rack]
+      required: [id, rack_id, level, code, max_weight, max_volume, created_at, updated_at, warehouse_id, zone, aisle, rack]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        rack_id: { type: integer, format: int32 }
-        level: { type: string }
+        id: {type: integer, format: int32}
+        rack_id: {type: integer, format: int32}
+        level: {type: string}
         code:
           type: string
           nullable: true
           example: 'BULK-A01-R001-L1'
-        max_weight: { $ref: '#/components/schemas/WeightOutput' }
-        max_volume: { $ref: '#/components/schemas/VolumeOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        warehouse_id: { type: integer, format: int32 }
+        max_weight: {$ref: '#/components/schemas/WeightOutput'}
+        max_volume: {$ref: '#/components/schemas/VolumeOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        warehouse_id: {type: integer, format: int32}
         zone:
           type: object
           required: [id, code]
           additionalProperties: false
           properties:
-            id: { type: integer, format: int32 }
-            code: { type: string }
+            id: {type: integer, format: int32}
+            code: {type: string}
         aisle:
           type: object
           required: [id, label]
           additionalProperties: false
           properties:
-            id: { type: integer, format: int32 }
-            label: { type: string }
+            id: {type: integer, format: int32}
+            label: {type: string}
         rack:
           type: object
           required: [id, label]
           additionalProperties: false
           properties:
-            id: { type: integer, format: int32 }
-            label: { type: string }
-
-    # --- topology: pagination ---------------------------------------------
+            id: {type: integer, format: int32}
+            label: {type: string}
     LocationPage:
       type: object
       required: [items, page, limit, total]
@@ -2002,11 +1976,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Location' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Location'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     WarehousePage:
       type: object
       required: [items, page, limit, total]
@@ -2014,11 +1987,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Warehouse' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Warehouse'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     ZonePage:
       type: object
       required: [items, page, limit, total]
@@ -2026,11 +1998,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Zone' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Zone'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     AislePage:
       type: object
       required: [items, page, limit, total]
@@ -2038,11 +2009,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Aisle' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Aisle'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     RackPage:
       type: object
       required: [items, page, limit, total]
@@ -2050,11 +2020,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Rack' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Rack'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     ShelfPage:
       type: object
       required: [items, page, limit, total]
@@ -2062,11 +2031,10 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/Shelf' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
+          items: {$ref: '#/components/schemas/Shelf'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
     ShelfWithPathPage:
       type: object
       required: [items, page, limit, total]
@@ -2074,22 +2042,20 @@ components:
       properties:
         items:
           type: array
-          items: { $ref: '#/components/schemas/ShelfWithPath' }
-        page: { type: integer, minimum: 1 }
-        limit: { type: integer, minimum: 1 }
-        total: { type: integer, minimum: 0 }
-
-    # --- topology: request bodies -----------------------------------------
+          items: {$ref: '#/components/schemas/ShelfWithPath'}
+        page: {type: integer, minimum: 1}
+        limit: {type: integer, minimum: 1}
+        total: {type: integer, minimum: 0}
+    # topology-write.yaml
     LocationCreate:
       type: object
       required: [address, city, postal_code, country]
       additionalProperties: false
       properties:
-        address: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
-        city: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
-        postal_code: { type: string, minLength: 1, maxLength: 20, pattern: '^[^\u0000]*$' }
-        country: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
-
+        address: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+        city: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+        postal_code: {type: string, minLength: 1, maxLength: 20, pattern: '^[^\u0000]*$'}
+        country: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
     WarehouseCreate:
       type: object
       description: |
@@ -2102,11 +2068,11 @@ components:
       additionalProperties: false
       oneOf:
         - required: [location_id]
-          not: { required: [location] }
+          not: {required: [location]}
         - required: [location]
-          not: { required: [location_id] }
+          not: {required: [location_id]}
       properties:
-        name: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
+        name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
         description:
           type: string
           nullable: true
@@ -2129,7 +2095,7 @@ components:
       minProperties: 1
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
+        name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
         description:
           type: string
           nullable: true
@@ -2146,8 +2112,8 @@ components:
       required: [code, name]
       additionalProperties: false
       properties:
-        code: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        name: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
+        code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
         description:
           type: string
           nullable: true
@@ -2159,8 +2125,8 @@ components:
       minProperties: 1
       additionalProperties: false
       properties:
-        code: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        name: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
+        code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
         description:
           type: string
           nullable: true
@@ -2172,60 +2138,53 @@ components:
       required: [label, width]
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        width: { $ref: '#/components/schemas/LengthInput' }
-
+        label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        width: {$ref: '#/components/schemas/LengthInput'}
     AislePatch:
       type: object
       minProperties: 1
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        width: { $ref: '#/components/schemas/LengthInput' }
-
+        label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        width: {$ref: '#/components/schemas/LengthInput'}
     RackCreate:
       type: object
       required: [label, max_height]
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        max_height: { $ref: '#/components/schemas/LengthInput' }
-
+        label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        max_height: {$ref: '#/components/schemas/LengthInput'}
     RackPatch:
       type: object
       minProperties: 1
       additionalProperties: false
       properties:
-        label: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        max_height: { $ref: '#/components/schemas/LengthInput' }
-
+        label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        max_height: {$ref: '#/components/schemas/LengthInput'}
     ShelfCreate:
       type: object
       required: [level, max_weight, max_volume]
       additionalProperties: false
       properties:
-        level: { type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$' }
-        max_weight: { $ref: '#/components/schemas/WeightInput' }
-        max_volume: { $ref: '#/components/schemas/VolumeInput' }
-
+        level: {type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$'}
+        max_weight: {$ref: '#/components/schemas/WeightInput'}
+        max_volume: {$ref: '#/components/schemas/VolumeInput'}
     ShelfPatch:
       type: object
       minProperties: 1
       additionalProperties: false
       properties:
-        level: { type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$' }
-        max_weight: { $ref: '#/components/schemas/WeightInput' }
-        max_volume: { $ref: '#/components/schemas/VolumeInput' }
-
+        level: {type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$'}
+        max_weight: {$ref: '#/components/schemas/WeightInput'}
+        max_volume: {$ref: '#/components/schemas/VolumeInput'}
     ShelfBulkPatchBody:
       type: object
       description: '`level` is deliberately absent - it is unique per rack.'
       minProperties: 1
       additionalProperties: false
       properties:
-        max_weight: { $ref: '#/components/schemas/WeightInput' }
-        max_volume: { $ref: '#/components/schemas/VolumeInput' }
-
+        max_weight: {$ref: '#/components/schemas/WeightInput'}
+        max_volume: {$ref: '#/components/schemas/VolumeInput'}
     ShelfBulkPatch:
       type: object
       required: [ids, patch]
@@ -2235,20 +2194,17 @@ components:
           type: array
           minItems: 1
           maxItems: 5000
-          items: { type: integer, format: int32 }
-        patch: { $ref: '#/components/schemas/ShelfBulkPatchBody' }
-
+          items: {type: integer, format: int32}
+        patch: {$ref: '#/components/schemas/ShelfBulkPatchBody'}
     ShelfBulkPatchResult:
       type: object
       required: [updated, items]
       additionalProperties: false
       properties:
-        updated: { type: integer, minimum: 0 }
+        updated: {type: integer, minimum: 0}
         items:
           type: array
-          items: { $ref: '#/components/schemas/Shelf' }
-
-    # --- topology: declarative templates ----------------------------------
+          items: {$ref: '#/components/schemas/Shelf'}
     ShelfTemplate:
       type: object
       required: [levels, max_weight, max_volume]
@@ -2264,10 +2220,9 @@ components:
             `400 inconsistent_request`. JSON Schema cannot state "this integer
             equals the length of that list after a range is expanded", so this
             is one rule the server checks and the contract can only describe.
-        levels: { $ref: '#/components/schemas/LevelSpec' }
-        max_weight: { $ref: '#/components/schemas/WeightInput' }
-        max_volume: { $ref: '#/components/schemas/VolumeInput' }
-
+        levels: {$ref: '#/components/schemas/LevelSpec'}
+        max_weight: {$ref: '#/components/schemas/WeightInput'}
+        max_volume: {$ref: '#/components/schemas/VolumeInput'}
     RackTemplate:
       type: object
       required: [labels, max_height]
@@ -2281,10 +2236,9 @@ components:
             Optional redundant count of the racks per aisle. If given it must
             equal what `labels` expands to; a mismatch is a
             `400 inconsistent_request`. See `ShelfTemplate.per_rack`.
-        labels: { $ref: '#/components/schemas/LabelSpec' }
-        max_height: { $ref: '#/components/schemas/LengthInput' }
-        shelves: { $ref: '#/components/schemas/ShelfTemplate' }
-
+        labels: {$ref: '#/components/schemas/LabelSpec'}
+        max_height: {$ref: '#/components/schemas/LengthInput'}
+        shelves: {$ref: '#/components/schemas/ShelfTemplate'}
     AisleTemplate:
       type: object
       required: [labels, width]
@@ -2298,10 +2252,9 @@ components:
             Optional redundant count of the aisles. If given it must equal what
             `labels` expands to; a mismatch is a `400 inconsistent_request`.
             See `ShelfTemplate.per_rack`.
-        labels: { $ref: '#/components/schemas/LabelSpec' }
-        width: { $ref: '#/components/schemas/LengthInput' }
-        racks: { $ref: '#/components/schemas/RackTemplate' }
-
+        labels: {$ref: '#/components/schemas/LabelSpec'}
+        width: {$ref: '#/components/schemas/LengthInput'}
+        racks: {$ref: '#/components/schemas/RackTemplate'}
     AisleGenerate:
       allOf:
         - $ref: '#/components/schemas/AisleTemplate'
@@ -2325,17 +2278,16 @@ components:
       required: [code, name]
       additionalProperties: false
       properties:
-        code: { type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$' }
-        name: { type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$' }
+        code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+        name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
         description:
           type: string
           nullable: true
           maxLength: 2000
           pattern: '^[^\u0000]*$'
-        aisles: { $ref: '#/components/schemas/AisleTemplate' }
-        racks: { $ref: '#/components/schemas/RackTemplate' }
-        shelves: { $ref: '#/components/schemas/ShelfTemplate' }
-
+        aisles: {$ref: '#/components/schemas/AisleTemplate'}
+        racks: {$ref: '#/components/schemas/RackTemplate'}
+        shelves: {$ref: '#/components/schemas/ShelfTemplate'}
     LayoutCreate:
       type: object
       required: [zones]
@@ -2352,9 +2304,8 @@ components:
           type: array
           minItems: 1
           maxItems: 50
-          items: { $ref: '#/components/schemas/LayoutZoneSpec' }
-
-    # --- topology: counts and layout responses ----------------------------
+          items: {$ref: '#/components/schemas/LayoutZoneSpec'}
+    # layout.yaml
     TopologyCounts:
       type: object
       description: |
@@ -2362,98 +2313,92 @@ components:
         call addressed - a zone delete reports `zones`, an aisle delete does not.
       additionalProperties: false
       properties:
-        zones: { type: integer, minimum: 0 }
-        aisles: { type: integer, minimum: 0 }
-        racks: { type: integer, minimum: 0 }
-        shelves: { type: integer, minimum: 0 }
-
+        zones: {type: integer, minimum: 0}
+        aisles: {type: integer, minimum: 0}
+        racks: {type: integer, minimum: 0}
+        shelves: {type: integer, minimum: 0}
     LayoutRackNode:
       type: object
       required: [id, aisle_id, label, max_height, created_at, updated_at, counts]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        aisle_id: { type: integer, format: int32 }
-        label: { type: string }
-        max_height: { $ref: '#/components/schemas/LengthOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        counts: { $ref: '#/components/schemas/TopologyCounts' }
+        id: {type: integer, format: int32}
+        aisle_id: {type: integer, format: int32}
+        label: {type: string}
+        max_height: {$ref: '#/components/schemas/LengthOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        counts: {$ref: '#/components/schemas/TopologyCounts'}
         shelves:
           type: array
           description: Present only at `depth=shelf`.
-          items: { $ref: '#/components/schemas/Shelf' }
-
+          items: {$ref: '#/components/schemas/Shelf'}
     LayoutAisleNode:
       type: object
       required: [id, zone_id, label, width, created_at, updated_at, counts]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        zone_id: { type: integer, format: int32 }
-        label: { type: string }
-        width: { $ref: '#/components/schemas/LengthOutput' }
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        counts: { $ref: '#/components/schemas/TopologyCounts' }
+        id: {type: integer, format: int32}
+        zone_id: {type: integer, format: int32}
+        label: {type: string}
+        width: {$ref: '#/components/schemas/LengthOutput'}
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        counts: {$ref: '#/components/schemas/TopologyCounts'}
         racks:
           type: array
           description: Present from `depth=rack` downwards.
-          items: { $ref: '#/components/schemas/LayoutRackNode' }
-
+          items: {$ref: '#/components/schemas/LayoutRackNode'}
     LayoutZoneNode:
       type: object
       required: [id, warehouse_id, code, name, description, created_at, updated_at, counts]
       additionalProperties: false
       properties:
-        id: { type: integer, format: int32 }
-        warehouse_id: { type: integer, format: int32 }
-        code: { type: string }
-        name: { type: string }
+        id: {type: integer, format: int32}
+        warehouse_id: {type: integer, format: int32}
+        code: {type: string}
+        name: {type: string}
         description:
           type: string
           nullable: true
-        created_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        updated_at: { $ref: '#/components/schemas/NaiveDateTime' }
-        counts: { $ref: '#/components/schemas/TopologyCounts' }
+        created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+        counts: {$ref: '#/components/schemas/TopologyCounts'}
         aisles:
           type: array
           description: Present from `depth=aisle` downwards.
-          items: { $ref: '#/components/schemas/LayoutAisleNode' }
-
+          items: {$ref: '#/components/schemas/LayoutAisleNode'}
     Layout:
       type: object
       required: [warehouse, depth, counts, zones]
       additionalProperties: false
       properties:
-        warehouse: { $ref: '#/components/schemas/Warehouse' }
+        warehouse: {$ref: '#/components/schemas/Warehouse'}
         depth:
           type: string
           enum: [zone, aisle, rack, shelf]
-        counts: { $ref: '#/components/schemas/TopologyCounts' }
+        counts: {$ref: '#/components/schemas/TopologyCounts'}
         zones:
           type: array
-          items: { $ref: '#/components/schemas/LayoutZoneNode' }
-
+          items: {$ref: '#/components/schemas/LayoutZoneNode'}
     LayoutCreated:
       type: object
       required: [created, naming, zones]
       additionalProperties: false
       properties:
-        created: { $ref: '#/components/schemas/TopologyCounts' }
+        created: {$ref: '#/components/schemas/TopologyCounts'}
         naming:
           type: string
           example: '{zone}-{aisle}-{rack}-L{level}'
         zones:
           type: array
-          items: { $ref: '#/components/schemas/Zone' }
-
+          items: {$ref: '#/components/schemas/Zone'}
     LayoutDryRun:
       type: object
       required: [would_create, naming]
       additionalProperties: false
       properties:
-        would_create: { $ref: '#/components/schemas/TopologyCounts' }
+        would_create: {$ref: '#/components/schemas/TopologyCounts'}
         naming:
           type: string
           example: '{zone}-{aisle}-{rack}-L{level}'
@@ -2464,41 +2409,37 @@ components:
       required: [would_delete]
       additionalProperties: false
       properties:
-        would_delete: { $ref: '#/components/schemas/TopologyCounts' }
-
+        would_delete: {$ref: '#/components/schemas/TopologyCounts'}
     GenerateDryRun:
       type: object
       required: [would_create]
       additionalProperties: false
       properties:
-        would_create: { $ref: '#/components/schemas/TopologyCounts' }
-
+        would_create: {$ref: '#/components/schemas/TopologyCounts'}
     AislesGenerated:
       type: object
       required: [created, aisles]
       additionalProperties: false
       properties:
-        created: { $ref: '#/components/schemas/TopologyCounts' }
+        created: {$ref: '#/components/schemas/TopologyCounts'}
         aisles:
           type: array
-          items: { $ref: '#/components/schemas/Aisle' }
-
+          items: {$ref: '#/components/schemas/Aisle'}
     RacksGenerated:
       type: object
       required: [created, racks]
       additionalProperties: false
       properties:
-        created: { $ref: '#/components/schemas/TopologyCounts' }
+        created: {$ref: '#/components/schemas/TopologyCounts'}
         racks:
           type: array
-          items: { $ref: '#/components/schemas/Rack' }
-
+          items: {$ref: '#/components/schemas/Rack'}
     ShelvesGenerated:
       type: object
       required: [created, shelves]
       additionalProperties: false
       properties:
-        created: { $ref: '#/components/schemas/TopologyCounts' }
+        created: {$ref: '#/components/schemas/TopologyCounts'}
         shelves:
           type: array
-          items: { $ref: '#/components/schemas/Shelf' }
+          items: {$ref: '#/components/schemas/Shelf'}

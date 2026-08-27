@@ -3,9 +3,11 @@
 Note the plural: the pre-existing `/warehouse/{id}` (singular) returns the
 *employees* of a warehouse and is a different namespace entirely.
 """
+from typing import Any, Dict, List
+
 from flask import Blueprint, jsonify, request
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.building import (aisle_rows, check_collisions, check_shelf_budget, expand_aisles,
                                expand_levels, expand_racks, rack_rows, shelf_rows)
@@ -52,12 +54,18 @@ def get_warehouse_details(warehouse_id):
 def create_warehouse():
     body = parse_body(WarehouseCreate)
     with db_engine.begin() as conn:
+        location_id: int
         if body.location is not None:
             location_id = insert_location(conn, body.location.model_dump())
-        else:
+        elif body.location_id is not None:
             location_id = body.location_id
             if not location_exists(conn, location_id):
                 raise ApiError('not_found', f'Location {location_id} not found.', 404)
+        else:
+            # `WarehouseCreate` requires exactly one of the two, so this is
+            # unreachable through the API - it is here to keep `location_id` an
+            # `int` rather than an `int | None` for everything below.
+            raise ApiError('invalid_body', 'Either location or location_id is required.', 400)
         warehouse_id = insert_warehouse(conn, location_id, body.name, body.description)
         row = get_warehouse(conn, warehouse_id)
         payload = warehouse_out(row)
@@ -121,13 +129,13 @@ def get_layout(warehouse_id):
         rack_counts = counts_by_parent(conn, 'rack', warehouse_id) if 'rack' in wanted else {}
         shelves = warehouse_tree_rows(conn, warehouse_id, 'shelf') if 'shelf' in wanted else []
 
-    shelves_by_rack = {}
+    shelves_by_rack: Dict[Any, List[Any]] = {}
     for row in shelves:
         shelves_by_rack.setdefault(row['rack_id'], []).append(row)
-    racks_by_aisle = {}
+    racks_by_aisle: Dict[Any, List[Any]] = {}
     for row in racks:
         racks_by_aisle.setdefault(row['aisle_id'], []).append(row)
-    aisles_by_zone = {}
+    aisles_by_zone: Dict[Any, List[Any]] = {}
     for row in aisles:
         aisles_by_zone.setdefault(row['zone_id'], []).append(row)
 
@@ -200,14 +208,17 @@ def create_layout(warehouse_id):
         for zone, aisle_labels, rack_labels, levels in plans:
             zone_row = insert_zone(conn, warehouse_id, zone.code, zone.name, zone.description)
             zone_payloads.append(zone_out(zone_row))
-            if not aisle_labels:
+            # The labels were expanded from the templates above, so a non-empty
+            # list means the template it came from is there. Saying both makes
+            # that readable, and lets mypy follow it into `.width` / `.max_height`.
+            if not aisle_labels or zone.aisles is None:
                 continue
             aisles = insert_aisles(conn, aisle_rows(zone_row['zone_id'], aisle_labels, zone.aisles.width))
-            if not rack_labels:
+            if not rack_labels or zone.racks is None:
                 continue
             racks = insert_racks(conn, rack_rows([row['aisle_id'] for row in aisles],
                                                  rack_labels, zone.racks.max_height))
-            if not levels:
+            if not levels or zone.shelves is None:
                 continue
             insert_shelves(conn, shelf_rows([row['rack_id'] for row in racks], levels,
                                             zone.shelves.max_weight, zone.shelves.max_volume))

@@ -1,0 +1,19 @@
+# Liveness and dependency status.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/health:
+  get:
+    summary: Service health check
+    description: Returns service status, uptime, version and dependency status (PostgreSQL).
+    operationId: health
+    tags: [Health]
+    responses:
+      '200':
+        description: Service is running correctly.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/HealthStatus'}
+      '503':
+        description: A dependency is down (e.g. PostgreSQL is unreachable).
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/HealthStatus'}

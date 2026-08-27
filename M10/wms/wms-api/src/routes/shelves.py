@@ -6,7 +6,7 @@ filter - an accidental "update all" is not expressible.
 """
 from flask import Blueprint, jsonify, request
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.deletion import perform_delete
 from topology.errors import ApiError, bool_arg, int_arg, parse_body

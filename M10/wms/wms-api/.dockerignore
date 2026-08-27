@@ -9,6 +9,10 @@ __pycache__
 *.log
 tests
 docs
+# The image reads the assembled openapi.yaml; the fragments it was built from and
+# the scripts that build them are development-time only.
+openapi
+scripts
 schemathesis-report
 .http
 topology.http

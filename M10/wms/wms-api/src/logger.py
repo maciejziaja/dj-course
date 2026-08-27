@@ -3,10 +3,9 @@ import os
 import socket
 from flask import has_request_context, request
 import json
-from env import assert_env_var
+from env import require_env
 
-assert_env_var("SERVICE_NAME")
-SERVICE_NAME = os.environ.get("SERVICE_NAME")
+SERVICE_NAME = require_env("SERVICE_NAME")
 
 class RequestContextFilter(logging.Filter):
     def filter(self, record):
@@ -43,7 +42,7 @@ def setup_logger():
     logger.setLevel(logging.DEBUG)
 
     # File handler
-    file_handler = logging.FileHandler(os.environ.get("SERVICE_NAME") + ".log")
+    file_handler = logging.FileHandler(SERVICE_NAME + ".log")
     file_formatter = JsonFormatter()
     file_handler.setFormatter(file_formatter)
     file_handler.addFilter(RequestContextFilter())

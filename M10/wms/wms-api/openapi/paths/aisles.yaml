@@ -1,0 +1,152 @@
+# Aisles and the racks beneath them.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/aisles/{aisle_id}:
+  get:
+    summary: Get an aisle
+    operationId: getAisle
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+    responses:
+      '200':
+        description: The aisle.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Aisle'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update an aisle
+    operationId: updateAisle
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AislePatch'}
+    responses:
+      '200':
+        description: The updated aisle.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Aisle'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+  delete:
+    summary: Delete an aisle
+    operationId: deleteAisle
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+      - $ref: '#/components/parameters/Cascade'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    responses:
+      '200':
+        description: Dry run - nothing was deleted.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DeleteDryRun'}
+      '204':
+        description: Deleted.
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/DeleteBlocked'
+
+/aisles/{aisle_id}/racks:
+  get:
+    summary: List the racks of an aisle
+    operationId: getAisleRacks
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+    responses:
+      '200':
+        description: A page of racks.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RackPage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  post:
+    summary: Create a single rack
+    operationId: createRack
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/RackCreate'}
+    responses:
+      '201':
+        description: Rack created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Rack'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/aisles/{aisle_id}/racks:generate:
+  post:
+    summary: Generate racks by range
+    operationId: generateRacks
+    tags: [Aisles]
+    parameters:
+      - $ref: '#/components/parameters/AisleId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/RackGenerate'}
+    responses:
+      '200':
+        description: Dry run - nothing was written.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GenerateDryRun'}
+      '201':
+        description: Racks created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RacksGenerated'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # Racks (topology)
+  # ==========================================================================

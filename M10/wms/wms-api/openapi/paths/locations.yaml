@@ -1,0 +1,41 @@
+# Addresses a warehouse can be placed at.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/locations:
+  get:
+    summary: List locations
+    description: |
+      The address picker behind `POST /warehouses`. A location has no children
+      and nothing to cascade, so it is read-only here - one is created inline
+      with a warehouse instead.
+    operationId: getLocations
+    tags: [Locations]
+    parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: city
+        in: query
+        description: Case-insensitive `ILIKE` filter on city.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: country
+        in: query
+        description: Case-insensitive `ILIKE` filter on country.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: q
+        in: query
+        description: Free-text `ILIKE` filter across address, city and postal code.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+    responses:
+      '200':
+        description: A page of locations.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LocationPage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+
+  # ==========================================================================
+  # Warehouses (topology)
+  # ==========================================================================

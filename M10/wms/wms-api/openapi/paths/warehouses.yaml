@@ -1,0 +1,225 @@
+# Root of the topology, its zones, and the declarative layout endpoints.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/warehouses:
+  get:
+    summary: List warehouses
+    operationId: getWarehouses
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: city
+        in: query
+        description: Case-insensitive `ILIKE` filter on the location's city.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: country
+        in: query
+        description: Case-insensitive `ILIKE` filter on the location's country.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: q
+        in: query
+        description: Free-text `ILIKE` filter on warehouse name and description.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 200, pattern: '^[^\u0000-\u001F\u007F]*$'}
+    responses:
+      '200':
+        description: A page of warehouses.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WarehousePage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+  post:
+    summary: Create a warehouse
+    description: |
+      Exactly one of `location_id` (an existing address) or `location` (a new
+      one, created in the same transaction) must be supplied.
+    operationId: createWarehouse
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/WarehouseCreate'}
+    responses:
+      '201':
+        description: Warehouse created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Warehouse'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/warehouses/{warehouse_id}:
+  get:
+    summary: Get a warehouse
+    operationId: getWarehouseDetails
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+    responses:
+      '200':
+        description: The warehouse.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Warehouse'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update a warehouse
+    description: Partial update - at least one field must be present in the body.
+    operationId: updateWarehouse
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/WarehousePatch'}
+    responses:
+      '200':
+        description: The updated warehouse.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Warehouse'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/warehouses/{warehouse_id}/zones:
+  get:
+    summary: List the zones of a warehouse
+    operationId: getWarehouseZones
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+    responses:
+      '200':
+        description: A page of zones.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ZonePage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  post:
+    summary: Create a zone
+    operationId: createZone
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ZoneCreate'}
+    responses:
+      '201':
+        description: Zone created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Zone'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/warehouses/{warehouse_id}/layout:
+  get:
+    summary: Read the warehouse layout as a tree
+    description: |
+      Returns the topology of one warehouse, nested to the requested `depth`.
+      Every node carries a `counts` object describing what sits beneath it, so
+      a shallow read still reports the size of the subtree.
+    operationId: getLayout
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+      - name: depth
+        in: query
+        description: How far down to expand the tree. Nodes always carry `counts`.
+        schema:
+          type: string
+          enum: [zone, aisle, rack, shelf]
+          default: zone
+    responses:
+      '200':
+        description: The layout tree.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Layout'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  post:
+    summary: Create a whole layout in one call
+    description: |
+      Declarative bulk creation: zones, and optionally the aisles, racks and
+      shelves beneath them, expanded from label ranges (`"01..08"`) or explicit
+      lists. Everything is expanded and budget-checked before a single row is
+      written, so a bad range costs nothing.
+
+      With `?dry_run=true` nothing is written and the response reports what
+      *would* have been created.
+    operationId: createLayout
+    tags: [Warehouses]
+    parameters:
+      - $ref: '#/components/parameters/WarehouseId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/LayoutCreate'}
+    responses:
+      '200':
+        description: Dry run - nothing was written.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LayoutDryRun'}
+      '201':
+        description: Layout created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LayoutCreated'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # Zones (topology)
+  # ==========================================================================

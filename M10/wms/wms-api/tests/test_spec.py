@@ -7,9 +7,11 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts'))
+SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts')
+sys.path.insert(0, SCRIPTS)
 
-from lint_spec import SPEC_PATH, rule_to_openapi_path, spec_operations  # noqa: E402
+from lint_spec import SPEC_PATH  # noqa: E402
+from openapi_guard import coverage_gaps  # noqa: E402
 
 
 @pytest.fixture(scope='module')
@@ -28,14 +30,9 @@ def test_spec_is_a_valid_openapi_document(spec):
 def test_every_route_is_documented(spec, flask_app):
     """A spec that omits routes is worse than none - it looks authoritative."""
     document, _ = spec
-    documented = spec_operations(document)
-    served = {
-        (rule_to_openapi_path(rule.rule), method.lower())
-        for rule in flask_app.url_map.iter_rules() if rule.endpoint != 'static'
-        for method in rule.methods - {'HEAD', 'OPTIONS'}
-    }
-    assert served - documented == set(), 'served by Flask but missing from openapi.yaml'
-    assert documented - served == set(), 'documented in openapi.yaml but not routed'
+    undocumented, unrouted = coverage_gaps(flask_app, document['paths'])
+    assert undocumented == [], 'served by Flask but missing from openapi.yaml'
+    assert unrouted == [], 'documented in openapi.yaml but not routed'
 
 
 def test_every_operation_has_an_operation_id(spec):
@@ -154,3 +151,48 @@ def test_no_component_is_unused(spec):
             if f'#/components/{section}/{name}' not in body:
                 orphans.append(f'{section}/{name}')
     assert orphans == []
+
+
+# ---------------------------------------------------------------------------
+# The contract is assembled from openapi/ and the models are generated from the
+# result. Both are committed, so both can go stale - and a stale artefact is a
+# lie that looks authoritative. These are the checks that catch it without a CI
+# server: they run in the same suite as everything else.
+# ---------------------------------------------------------------------------
+
+def test_openapi_yaml_is_the_bundle_of_the_openapi_directory():
+    """`openapi.yaml` is generated; if it drifted, someone edited the wrong file."""
+    from bundle_spec import BUNDLE, Bundler
+    with open(BUNDLE, encoding='utf-8') as handle:
+        committed = handle.read()
+    assert committed == Bundler().bundle(), (
+        'openapi.yaml no longer matches openapi/ - run `task contract-bundle`')
+
+
+def test_generated_models_match_the_contract():
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, os.path.join(SCRIPTS, 'generate_models.py'), '--check'],
+        capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_coverage_gaps_sees_a_route_the_contract_does_not_describe(flask_app):
+    """The check itself, on a contract that is deliberately wrong."""
+    from openapi_guard import coverage_gaps
+    undocumented, unrouted = coverage_gaps(flask_app, {'/health': {'get': {}},
+                                                       '/invented': {'get': {}}})
+    assert ('/invented', 'get') in unrouted
+    assert ('/shelves', 'get') in undocumented
+
+
+def test_strict_mode_refuses_to_start_against_a_contract_that_misses_a_route():
+    """The gate that does not need CI: drift stops the process, not a build server."""
+    from flask import Flask
+
+    from openapi_guard import OpenAPIGuard
+
+    app = Flask('contract-gate-test')
+    app.add_url_rule('/not-in-the-contract', 'invented', lambda: '')
+    with pytest.raises(RuntimeError, match='does not match the route table'):
+        OpenAPIGuard(mode='strict').init_app(app)

@@ -1,0 +1,261 @@
+# Request bodies: creates, patches and the declarative templates.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+LocationCreate:
+  type: object
+  required: [address, city, postal_code, country]
+  additionalProperties: false
+  properties:
+    address: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    city: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    postal_code: {type: string, minLength: 1, maxLength: 20, pattern: '^[^\u0000]*$'}
+    country: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+WarehouseCreate:
+  type: object
+  description: |
+    Exactly one of `location_id` (an existing address) or `location` (a new
+    one, created in the same transaction) is required.
+
+    The `oneOf` below is that rule, not a restatement of it: send both or
+    neither and the contract rejects the call before the handler does.
+  required: [name]
+  additionalProperties: false
+  oneOf:
+    - required: [location_id]
+      not: {required: [location]}
+    - required: [location]
+      not: {required: [location_id]}
+  properties:
+    name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      pattern: '^[^\u0000]*$'
+    location_id:
+      type: integer
+      format: int32
+      minimum: 0
+      exclusiveMinimum: true
+      description: An existing location. Mutually exclusive with `location`.
+    location:
+      allOf:
+        - $ref: '#/components/schemas/LocationCreate'
+      description: A new location, created in the same transaction. Mutually exclusive with `location_id`.
+
+WarehousePatch:
+  type: object
+  description: At least one field must be present.
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      pattern: '^[^\u0000]*$'
+    location_id:
+      type: integer
+      format: int32
+      minimum: 0
+      exclusiveMinimum: true
+
+ZoneCreate:
+  type: object
+  required: [code, name]
+  additionalProperties: false
+  properties:
+    code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      pattern: '^[^\u0000]*$'
+
+ZonePatch:
+  type: object
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      pattern: '^[^\u0000]*$'
+
+AisleCreate:
+  type: object
+  required: [label, width]
+  additionalProperties: false
+  properties:
+    label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    width: {$ref: '#/components/schemas/LengthInput'}
+AislePatch:
+  type: object
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    width: {$ref: '#/components/schemas/LengthInput'}
+RackCreate:
+  type: object
+  required: [label, max_height]
+  additionalProperties: false
+  properties:
+    label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    max_height: {$ref: '#/components/schemas/LengthInput'}
+RackPatch:
+  type: object
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    label: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    max_height: {$ref: '#/components/schemas/LengthInput'}
+ShelfCreate:
+  type: object
+  required: [level, max_weight, max_volume]
+  additionalProperties: false
+  properties:
+    level: {type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$'}
+    max_weight: {$ref: '#/components/schemas/WeightInput'}
+    max_volume: {$ref: '#/components/schemas/VolumeInput'}
+ShelfPatch:
+  type: object
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    level: {type: string, minLength: 1, maxLength: 8, pattern: '^[A-Za-z0-9_]+$'}
+    max_weight: {$ref: '#/components/schemas/WeightInput'}
+    max_volume: {$ref: '#/components/schemas/VolumeInput'}
+ShelfBulkPatchBody:
+  type: object
+  description: '`level` is deliberately absent - it is unique per rack.'
+  minProperties: 1
+  additionalProperties: false
+  properties:
+    max_weight: {$ref: '#/components/schemas/WeightInput'}
+    max_volume: {$ref: '#/components/schemas/VolumeInput'}
+ShelfBulkPatch:
+  type: object
+  required: [ids, patch]
+  additionalProperties: false
+  properties:
+    ids:
+      type: array
+      minItems: 1
+      maxItems: 5000
+      items: {type: integer, format: int32}
+    patch: {$ref: '#/components/schemas/ShelfBulkPatchBody'}
+ShelfBulkPatchResult:
+  type: object
+  required: [updated, items]
+  additionalProperties: false
+  properties:
+    updated: {type: integer, minimum: 0}
+    items:
+      type: array
+      items: {$ref: '#/components/schemas/Shelf'}
+ShelfTemplate:
+  type: object
+  required: [levels, max_weight, max_volume]
+  additionalProperties: false
+  properties:
+    per_rack:
+      type: integer
+      minimum: 0
+      exclusiveMinimum: true
+      description: |
+        Optional redundant count of the shelves per rack. If given it must
+        equal the number of levels `levels` expands to; a mismatch is a
+        `400 inconsistent_request`. JSON Schema cannot state "this integer
+        equals the length of that list after a range is expanded", so this
+        is one rule the server checks and the contract can only describe.
+    levels: {$ref: '#/components/schemas/LevelSpec'}
+    max_weight: {$ref: '#/components/schemas/WeightInput'}
+    max_volume: {$ref: '#/components/schemas/VolumeInput'}
+RackTemplate:
+  type: object
+  required: [labels, max_height]
+  additionalProperties: false
+  properties:
+    per_aisle:
+      type: integer
+      minimum: 0
+      exclusiveMinimum: true
+      description: |
+        Optional redundant count of the racks per aisle. If given it must
+        equal what `labels` expands to; a mismatch is a
+        `400 inconsistent_request`. See `ShelfTemplate.per_rack`.
+    labels: {$ref: '#/components/schemas/LabelSpec'}
+    max_height: {$ref: '#/components/schemas/LengthInput'}
+    shelves: {$ref: '#/components/schemas/ShelfTemplate'}
+AisleTemplate:
+  type: object
+  required: [labels, width]
+  additionalProperties: false
+  properties:
+    count:
+      type: integer
+      minimum: 0
+      exclusiveMinimum: true
+      description: |
+        Optional redundant count of the aisles. If given it must equal what
+        `labels` expands to; a mismatch is a `400 inconsistent_request`.
+        See `ShelfTemplate.per_rack`.
+    labels: {$ref: '#/components/schemas/LabelSpec'}
+    width: {$ref: '#/components/schemas/LengthInput'}
+    racks: {$ref: '#/components/schemas/RackTemplate'}
+AisleGenerate:
+  allOf:
+    - $ref: '#/components/schemas/AisleTemplate'
+  description: 'Body of `POST /zones/{zone_id}/aisles:generate`.'
+
+RackGenerate:
+  allOf:
+    - $ref: '#/components/schemas/RackTemplate'
+  description: 'Body of `POST /aisles/{aisle_id}/racks:generate`.'
+
+ShelfGenerate:
+  allOf:
+    - $ref: '#/components/schemas/ShelfTemplate'
+  description: 'Body of `POST /racks/{rack_id}/shelves:generate`.'
+
+LayoutZoneSpec:
+  type: object
+  description: |
+    A zone plus what to build underneath it. `racks` needs `aisles` and
+    `shelves` needs `racks` - there would be nothing to hang them off.
+  required: [code, name]
+  additionalProperties: false
+  properties:
+    code: {type: string, minLength: 1, maxLength: 16, pattern: '^[A-Za-z0-9_]+$'}
+    name: {type: string, minLength: 1, maxLength: 200, pattern: '^[^\u0000]*$'}
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      pattern: '^[^\u0000]*$'
+    aisles: {$ref: '#/components/schemas/AisleTemplate'}
+    racks: {$ref: '#/components/schemas/RackTemplate'}
+    shelves: {$ref: '#/components/schemas/ShelfTemplate'}
+LayoutCreate:
+  type: object
+  required: [zones]
+  additionalProperties: false
+  properties:
+    naming:
+      type: string
+      description: |
+        Accepted only with the one canonical value. The composed path is
+        never stored, so a per-request template would have nothing to write
+        to.
+      enum: ['{zone}-{aisle}-{rack}-L{level}']
+    zones:
+      type: array
+      minItems: 1
+      maxItems: 50
+      items: {$ref: '#/components/schemas/LayoutZoneSpec'}

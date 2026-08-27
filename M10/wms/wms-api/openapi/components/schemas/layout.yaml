@@ -1,0 +1,140 @@
+# Counts, the layout tree, and what the generators and dry runs answer with.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+TopologyCounts:
+  type: object
+  description: |
+    Row counts per level. Which keys are present depends on the level the
+    call addressed - a zone delete reports `zones`, an aisle delete does not.
+  additionalProperties: false
+  properties:
+    zones: {type: integer, minimum: 0}
+    aisles: {type: integer, minimum: 0}
+    racks: {type: integer, minimum: 0}
+    shelves: {type: integer, minimum: 0}
+LayoutRackNode:
+  type: object
+  required: [id, aisle_id, label, max_height, created_at, updated_at, counts]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    aisle_id: {type: integer, format: int32}
+    label: {type: string}
+    max_height: {$ref: '#/components/schemas/LengthOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    counts: {$ref: '#/components/schemas/TopologyCounts'}
+    shelves:
+      type: array
+      description: Present only at `depth=shelf`.
+      items: {$ref: '#/components/schemas/Shelf'}
+LayoutAisleNode:
+  type: object
+  required: [id, zone_id, label, width, created_at, updated_at, counts]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    zone_id: {type: integer, format: int32}
+    label: {type: string}
+    width: {$ref: '#/components/schemas/LengthOutput'}
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    counts: {$ref: '#/components/schemas/TopologyCounts'}
+    racks:
+      type: array
+      description: Present from `depth=rack` downwards.
+      items: {$ref: '#/components/schemas/LayoutRackNode'}
+LayoutZoneNode:
+  type: object
+  required: [id, warehouse_id, code, name, description, created_at, updated_at, counts]
+  additionalProperties: false
+  properties:
+    id: {type: integer, format: int32}
+    warehouse_id: {type: integer, format: int32}
+    code: {type: string}
+    name: {type: string}
+    description:
+      type: string
+      nullable: true
+    created_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    updated_at: {$ref: '#/components/schemas/NaiveDateTime'}
+    counts: {$ref: '#/components/schemas/TopologyCounts'}
+    aisles:
+      type: array
+      description: Present from `depth=aisle` downwards.
+      items: {$ref: '#/components/schemas/LayoutAisleNode'}
+Layout:
+  type: object
+  required: [warehouse, depth, counts, zones]
+  additionalProperties: false
+  properties:
+    warehouse: {$ref: '#/components/schemas/Warehouse'}
+    depth:
+      type: string
+      enum: [zone, aisle, rack, shelf]
+    counts: {$ref: '#/components/schemas/TopologyCounts'}
+    zones:
+      type: array
+      items: {$ref: '#/components/schemas/LayoutZoneNode'}
+LayoutCreated:
+  type: object
+  required: [created, naming, zones]
+  additionalProperties: false
+  properties:
+    created: {$ref: '#/components/schemas/TopologyCounts'}
+    naming:
+      type: string
+      example: '{zone}-{aisle}-{rack}-L{level}'
+    zones:
+      type: array
+      items: {$ref: '#/components/schemas/Zone'}
+LayoutDryRun:
+  type: object
+  required: [would_create, naming]
+  additionalProperties: false
+  properties:
+    would_create: {$ref: '#/components/schemas/TopologyCounts'}
+    naming:
+      type: string
+      example: '{zone}-{aisle}-{rack}-L{level}'
+
+DeleteDryRun:
+  type: object
+  description: What a real `DELETE` would have removed. Nothing was written.
+  required: [would_delete]
+  additionalProperties: false
+  properties:
+    would_delete: {$ref: '#/components/schemas/TopologyCounts'}
+GenerateDryRun:
+  type: object
+  required: [would_create]
+  additionalProperties: false
+  properties:
+    would_create: {$ref: '#/components/schemas/TopologyCounts'}
+AislesGenerated:
+  type: object
+  required: [created, aisles]
+  additionalProperties: false
+  properties:
+    created: {$ref: '#/components/schemas/TopologyCounts'}
+    aisles:
+      type: array
+      items: {$ref: '#/components/schemas/Aisle'}
+RacksGenerated:
+  type: object
+  required: [created, racks]
+  additionalProperties: false
+  properties:
+    created: {$ref: '#/components/schemas/TopologyCounts'}
+    racks:
+      type: array
+      items: {$ref: '#/components/schemas/Rack'}
+ShelvesGenerated:
+  type: object
+  required: [created, shelves]
+  additionalProperties: false
+  properties:
+    created: {$ref: '#/components/schemas/TopologyCounts'}
+    shelves:
+      type: array
+      items: {$ref: '#/components/schemas/Shelf'}

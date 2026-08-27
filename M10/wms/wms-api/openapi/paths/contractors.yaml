@@ -1,0 +1,78 @@
+# Contractor companies and their representatives (legacy shape).
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/contractors:
+  get:
+    summary: Contractor list
+    description: Contractor companies with their contacts.
+    operationId: getContractors
+    tags: [Contractors]
+    responses:
+      '200':
+        description: List of contractors.
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/ContractorSummary'}
+      '500':
+        description: A stored row failed the server-side pydantic validation.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+/contractors/{id}:
+  get:
+    summary: Contractor details
+    description: Full contractor record including addresses and representative employees.
+    operationId: getContractorDetails
+    tags: [Contractors]
+    parameters:
+      - $ref: '#/components/parameters/ContractorId'
+    responses:
+      '200':
+        description: Contractor details.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ContractorDetails'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        description: Contractor not found.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+      '500':
+        description: A stored row failed the server-side pydantic validation.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+  patch:
+    summary: Update contractor status
+    description: Sets the contractor status to `ACTIVE` or `INACTIVE`.
+    operationId: updateContractorStatus
+    tags: [Contractors]
+    parameters:
+      - $ref: '#/components/parameters/ContractorId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ContractorStatusUpdate'}
+    responses:
+      '200':
+        description: Status updated.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ContractorStatusUpdateResponse'}
+      '400':
+        description: Invalid request body.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        description: Contractor not found.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
