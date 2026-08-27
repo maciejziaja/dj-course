@@ -1,0 +1,72 @@
+# Warehouse staff, and the employees of one warehouse (legacy shapes).
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/employees:
+  get:
+    summary: Employee list
+    description: All employees with their contact details and comma-joined roles.
+    operationId: getEmployees
+    tags: [Employees]
+    responses:
+      '200':
+        description: List of employees.
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/EmployeeListItem'}
+/employees/{employee_id}:
+  get:
+    summary: Employee details
+    description: A single employee, in the same shape as the list entry.
+    operationId: getEmployee
+    tags: [Employees]
+    parameters:
+      - name: employee_id
+        in: path
+        required: true
+        description: Employee ID (`party_id`).
+        schema: {type: integer, format: int32}
+    responses:
+      '200':
+        description: Employee data.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EmployeeListItem'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        description: Employee not found.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}
+/warehouse/{warehouse_id}:
+  get:
+    summary: Warehouse employees
+    description: |
+      Employees assigned to the given warehouse.
+
+      Note the singular path: this is a different namespace from the topology
+      endpoints under `/warehouses` (plural).
+    operationId: getWarehouseEmployees
+    tags: [Employees]
+    parameters:
+      - name: warehouse_id
+        in: path
+        required: true
+        description: Warehouse ID.
+        schema: {type: integer, format: int32}
+    responses:
+      '200':
+        description: List of warehouse employees (empty when none are assigned).
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/EmployeeListItem'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        description: No endpoint matches this URL (the path parameter did not parse).
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LegacyOrGuardError'}

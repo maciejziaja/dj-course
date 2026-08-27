@@ -1,7 +1,7 @@
 """/zones - and the aisles beneath them, one at a time or by range."""
 from flask import Blueprint, jsonify
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.building import (aisle_rows, check_collisions, check_shelf_budget, expand_aisles,
                                expand_levels, expand_racks, rack_rows, shelf_rows)
@@ -70,9 +70,11 @@ def generate_aisles(zone_id):
     body = parse_body(AisleGenerate)
     dry_run = bool_arg('dry_run')
 
+    racks_spec = body.racks
+    shelves_spec = racks_spec.shelves if racks_spec else None
     aisle_labels = expand_aisles(body)
-    rack_labels = expand_racks(body.racks) if body.racks else []
-    levels = expand_levels(body.racks.shelves) if body.racks and body.racks.shelves else []
+    rack_labels = expand_racks(racks_spec) if racks_spec else []
+    levels = expand_levels(shelves_spec) if shelves_spec else []
     created = {'aisles': len(aisle_labels),
                'racks': len(aisle_labels) * len(rack_labels),
                'shelves': len(aisle_labels) * len(rack_labels) * len(levels)}
@@ -84,13 +86,13 @@ def generate_aisles(zone_id):
         if dry_run:
             return jsonify({'would_create': created}), 200
         aisles = insert_aisles(conn, aisle_rows(zone_id, aisle_labels, body.width))
-        if rack_labels:
+        if racks_spec is not None and rack_labels:
             racks = insert_racks(conn, rack_rows([row['aisle_id'] for row in aisles],
-                                                 rack_labels, body.racks.max_height))
-            if levels:
+                                                 rack_labels, racks_spec.max_height))
+            if shelves_spec is not None and levels:
                 insert_shelves(conn, shelf_rows([row['rack_id'] for row in racks], levels,
-                                                body.racks.shelves.max_weight,
-                                                body.racks.shelves.max_volume))
+                                                shelves_spec.max_weight,
+                                                shelves_spec.max_volume))
         payload = [aisle_out(row) for row in aisles]
     logger.info(f'Generated in zone {zone_id}: {created}')
     return jsonify({'created': created, 'aisles': payload}), 201

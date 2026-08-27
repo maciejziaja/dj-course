@@ -7,76 +7,45 @@
 
 The second check is the one that keeps the contract honest. A spec that
 validates but omits half the routes is worse than no spec at all, because it
-looks authoritative.
+looks authoritative. It is the same check `src/openapi_guard.py` runs when the
+app starts - imported from there rather than reimplemented, so the two cannot
+drift apart - but here it runs without a database or a server.
 
 Run: python scripts/lint_spec.py
 """
 import os
-import re
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO, 'src'))
 
 SPEC_PATH = os.path.join(REPO, 'openapi.yaml')
-HTTP_METHODS = ('get', 'put', 'post', 'delete', 'patch', 'head', 'options', 'trace')
 
-# `<int:warehouse_id>` -> `{warehouse_id}`, matching openapi-core's own rewrite.
-_CONVERTER = re.compile(r'<(?:[^:>]+:)?([^>]+)>')
-
-
-def rule_to_openapi_path(rule: str) -> str:
-    """The OpenAPI path a Flask rule corresponds to.
-
-    Trailing slashes are dropped so the published contract can say `/health`
-    rather than `/health/`; `src/openapi_guard.py` applies the same rule at
-    runtime, so the two never disagree.
-    """
-    path = _CONVERTER.sub(r'{\1}', rule)
-    return path.rstrip('/') or '/'
+# Set before anything under src/ is imported: the modules there read their
+# configuration at import time. Importing the app builds a SQLAlchemy engine but
+# never connects, so a placeholder URL is enough to read the route table offline.
+os.environ.setdefault('SERVICE_NAME', 'wms-api')
+os.environ.setdefault('OPENAPI_VALIDATION', 'off')
+os.environ.setdefault('POSTGRES_URL', 'postgresql+psycopg2://unused@localhost/unused')
 
 
-def flask_operations():
-    """{(path, method)} actually served by the app."""
-    os.environ.setdefault('SERVICE_NAME', 'wms-api')
-    os.environ.setdefault('OPENAPI_VALIDATION', 'off')
-    # Importing the app builds a SQLAlchemy engine but never connects, so a
-    # placeholder URL is enough to read the route table offline.
-    os.environ.setdefault('POSTGRES_URL', 'postgresql+psycopg2://unused@localhost/unused')
+def flask_app():
     from application import app
-
-    found = set()
-    for rule in app.url_map.iter_rules():
-        if rule.endpoint == 'static':
-            continue
-        for method in rule.methods - {'HEAD', 'OPTIONS'}:
-            found.add((rule_to_openapi_path(rule.rule), method.lower()))
-    return found
-
-
-def spec_operations(spec):
-    return {
-        (path, method)
-        for path, item in spec['paths'].items()
-        for method in item
-        if method in HTTP_METHODS
-    }
+    return app
 
 
 def main() -> int:
     from openapi_spec_validator import validate
     from openapi_spec_validator.readers import read_from_filename
 
+    from openapi_guard import coverage_gaps, spec_operations
+
     spec, base_uri = read_from_filename(SPEC_PATH)
     validate(spec, base_uri=base_uri)
-    documented = spec_operations(spec)
     print(f'✅ openapi.yaml is a valid OpenAPI {spec["openapi"]} document '
-          f'({len(spec["paths"])} paths, {len(documented)} operations)')
+          f'({len(spec["paths"])} paths, {len(spec_operations(spec["paths"]))} operations)')
 
-    served = flask_operations()
-    undocumented = sorted(served - documented)
-    unrouted = sorted(documented - served)
-
+    undocumented, unrouted = coverage_gaps(flask_app(), spec['paths'])
     for path, method in undocumented:
         print(f'❌ served but not documented: {method.upper():6} {path}')
     for path, method in unrouted:
@@ -87,7 +56,8 @@ def main() -> int:
               f'openapi.yaml and the Flask route table.')
         return 1
 
-    print(f'✅ contract and route table agree on all {len(served)} operations')
+    print('✅ contract and route table agree on all '
+          f'{len(spec_operations(spec["paths"]))} operations')
     return 0
 
 

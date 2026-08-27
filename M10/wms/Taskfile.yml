@@ -18,6 +18,10 @@ tasks:
 
   run-wms:
     desc: Run full WMS stack in Docker (postgres + api + pgadmin)
+    # The contract gate, on the way to running anything. `contract-lint` needs no
+    # server and no network, so it costs a second and it means the API cannot be
+    # started against a contract that no longer describes it.
+    deps: [contract-lint]
     cmds:
       - task: setup
       - task: generate-config
@@ -25,6 +29,7 @@ tasks:
 
   run-wms-with-local-api:
     desc: Run postgres + pgadmin in Docker, wms-api locally
+    deps: [contract-lint]
     cmds:
       - task: setup
       - task: generate-config
@@ -64,6 +69,7 @@ tasks:
 
   run-only-local-api:
     desc: Run wms-api locally (requires postgres running, e.g. via run-wms-with-local-api)
+    deps: [contract-lint]
     cmds:
       - task: setup
       - cd wms-api && ./run-local.sh
@@ -81,34 +87,80 @@ tasks:
       - './generate-and-sync.sh {{.MODE | default "SMALL"}} {{.VERBOSE | default "FALSE"}}'
 
   # ==========================================================================
-  # API contract (openapi.yaml)
+  # API contract
   #
-  # The contract is enforced at runtime by src/openapi_guard.py, so these tasks
-  # are not a separate documentation chore - they are the tests for the thing the
-  # service already does on every request.
+  # `wms-api/openapi/` is the source of truth, split by resource so it can be
+  # worked on. Two artefacts are generated from it and committed:
+  #
+  #   openapi.yaml            the assembled document every tool reads, including
+  #                           src/openapi_guard.py at runtime
+  #   src/contract/models.py  pydantic models the handlers and tests import
+  #
+  # Both can go stale, so nothing here trusts them: `contract-lint` regenerates
+  # each one into memory and fails on any difference. That check runs before the
+  # API starts (`run-wms`), before the tests and before the fuzzer - which is the
+  # gate, in place of a CI server. The app itself carries the last one: it
+  # refuses to start when the contract does not describe its own route table.
   # ==========================================================================
 
   contract:
-    desc: "The full contract gate: lint the spec, test it against the API, render the docs"
+    desc: "The full contract gate: lint, style, types, tests, docs"
     cmds:
       - task: contract-lint
+      - task: contract-style
+      - task: typecheck
       - task: contract-test
       - task: contract-docs
 
-  contract-lint:
-    desc: Validate openapi.yaml and check it still describes every Flask route
+  contract-regen:
+    desc: "Regenerate everything the contract produces: openapi.yaml, the models, the docs"
+    cmds:
+      - task: contract-bundle
+      - task: contract-models
+      - task: contract-docs
+
+  contract-bundle:
+    desc: Assemble wms-api/openapi/ into wms-api/openapi.yaml
     dir: wms-api
     deps: [setup-wms-api]
     cmds:
-      # Two different questions: is the document valid OpenAPI and does it match
-      # the app (lint_spec.py), and is it good OpenAPI (redocly).
+      - .venv/bin/python scripts/bundle_spec.py
+
+  contract-models:
+    desc: Regenerate src/contract/models.py from openapi.yaml
+    dir: wms-api
+    deps: [setup-wms-api]
+    cmds:
+      - .venv/bin/python scripts/generate_models.py
+
+  contract-lint:
+    desc: "The offline gate: artefacts current, spec valid, every route described"
+    dir: wms-api
+    deps: [setup-wms-api]
+    cmds:
+      # Three separate questions: are the generated artefacts current, is the
+      # document valid OpenAPI, and does it still match the app.
+      - .venv/bin/python scripts/bundle_spec.py --check
+      - .venv/bin/python scripts/generate_models.py --check
       - .venv/bin/python scripts/lint_spec.py
+
+  contract-style:
+    desc: "Is it *good* OpenAPI? (Redocly's ruleset; needs npx)"
+    dir: wms-api
+    cmds:
       - npx --yes @redocly/cli@latest lint openapi.yaml
+
+  typecheck:
+    desc: Static type check of src, scripts and tests (mypy)
+    dir: wms-api
+    deps: [setup-wms-api]
+    cmds:
+      - .venv/bin/mypy
 
   contract-test:
     desc: Run the contract test suite (guard in strict mode - a drifted response fails)
     dir: wms-api
-    deps: [setup-wms-api]
+    deps: [contract-lint]
     cmds:
       - .venv/bin/python -m pytest {{.CLI_ARGS}}
 
@@ -130,7 +182,7 @@ tasks:
   contract-fuzz:
     desc: "Property-based contract testing against a running API (reads only; safe)"
     dir: wms-api
-    deps: [setup-wms-api]
+    deps: [contract-lint]
     preconditions:
       - sh: curl -sf -m 5 -o /dev/null {{.API_URL | default "http://localhost:3001"}}/health
         msg: "The API is not answering on {{.API_URL | default \"http://localhost:3001\"}} - start it with `task run-wms`."
@@ -141,7 +193,7 @@ tasks:
   contract-fuzz-all:
     desc: "Property-based testing of every operation - WRITES to the database (snapshotted and restored)"
     dir: wms-api
-    deps: [setup-wms-api]
+    deps: [contract-lint]
     vars:
       SNAPSHOT: '{{.SNAPSHOT | default ".fuzz-snapshot.sql"}}'
     preconditions:

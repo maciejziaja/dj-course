@@ -1,7 +1,9 @@
 """/aisles - and the racks beneath them."""
+from typing import Any, Dict
+
 from flask import Blueprint, jsonify
 
-from application import logger
+from logger import logger
 from database import db_engine
 from topology.building import (check_collisions, check_shelf_budget, expand_levels, expand_racks,
                                rack_rows, shelf_rows)
@@ -15,12 +17,15 @@ from topology.schemas import AislePatch, RackCreate, RackGenerate
 aisles_bp = Blueprint('aisles_bp', __name__)
 
 
-def _aisle_columns(body: AislePatch):
+def _aisle_columns(body: AislePatch) -> Dict[str, Any]:
     changes = body.changes()
-    columns = {}
+    columns: Dict[str, Any] = {}
     if 'label' in changes:
         columns['label'] = body.label
-    if 'width' in changes:
+    # `width` is not nullable in the contract, so "the caller sent it" and "it is
+    # not None" are the same condition - and only the second one is one a type
+    # checker can follow into `body.width.value`.
+    if body.width is not None:
         columns['width'] = body.width.value
         columns['width_unit'] = body.width.unit
     return columns
@@ -80,8 +85,9 @@ def generate_racks(aisle_id):
     body = parse_body(RackGenerate)
     dry_run = bool_arg('dry_run')
 
+    shelves = body.shelves
     rack_labels = expand_racks(body)
-    levels = expand_levels(body.shelves) if body.shelves else []
+    levels = expand_levels(shelves) if shelves else []
     created = {'racks': len(rack_labels), 'shelves': len(rack_labels) * len(levels)}
     check_shelf_budget(created['shelves'])
 
@@ -91,9 +97,9 @@ def generate_racks(aisle_id):
         if dry_run:
             return jsonify({'would_create': created}), 200
         racks = insert_racks(conn, rack_rows([aisle_id], rack_labels, body.max_height))
-        if levels:
+        if shelves is not None and levels:
             insert_shelves(conn, shelf_rows([row['rack_id'] for row in racks], levels,
-                                            body.shelves.max_weight, body.shelves.max_volume))
+                                            shelves.max_weight, shelves.max_volume))
         payload = [rack_out(row) for row in racks]
     logger.info(f'Generated in aisle {aisle_id}: {created}')
     return jsonify({'created': created, 'racks': payload}), 201

@@ -1,0 +1,28 @@
+# Scalar shapes shared by every other schema here.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+HttpDate:
+  type: string
+  description: |
+    A timestamp rendered by Flask's default JSON encoder (RFC 1123 / RFC 7231
+    HTTP-date), e.g. `Wed, 11 Dec 2024 06:50:57 GMT`. Deliberately *not*
+    `format: date-time` - that would assert RFC 3339, which this is not.
+  pattern: '^[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT$'
+  example: 'Wed, 11 Dec 2024 06:50:57 GMT'
+
+NaiveDateTime:
+  type: string
+  description: |
+    `datetime.isoformat()` of a Postgres `TIMESTAMP` column - ISO-8601 with
+    no UTC offset, e.g. `2026-08-27T12:13:55.537725`. Values are UTC by
+    convention. Deliberately *not* `format: date-time`, which would assert an
+    offset that is not there.
+  pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$'
+  example: '2026-08-27T12:13:55.537725'
+
+LooseBoolean:
+  type: string
+  description: |
+    A boolean query flag. Accepted spellings are `true`/`1`/`yes` and
+    `false`/`0`/`no`; anything else is a `400 invalid_query`.
+  enum: ['true', 'false', '1', '0', 'yes', 'no']

@@ -1,0 +1,192 @@
+# The API contract, split so that it can be worked on.
+#
+# This file is the index: what the API is, and where each operation and
+# schema is written down. `task contract-bundle` assembles it and the files
+# it points at into ../openapi.yaml, which is the document every tool reads -
+# the runtime guard, the test suite, schemathesis, Redocly and the generated
+# models. Editing ../openapi.yaml by hand is pointless: it is regenerated,
+# and `task contract-lint` fails when it stops matching these files.
+#
+# `~1` in a $ref is a literal `/` (JSON Pointer escaping, RFC 6901).
+openapi: 3.0.3
+info:
+  title: WMS API (Warehouse Management System)
+  description: |
+    API for warehouse management.
+
+    Two generations of endpoints live side by side and they do **not** share
+    conventions - the contract documents both as they actually behave:
+
+    * **Legacy** (`/employees`, `/contractors`, `/payments`, `/storage`,
+      `/warehouse/{id}`) - bare arrays, no pagination, `{"error": "..."}` on
+      failure, and timestamps rendered by Flask's default JSON encoder as
+      **RFC 1123 HTTP dates** (`Wed, 11 Dec 2024 06:50:57 GMT`).
+    * **Topology** (`/locations`, `/warehouses`, `/zones`, `/aisles`, `/racks`,
+      `/shelves`) - paginated `{items, page, limit, total}` envelopes, a
+      `{"error": <code>, "message": <text>, ...}` envelope on failure, and
+      timestamps as **naive ISO-8601** (`2026-08-27T12:13:55.537725`, no offset).
+
+    Neither timestamp rendering is RFC 3339, so neither is declared as
+    `format: date-time`; both are pinned with an explicit `pattern` instead. See
+    the `HttpDate` and `NaiveDateTime` schemas.
+
+    This document is enforced at runtime by `openapi-core` (see
+    `src/openapi_guard.py`): requests are validated before the handler runs and
+    responses before they leave the process.
+  version: 2.0.0
+
+servers:
+  - url: /
+    description: Base API URL
+
+tags:
+  - name: Health
+    description: Liveness and dependency status.
+  - name: Employees
+    description: Warehouse staff (legacy shape).
+  - name: Contractors
+    description: Contractor companies and their representatives (legacy shape).
+  - name: Payments
+    description: Payments against storage records (legacy shape).
+  - name: Storage
+    description: Cargo event history (legacy shape).
+  - name: Locations
+    description: Addresses a warehouse can be placed at.
+  - name: Warehouses
+    description: Root of the topology, plus the declarative layout endpoints.
+  - name: Zones
+    description: Zones and the aisles beneath them.
+  - name: Aisles
+    description: Aisles and the racks beneath them.
+  - name: Racks
+    description: Racks and the shelves beneath them.
+  - name: Shelves
+    description: The leaf level - flat catalogue, single-shelf CRUD and bulk patch.
+
+paths:
+  # Liveness and dependency status.
+  /health: {$ref: ./paths/health.yaml#/~1health}
+  # Cargo event history (legacy shape).
+  /storage/{record_id}/events: {$ref: './paths/storage.yaml#/~1storage~1{record_id}~1events'}
+  # Warehouse staff, and the employees of one warehouse (legacy shapes).
+  /employees: {$ref: ./paths/employees.yaml#/~1employees}
+  /employees/{employee_id}: {$ref: './paths/employees.yaml#/~1employees~1{employee_id}'}
+  /warehouse/{warehouse_id}: {$ref: './paths/employees.yaml#/~1warehouse~1{warehouse_id}'}
+  # Contractor companies and their representatives (legacy shape).
+  /contractors: {$ref: ./paths/contractors.yaml#/~1contractors}
+  /contractors/{id}: {$ref: './paths/contractors.yaml#/~1contractors~1{id}'}
+  # Payments against storage records (legacy shape).
+  /payments: {$ref: ./paths/payments.yaml#/~1payments}
+  # Addresses a warehouse can be placed at.
+  /locations: {$ref: ./paths/locations.yaml#/~1locations}
+  # Root of the topology, its zones, and the declarative layout endpoints.
+  /warehouses: {$ref: ./paths/warehouses.yaml#/~1warehouses}
+  /warehouses/{warehouse_id}: {$ref: './paths/warehouses.yaml#/~1warehouses~1{warehouse_id}'}
+  /warehouses/{warehouse_id}/zones: {$ref: './paths/warehouses.yaml#/~1warehouses~1{warehouse_id}~1zones'}
+  /warehouses/{warehouse_id}/layout: {$ref: './paths/warehouses.yaml#/~1warehouses~1{warehouse_id}~1layout'}
+  # Zones and the aisles beneath them.
+  /zones/{zone_id}: {$ref: './paths/zones.yaml#/~1zones~1{zone_id}'}
+  /zones/{zone_id}/aisles: {$ref: './paths/zones.yaml#/~1zones~1{zone_id}~1aisles'}
+  /zones/{zone_id}/aisles:generate: {$ref: './paths/zones.yaml#/~1zones~1{zone_id}~1aisles:generate'}
+  # Aisles and the racks beneath them.
+  /aisles/{aisle_id}: {$ref: './paths/aisles.yaml#/~1aisles~1{aisle_id}'}
+  /aisles/{aisle_id}/racks: {$ref: './paths/aisles.yaml#/~1aisles~1{aisle_id}~1racks'}
+  /aisles/{aisle_id}/racks:generate: {$ref: './paths/aisles.yaml#/~1aisles~1{aisle_id}~1racks:generate'}
+  # Racks and the shelves beneath them.
+  /racks/{rack_id}: {$ref: './paths/racks.yaml#/~1racks~1{rack_id}'}
+  /racks/{rack_id}/shelves: {$ref: './paths/racks.yaml#/~1racks~1{rack_id}~1shelves'}
+  /racks/{rack_id}/shelves:generate: {$ref: './paths/racks.yaml#/~1racks~1{rack_id}~1shelves:generate'}
+  # The leaf level: flat catalogue, single-shelf CRUD and bulk patch.
+  /shelves: {$ref: ./paths/shelves.yaml#/~1shelves}
+  /shelves:bulk: {$ref: ./paths/shelves.yaml#/~1shelves:bulk}
+  /shelves/{shelf_id}: {$ref: './paths/shelves.yaml#/~1shelves~1{shelf_id}'}
+components:
+  parameters: {$ref: ./components/parameters.yaml}
+  responses: {$ref: ./components/responses.yaml}
+  schemas:
+    # primitives.yaml
+    HttpDate: {$ref: ./components/schemas/primitives.yaml#/HttpDate}
+    NaiveDateTime: {$ref: ./components/schemas/primitives.yaml#/NaiveDateTime}
+    LooseBoolean: {$ref: ./components/schemas/primitives.yaml#/LooseBoolean}
+    # errors.yaml
+    LegacyOrGuardError: {$ref: ./components/schemas/errors.yaml#/LegacyOrGuardError}
+    LegacyError: {$ref: ./components/schemas/errors.yaml#/LegacyError}
+    ApiError: {$ref: ./components/schemas/errors.yaml#/ApiError}
+    BulkNotFoundError: {$ref: ./components/schemas/errors.yaml#/BulkNotFoundError}
+    DeleteBlockedError: {$ref: ./components/schemas/errors.yaml#/DeleteBlockedError}
+    BlockedShelf: {$ref: ./components/schemas/errors.yaml#/BlockedShelf}
+    # health.yaml
+    HealthStatus: {$ref: ./components/schemas/health.yaml#/HealthStatus}
+    # legacy.yaml
+    StorageEvent: {$ref: ./components/schemas/legacy.yaml#/StorageEvent}
+    EmployeeListItem: {$ref: ./components/schemas/legacy.yaml#/EmployeeListItem}
+    ContractorStatus: {$ref: ./components/schemas/legacy.yaml#/ContractorStatus}
+    Contact: {$ref: ./components/schemas/legacy.yaml#/Contact}
+    ContractorSummary: {$ref: ./components/schemas/legacy.yaml#/ContractorSummary}
+    AddressDetails: {$ref: ./components/schemas/legacy.yaml#/AddressDetails}
+    EmployeeSummaryEmployeeData: {$ref: ./components/schemas/legacy.yaml#/EmployeeSummaryEmployeeData}
+    EmployeeSummary: {$ref: ./components/schemas/legacy.yaml#/EmployeeSummary}
+    ContractorDetails: {$ref: ./components/schemas/legacy.yaml#/ContractorDetails}
+    ContractorStatusUpdate: {$ref: ./components/schemas/legacy.yaml#/ContractorStatusUpdate}
+    ContractorStatusUpdateResponse: {$ref: ./components/schemas/legacy.yaml#/ContractorStatusUpdateResponse}
+    Payment: {$ref: ./components/schemas/legacy.yaml#/Payment}
+    # measures.yaml
+    LengthInput: {$ref: ./components/schemas/measures.yaml#/LengthInput}
+    WeightInput: {$ref: ./components/schemas/measures.yaml#/WeightInput}
+    VolumeInput: {$ref: ./components/schemas/measures.yaml#/VolumeInput}
+    LengthOutput: {$ref: ./components/schemas/measures.yaml#/LengthOutput}
+    WeightOutput: {$ref: ./components/schemas/measures.yaml#/WeightOutput}
+    VolumeOutput: {$ref: ./components/schemas/measures.yaml#/VolumeOutput}
+    LabelSpec: {$ref: ./components/schemas/measures.yaml#/LabelSpec}
+    LevelSpec: {$ref: ./components/schemas/measures.yaml#/LevelSpec}
+    # topology.yaml
+    Location: {$ref: ./components/schemas/topology.yaml#/Location}
+    Warehouse: {$ref: ./components/schemas/topology.yaml#/Warehouse}
+    Zone: {$ref: ./components/schemas/topology.yaml#/Zone}
+    Aisle: {$ref: ./components/schemas/topology.yaml#/Aisle}
+    Rack: {$ref: ./components/schemas/topology.yaml#/Rack}
+    Shelf: {$ref: ./components/schemas/topology.yaml#/Shelf}
+    ShelfWithPath: {$ref: ./components/schemas/topology.yaml#/ShelfWithPath}
+    LocationPage: {$ref: ./components/schemas/topology.yaml#/LocationPage}
+    WarehousePage: {$ref: ./components/schemas/topology.yaml#/WarehousePage}
+    ZonePage: {$ref: ./components/schemas/topology.yaml#/ZonePage}
+    AislePage: {$ref: ./components/schemas/topology.yaml#/AislePage}
+    RackPage: {$ref: ./components/schemas/topology.yaml#/RackPage}
+    ShelfPage: {$ref: ./components/schemas/topology.yaml#/ShelfPage}
+    ShelfWithPathPage: {$ref: ./components/schemas/topology.yaml#/ShelfWithPathPage}
+    # topology-write.yaml
+    LocationCreate: {$ref: ./components/schemas/topology-write.yaml#/LocationCreate}
+    WarehouseCreate: {$ref: ./components/schemas/topology-write.yaml#/WarehouseCreate}
+    WarehousePatch: {$ref: ./components/schemas/topology-write.yaml#/WarehousePatch}
+    ZoneCreate: {$ref: ./components/schemas/topology-write.yaml#/ZoneCreate}
+    ZonePatch: {$ref: ./components/schemas/topology-write.yaml#/ZonePatch}
+    AisleCreate: {$ref: ./components/schemas/topology-write.yaml#/AisleCreate}
+    AislePatch: {$ref: ./components/schemas/topology-write.yaml#/AislePatch}
+    RackCreate: {$ref: ./components/schemas/topology-write.yaml#/RackCreate}
+    RackPatch: {$ref: ./components/schemas/topology-write.yaml#/RackPatch}
+    ShelfCreate: {$ref: ./components/schemas/topology-write.yaml#/ShelfCreate}
+    ShelfPatch: {$ref: ./components/schemas/topology-write.yaml#/ShelfPatch}
+    ShelfBulkPatchBody: {$ref: ./components/schemas/topology-write.yaml#/ShelfBulkPatchBody}
+    ShelfBulkPatch: {$ref: ./components/schemas/topology-write.yaml#/ShelfBulkPatch}
+    ShelfBulkPatchResult: {$ref: ./components/schemas/topology-write.yaml#/ShelfBulkPatchResult}
+    ShelfTemplate: {$ref: ./components/schemas/topology-write.yaml#/ShelfTemplate}
+    RackTemplate: {$ref: ./components/schemas/topology-write.yaml#/RackTemplate}
+    AisleTemplate: {$ref: ./components/schemas/topology-write.yaml#/AisleTemplate}
+    AisleGenerate: {$ref: ./components/schemas/topology-write.yaml#/AisleGenerate}
+    RackGenerate: {$ref: ./components/schemas/topology-write.yaml#/RackGenerate}
+    ShelfGenerate: {$ref: ./components/schemas/topology-write.yaml#/ShelfGenerate}
+    LayoutZoneSpec: {$ref: ./components/schemas/topology-write.yaml#/LayoutZoneSpec}
+    LayoutCreate: {$ref: ./components/schemas/topology-write.yaml#/LayoutCreate}
+    # layout.yaml
+    TopologyCounts: {$ref: ./components/schemas/layout.yaml#/TopologyCounts}
+    LayoutRackNode: {$ref: ./components/schemas/layout.yaml#/LayoutRackNode}
+    LayoutAisleNode: {$ref: ./components/schemas/layout.yaml#/LayoutAisleNode}
+    LayoutZoneNode: {$ref: ./components/schemas/layout.yaml#/LayoutZoneNode}
+    Layout: {$ref: ./components/schemas/layout.yaml#/Layout}
+    LayoutCreated: {$ref: ./components/schemas/layout.yaml#/LayoutCreated}
+    LayoutDryRun: {$ref: ./components/schemas/layout.yaml#/LayoutDryRun}
+    DeleteDryRun: {$ref: ./components/schemas/layout.yaml#/DeleteDryRun}
+    GenerateDryRun: {$ref: ./components/schemas/layout.yaml#/GenerateDryRun}
+    AislesGenerated: {$ref: ./components/schemas/layout.yaml#/AislesGenerated}
+    RacksGenerated: {$ref: ./components/schemas/layout.yaml#/RacksGenerated}
+    ShelvesGenerated: {$ref: ./components/schemas/layout.yaml#/ShelvesGenerated}

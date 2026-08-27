@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from application import logger
+from logger import logger
 from sqlalchemy import text
 from database import db_engine
 

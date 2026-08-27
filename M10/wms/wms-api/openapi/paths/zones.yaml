@@ -1,0 +1,159 @@
+# Zones and the aisles beneath them.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/zones/{zone_id}:
+  get:
+    summary: Get a zone
+    operationId: getZone
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+    responses:
+      '200':
+        description: The zone.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Zone'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update a zone
+    operationId: updateZone
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ZonePatch'}
+    responses:
+      '200':
+        description: The updated zone.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Zone'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+  delete:
+    summary: Delete a zone
+    description: |
+      Blocked with `409` when any shelf underneath carries a reservation or a
+      storage record, and blocked with `409 has_children` when the zone still
+      holds aisles and `?cascade=true` was not given.
+    operationId: deleteZone
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+      - $ref: '#/components/parameters/Cascade'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    responses:
+      '200':
+        description: Dry run - nothing was deleted.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DeleteDryRun'}
+      '204':
+        description: Deleted.
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/DeleteBlocked'
+
+/zones/{zone_id}/aisles:
+  get:
+    summary: List the aisles of a zone
+    operationId: getZoneAisles
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+    responses:
+      '200':
+        description: A page of aisles.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AislePage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  post:
+    summary: Create a single aisle
+    operationId: createAisle
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AisleCreate'}
+    responses:
+      '201':
+        description: Aisle created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Aisle'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/zones/{zone_id}/aisles:generate:
+  post:
+    summary: Generate aisles by range
+    description: |
+      Creates a run of aisles from a label range or list, optionally with the
+      racks and shelves underneath them in the same transaction.
+    operationId: generateAisles
+    tags: [Zones]
+    parameters:
+      - $ref: '#/components/parameters/ZoneId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/AisleGenerate'}
+    responses:
+      '200':
+        description: Dry run - nothing was written.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GenerateDryRun'}
+      '201':
+        description: Aisles created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AislesGenerated'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # Aisles (topology)
+  # ==========================================================================

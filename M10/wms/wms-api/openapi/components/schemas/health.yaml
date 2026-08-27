@@ -1,0 +1,28 @@
+# `GET /health` and its dependency report.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+HealthStatus:
+  type: object
+  required: [status, timestamp, uptime_seconds, dependencies]
+  additionalProperties: false
+  properties:
+    status:
+      type: string
+      enum: [UP, DOWN]
+      description: '`DOWN` as soon as any dependency is down.'
+    timestamp:
+      type: number
+      format: double
+      description: Unix epoch seconds at the moment of the check.
+    uptime_seconds:
+      type: integer
+      minimum: 0
+    version:
+      type: string
+      description: From the `VERSION` environment variable, `1.0.0` if unset.
+    dependencies:
+      type: object
+      description: One entry per checked dependency.
+      additionalProperties:
+        type: string
+        enum: [UP, DOWN]

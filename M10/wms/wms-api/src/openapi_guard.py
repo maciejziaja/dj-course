@@ -30,7 +30,8 @@ contract is a bug worth an alert, but not worth breaking a client that is coping
 with it fine.
 """
 import os
-from typing import Any, Dict, List, Optional
+import re
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 from flask import g, jsonify, make_response, request
 from openapi_core import OpenAPI
@@ -50,6 +51,11 @@ SPEC_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 MODES = ('off', 'request', 'observe', 'strict')
 DEFAULT_MODE = 'observe'
+
+HTTP_METHODS = ('get', 'put', 'post', 'delete', 'patch', 'head', 'options', 'trace')
+
+# `<int:warehouse_id>` -> `{warehouse_id}`, matching openapi-core's own rewrite.
+_CONVERTER = re.compile(r'<(?:[^:>]+:)?([^>]+)>')
 
 # `in` location -> the error code the envelope reports. Keeps a bad header
 # distinguishable from a bad query string without inventing a new envelope.
@@ -76,6 +82,42 @@ class _NormalisedRequest(FlaskOpenAPIRequest):
     def path_pattern(self) -> str:
         pattern = super().path_pattern
         return pattern.rstrip('/') or '/'
+
+
+def rule_to_openapi_path(rule: str) -> str:
+    """The OpenAPI path a Flask rule corresponds to.
+
+    Trailing slashes are dropped so the contract can say `/health` rather than
+    `/health/`; `_NormalisedRequest` below does the same to the incoming request,
+    and `scripts/lint_spec.py` imports this function rather than repeating it.
+    """
+    return _CONVERTER.sub(r'{\1}', rule).rstrip('/') or '/'
+
+
+def app_operations(app) -> Set[Tuple[str, str]]:
+    """{(path, method)} the Flask app actually serves."""
+    served = set()
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint == 'static':
+            continue
+        for method in (rule.methods or set()) - {'HEAD', 'OPTIONS'}:
+            served.add((rule_to_openapi_path(rule.rule), method.lower()))
+    return served
+
+
+def spec_operations(paths: Any) -> Set[Tuple[str, str]]:
+    """{(path, method)} the contract describes. `paths` is the mapping, however
+    it was read - a plain dict from PyYAML or openapi-core's own `SchemaPath`."""
+    return {(path, method)
+            for path in paths.keys()
+            for method in paths[path].keys()
+            if method in HTTP_METHODS}
+
+
+def coverage_gaps(app, paths: Any) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """(served but undocumented, documented but unrouted) - both should be empty."""
+    served, documented = app_operations(app), spec_operations(paths)
+    return sorted(served - documented), sorted(documented - served)
 
 
 def _cause_of(exc: BaseException, wanted: type):
@@ -148,12 +190,13 @@ def _as_api_error(exc: BaseException) -> ApiError:
     return ApiError('contract_gap', 'This endpoint is not described by the API contract.', 500)
 
 
-def _iter_causes(exc: BaseException):
+def _iter_causes(exc: BaseException) -> Iterator[BaseException]:
     seen = set()
-    while exc is not None and id(exc) not in seen:
-        seen.add(id(exc))
-        yield exc
-        exc = exc.__cause__ or exc.__context__
+    current: Optional[BaseException] = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        yield current
+        current = current.__cause__ or current.__context__
 
 
 def _describe(exc: BaseException) -> str:
@@ -200,11 +243,37 @@ class OpenAPIGuard:
             return self
 
         self.openapi = OpenAPI.from_file_path(self.spec_path)
+        self._check_coverage(app)
         app.before_request(self._before_request)
         app.after_request(self._after_request)
         app.extensions['openapi_guard'] = self
         logger.info(f"OpenAPI contract validation is ON (mode={self.mode}, spec={self.spec_path})")
         return self
+
+    def _check_coverage(self, app) -> None:
+        """Refuse to run against a contract that does not describe this app.
+
+        This is the gate that does not need a CI server: an operation missing
+        from the contract cannot be served at all (the guard answers it with
+        `contract_gap`), so finding out at start-up beats finding out per
+        request. Fatal in `strict` - which is what the test suite runs, so drift
+        fails the suite before a single test does. Loud but survivable
+        otherwise: a documentation gap is not a reason to take production down
+        mid-deploy.
+        """
+        assert self.openapi is not None
+        undocumented, unrouted = coverage_gaps(app, self.openapi.spec / 'paths')
+        if not undocumented and not unrouted:
+            return
+        complaints = ([f'served but not documented: {method.upper()} {path}'
+                       for path, method in undocumented] +
+                      [f'documented but not served: {method.upper()} {path}'
+                       for path, method in unrouted])
+        summary = '; '.join(complaints)
+        if self.mode == 'strict':
+            raise RuntimeError(
+                f'{os.path.basename(self.spec_path)} does not match the route table - {summary}')
+        logger.error(f'Contract does not match the route table - {summary}')
 
     # --- hooks ------------------------------------------------------------
 
@@ -213,7 +282,7 @@ class OpenAPIGuard:
         return request.url_rule is None or request.method in ('OPTIONS', 'HEAD')
 
     def _before_request(self):
-        if not self.validates_requests or self._skip():
+        if not self.validates_requests or self.openapi is None or self._skip():
             return None
 
         openapi_request = _NormalisedRequest(request)
@@ -238,7 +307,7 @@ class OpenAPIGuard:
         raise api_error
 
     def _after_request(self, response):
-        if not self.validates_responses or self._skip():
+        if not self.validates_responses or self.openapi is None or self._skip():
             return response
         # A 5xx is already a failure being reported; re-validating it only ever
         # turns one error into a less informative one.

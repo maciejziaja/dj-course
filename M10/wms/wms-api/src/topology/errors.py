@@ -6,7 +6,7 @@ that turn a bad request into that same envelope.
 
 Envelope: {"error": <code>, "message": <human text>, ...extra}
 """
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, TypeVar, overload
 
 from flask import jsonify, request
 from pydantic import BaseModel, ValidationError
@@ -14,6 +14,11 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
 
 from logger import logger
+
+# `parse_body(ZonePatch)` has to come back as a `ZonePatch`, not as a `BaseModel`:
+# a handler reading `body.code` is exactly the mistake a type checker should be
+# able to catch, and it cannot if the helper launders the type away.
+ModelT = TypeVar('ModelT', bound=BaseModel)
 
 
 class ApiError(Exception):
@@ -120,7 +125,7 @@ def _format_validation_error(exc: ValidationError):
     ]
 
 
-def parse_body(model_cls: Type[BaseModel]) -> BaseModel:
+def parse_body(model_cls: Type[ModelT]) -> ModelT:
     """Validate the JSON body against a pydantic model, or raise a 400."""
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -144,7 +149,13 @@ def bool_arg(name: str, default: bool = False) -> bool:
     raise ApiError('invalid_query', f"Query parameter '{name}' must be true or false.", 400)
 
 
+@overload
+def int_arg(name: str, default: int) -> int: ...
+@overload
+def int_arg(name: str, default: None = None) -> Optional[int]: ...
 def int_arg(name: str, default: Optional[int] = None) -> Optional[int]:
+    """`?page=3` as an int. With an int default the result is an int - which is
+    what `page_params()` needs to do arithmetic on it without a cast."""
     raw = request.args.get(name)
     if raw is None or raw == '':
         return default

@@ -1,0 +1,65 @@
+# Query, path and header parameters shared across operations.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+Page:
+  name: page
+  in: query
+  description: |
+    1-based page number. The upper bound exists so that `(page - 1) * limit`
+    stays inside the integer range Postgres can take as an OFFSET - without
+    it a large enough page number reaches the database and fails there.
+  schema: {type: integer, minimum: 1, maximum: 1000000, default: 1}
+Limit:
+  name: limit
+  in: query
+  description: Page size.
+  schema: {type: integer, minimum: 1, maximum: 500, default: 50}
+Cascade:
+  name: cascade
+  in: query
+  description: Delete the whole subtree instead of refusing when children exist.
+  schema: {$ref: '#/components/schemas/LooseBoolean'}
+DryRun:
+  name: dry_run
+  in: query
+  description: Report what would happen and write nothing.
+  schema: {$ref: '#/components/schemas/LooseBoolean'}
+XRequestId:
+  name: X-Request-Id
+  in: header
+  required: false
+  description: |
+    Optional correlation id, echoed into the server log line for this
+    request. Must be a UUID when present.
+  allowEmptyValue: true
+  schema: {type: string, format: uuid}
+ContractorId:
+  name: id
+  in: path
+  required: true
+  description: Contractor ID (`party_id`).
+  schema: {type: integer, format: int32}
+WarehouseId:
+  name: warehouse_id
+  in: path
+  required: true
+  schema: {type: integer, format: int32}
+ZoneId:
+  name: zone_id
+  in: path
+  required: true
+  schema: {type: integer, format: int32}
+AisleId:
+  name: aisle_id
+  in: path
+  required: true
+  schema: {type: integer, format: int32}
+RackId:
+  name: rack_id
+  in: path
+  required: true
+  schema: {type: integer, format: int32}
+ShelfId:
+  name: shelf_id
+  in: path
+  required: true
+  schema: {type: integer, format: int32}

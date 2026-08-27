@@ -1,0 +1,164 @@
+# The leaf level: flat catalogue, single-shelf CRUD and bulk patch.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/shelves:
+  get:
+    summary: The flat shelf catalogue
+    description: |
+      The one filter grammar in this API - every other endpoint addresses by
+      id. String filters are case-insensitive `ILIKE`, so `%` works as a
+      wildcard.
+    operationId: getShelves
+    tags: [Shelves]
+    parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: warehouse
+        in: query
+        description: Exact-match filter on warehouse id.
+        schema: {type: integer, format: int32}
+      - name: zone
+        in: query
+        description: '`ILIKE` filter on zone code.'
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: aisle
+        in: query
+        description: '`ILIKE` filter on aisle label.'
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: rack
+        in: query
+        description: '`ILIKE` filter on rack label.'
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 16, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: level
+        in: query
+        description: Exact-match filter on shelf level.
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 8, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: code
+        in: query
+        description: '`ILIKE` filter on the composed path, e.g. `BULK-A01-%`.'
+        allowEmptyValue: true
+        schema: {type: string, maxLength: 64, pattern: '^[^\u0000-\u001F\u007F]*$'}
+      - name: max_weight_gte
+        in: query
+        description: Only shelves whose declared capacity in kg is at least this.
+        schema: {type: number, minimum: 0}
+      - name: max_volume_gte
+        in: query
+        description: Only shelves whose declared capacity in m3 is at least this.
+        schema: {type: number, minimum: 0}
+    responses:
+      '200':
+        description: A page of shelves, each with its full path.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ShelfWithPathPage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+
+/shelves:bulk:
+  patch:
+    summary: Patch many shelves at once
+    description: |
+      Takes explicit ids, never a filter - an accidental "update all" is not
+      expressible. All or nothing: one unknown id and nothing is written.
+
+      `level` is deliberately not patchable in bulk: it is unique per rack, so
+      setting the same level on many shelves could only end in a conflict.
+    operationId: patchShelvesBulk
+    tags: [Shelves]
+    parameters:
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ShelfBulkPatch'}
+    responses:
+      '200':
+        description: The updated shelves.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ShelfBulkPatchResult'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        description: At least one id does not exist; nothing was written.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BulkNotFoundError'}
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/shelves/{shelf_id}:
+  get:
+    summary: Get a shelf
+    operationId: getShelf
+    tags: [Shelves]
+    parameters:
+      - $ref: '#/components/parameters/ShelfId'
+    responses:
+      '200':
+        description: The shelf, with its composed `code`.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Shelf'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update a shelf
+    operationId: updateShelf
+    tags: [Shelves]
+    parameters:
+      - $ref: '#/components/parameters/ShelfId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ShelfPatch'}
+    responses:
+      '200':
+        description: The updated shelf.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Shelf'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+  delete:
+    summary: Delete a shelf
+    description: A leaf - there is no cascade to consider, only the blocking check.
+    operationId: deleteShelf
+    tags: [Shelves]
+    parameters:
+      - $ref: '#/components/parameters/ShelfId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    responses:
+      '200':
+        description: Dry run - nothing was deleted.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DeleteDryRun'}
+      '204':
+        description: Deleted.
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/DeleteBlocked'
+
+# ============================================================================

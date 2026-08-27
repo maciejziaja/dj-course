@@ -6,6 +6,7 @@ therefore a failing test. That is the whole point: the contract is only worth
 something if drift breaks the build.
 """
 import os
+from typing import List
 
 import pytest
 from sqlalchemy import text
@@ -89,7 +90,7 @@ def scratch_warehouse(client):
     assert response.status_code == 201, response.get_data(as_text=True)
     warehouse_id = response.get_json()['id']
 
-    created_zones = []
+    created_zones: List[int] = []
     yield warehouse_id, created_zones
 
     for zone_id in created_zones:

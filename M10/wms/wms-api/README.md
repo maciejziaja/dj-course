@@ -92,10 +92,8 @@ src/topology/     errors.py (the error envelope + the Flask handlers), measures.
                   repository.py (SQL + response shapes), building.py (templates → rows),
                   deletion.py (the whole delete policy)
 src/routes/       locations.py, warehouses.py, zones.py, aisles.py, racks.py, shelves.py
+src/contract/     models.py — generated from openapi.yaml, never edited by hand
 ```
-
-`src/topology/` is hand-written, unlike `src/contract/`, which is generated from
-`openapi.yaml` — nothing there collides with a future `openapi-generator` run.
 
 ### Checks
 
@@ -116,14 +114,90 @@ older `/employees`, `/contractors`, `/payments`, `/storage` and `/warehouse/{id}
 It is not documentation that sits beside the code: `src/openapi_guard.py` loads it at
 start-up and enforces it on every request and every response.
 
+### Where it lives
+
+The contract is the source of truth, so it is split into files small enough to work on:
+
+```
+openapi/openapi.yaml            the root — info, tags, and an index of $refs
+openapi/paths/*.yaml            path items, one file per resource (11 files)
+openapi/components/             parameters.yaml, responses.yaml, schemas/*.yaml
+```
+
+Two things are generated from it and committed:
+
+| artefact | from | by |
+| --- | --- | --- |
+| `openapi.yaml` | `openapi/` | `task contract-bundle` |
+| `src/contract/models.py` | `openapi.yaml` | `task contract-models` |
+
+`openapi.yaml` is the assembled document; **every tool reads it and nothing reads
+`openapi/` except the bundler** — the guard, the tests, schemathesis, Redocly and the
+model generator all load the bundle. That is also why a `$ref` inside `openapi/` points
+at `#/components/schemas/X` in the *assembled* file rather than at a sibling file: the
+fragments are parts of one document, not documents themselves.
+
+`task contract-regen` runs both generators and rebuilds the docs.
+
+### Commands
+
 ```bash
-task contract            # lint the spec, run the suite against it, render the docs
-task contract-lint       # valid OpenAPI + still describes every Flask route
+task contract            # the lot: lint, style, types, tests, docs
+task contract-lint       # offline gate: artefacts current, spec valid, every route described
+task contract-style      # Redocly's ruleset — is it *good* OpenAPI (needs npx)
+task typecheck           # mypy over src, scripts and tests
 task contract-test       # pytest, guard in strict mode
 task contract-docs       # -> wms-api/docs/api.html (self-contained, no server needed)
 task contract-fuzz       # property-based testing against a running API (reads only)
 task contract-fuzz-all   # every operation; snapshots and restores the database
+task contract-regen      # rebuild openapi.yaml, the models and the docs
 ```
+
+### What stops the contract from drifting
+
+There is no CI server and no git hook here. The gate is built out of the things that
+already have to happen:
+
+1. **The app refuses to start** against a contract that does not describe its own route
+   table. `OpenAPIGuard.init_app` compares the Flask URL map with the spec: fatal in
+   `strict` (which the test suite runs), logged as an error otherwise. An undocumented
+   route could not be served anyway — the guard answers it `500 contract_gap` — so
+   failing at start-up beats failing per request.
+2. **`task contract-lint` runs before anything else does.** `run-wms`,
+   `run-wms-with-local-api`, `run-only-local-api`, `contract-test`, `contract-fuzz` and
+   `contract-fuzz-all` all declare it as a dependency. It regenerates both artefacts into
+   memory and fails on any difference, so a committed `openapi.yaml` that no longer
+   matches `openapi/` — or models that no longer match the contract — stop you before the
+   API starts. It needs no server, no database and no network.
+3. **The test suite asserts the same things** (`tests/test_spec.py`), including that the
+   start-up gate itself fires.
+
+### Type safety, in a language that has none at runtime
+
+Python cannot promise at compile time that a handler returns what the contract says, and
+no static type can describe `?limit=abc` arriving as a string. So the guarantee is bought
+in two halves, and neither one covers the other:
+
+* **Runtime — `src/openapi_guard.py`.** `openapi-core` validates every request against
+  the contract *before* the handler runs (body, query string, headers, path parameters,
+  `Content-Type`) and every response *before* it leaves the process. It is one
+  `before_request`/`after_request` pair over the whole app rather than a per-view
+  decorator, so a new route cannot forget to opt in.
+* **Static — `mypy` (`task typecheck`), with `check_untyped_defs`.** Without that flag
+  mypy skips unannotated function bodies, which is most of this codebase, and finds
+  nothing. With it, it reads the pydantic models in `topology/schemas.py` and the
+  generated ones in `contract/models.py` and checks the handlers against them. It found
+  real defects on its first run: `body.width.value` on a field typed `Optional[Length]`,
+  `int(os.environ.get('PORT'))` on a `str | None`, and a test importing a function that
+  had been moved. `parse_body(ZonePatch)` is generic (`TypeVar` bound to `BaseModel`) for
+  exactly this reason — a helper that returns `BaseModel` launders away the type that
+  makes the check possible.
+
+`src/contract/models.py` is where the two halves meet: generated from the contract with
+`--strict-nullable`, so a required `nullable: true` field is `str | None` rather than a
+lie, and `--enum-field-as-literal all`, so `unit` is a `Literal['mm', 'cm', 'm']`.
+`routes/contractors.py` validates its responses through those models before returning
+them.
 
 ### Validation modes
 

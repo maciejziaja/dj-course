@@ -1,0 +1,148 @@
+# Dimensions on the way in and on the way out, plus the label/level specs.
+# `$ref: '#/components/schemas/X'` below points into the assembled
+# openapi.yaml, not into this file. See scripts/bundle_spec.py.
+LengthInput:
+  description: |
+    A length. Either a bare integer - meaning millimetres, the base unit - or
+    an explicit `{value, unit}`. Lengths are stored **verbatim** together
+    with the unit the caller sent.
+
+    The ceiling is the width of the `INTEGER` column the value lands in.
+    Without it an oversized length reaches Postgres and fails there, which
+    would be a 500 for what is plainly a bad request.
+  oneOf:
+    - type: integer
+      minimum: 0
+      exclusiveMinimum: true
+      maximum: 2147483647
+      description: Millimetres.
+    - type: object
+      required: [value]
+      additionalProperties: false
+      properties:
+        value:
+          type: integer
+          minimum: 0
+          exclusiveMinimum: true
+          maximum: 2147483647
+        unit:
+          type: string
+          enum: [mm, cm, m]
+          default: mm
+  example: {value: 500, unit: cm}
+WeightInput:
+  description: |
+    A weight. A bare number means kilograms. Explicit units are **normalised
+    to kg on write** and always read back as kg.
+  oneOf:
+    - type: number
+      minimum: 0
+      exclusiveMinimum: true
+      maximum: 1000000000
+      description: Kilograms.
+    - type: object
+      required: [value]
+      additionalProperties: false
+      properties:
+        value:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          maximum: 1000000000
+        unit:
+          type: string
+          enum: [g, kg, t]
+          default: kg
+  example: {value: 700, unit: kg}
+VolumeInput:
+  description: |
+    A volume. A bare number means cubic metres. Explicit units are
+    **normalised to m3 on write** and always read back as m3.
+  oneOf:
+    - type: number
+      minimum: 0
+      exclusiveMinimum: true
+      maximum: 1000000000
+      description: Cubic metres.
+    - type: object
+      required: [value]
+      additionalProperties: false
+      properties:
+        value:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          maximum: 1000000000
+        unit:
+          type: string
+          enum: [cm3, l, m3]
+          default: m3
+  example: {value: 6, unit: m3}
+LengthOutput:
+  type: object
+  required: [value, unit]
+  additionalProperties: false
+  properties:
+    value: {type: number}
+    unit: {type: string, enum: [mm, cm, m]}
+WeightOutput:
+  type: object
+  description: Always kilograms - weights are normalised on write.
+  required: [value, unit]
+  additionalProperties: false
+  properties:
+    value: {type: number}
+    unit: {type: string, enum: [kg]}
+VolumeOutput:
+  type: object
+  description: Always cubic metres - volumes are normalised on write.
+  required: [value, unit]
+  additionalProperties: false
+  properties:
+    value: {type: number}
+    unit: {type: string, enum: [m3]}
+LabelSpec:
+  description: |
+    Either a range (`"01..08"`, zero-padding taken from the left operand, a
+    matching non-numeric prefix required on both sides), a single label, or
+    an explicit list. Labels are `[A-Za-z0-9_]` because `-` separates the
+    segments of the composed shelf path.
+
+    The two forms are spelled out rather than described, so a label the
+    expander would refuse is a `400` from the contract instead of a `400`
+    from a hundred lines further in.
+  oneOf:
+    - type: string
+      minLength: 1
+      maxLength: 34
+      pattern: '^([A-Za-z0-9_]{1,16}|[A-Za-z_]*[0-9]+\.\.[A-Za-z_]*[0-9]+)$'
+      example: '01..08'
+    - type: array
+      minItems: 1
+      uniqueItems: true
+      items:
+        type: string
+        minLength: 1
+        maxLength: 16
+        pattern: '^[A-Za-z0-9_]+$'
+      example: ['A01', 'A02']
+
+LevelSpec:
+  description: Same grammar as `LabelSpec`, but levels are capped at 8 characters.
+  oneOf:
+    - type: string
+      minLength: 1
+      maxLength: 18
+      pattern: '^([A-Za-z0-9_]{1,8}|[A-Za-z_]*[0-9]+\.\.[A-Za-z_]*[0-9]+)$'
+      example: '1..4'
+    - type: array
+      minItems: 1
+      uniqueItems: true
+      items:
+        type: string
+        minLength: 1
+        maxLength: 8
+        pattern: '^[A-Za-z0-9_]+$'
+      example: ['1', '2', '3']
+
+    # --- topology: entities -----------------------------------------------

@@ -1,0 +1,152 @@
+# Racks and the shelves beneath them.
+# Assembled into ../../openapi.yaml by `task contract-bundle`.
+/racks/{rack_id}:
+  get:
+    summary: Get a rack
+    operationId: getRack
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+    responses:
+      '200':
+        description: The rack.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Rack'}
+      '400':
+        $ref: '#/components/responses/InvalidPath'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update a rack
+    operationId: updateRack
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/RackPatch'}
+    responses:
+      '200':
+        description: The updated rack.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Rack'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+  delete:
+    summary: Delete a rack
+    operationId: deleteRack
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+      - $ref: '#/components/parameters/Cascade'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    responses:
+      '200':
+        description: Dry run - nothing was deleted.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DeleteDryRun'}
+      '204':
+        description: Deleted.
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/DeleteBlocked'
+
+/racks/{rack_id}/shelves:
+  get:
+    summary: List the shelves of a rack
+    operationId: getRackShelves
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+    responses:
+      '200':
+        description: A page of shelves.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ShelfPage'}
+      '400':
+        $ref: '#/components/responses/InvalidQuery'
+      '404':
+        $ref: '#/components/responses/NotFound'
+  post:
+    summary: Create a single shelf
+    operationId: createShelf
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ShelfCreate'}
+    responses:
+      '201':
+        description: Shelf created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Shelf'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+/racks/{rack_id}/shelves:generate:
+  post:
+    summary: Generate shelves by level range
+    operationId: generateShelves
+    tags: [Racks]
+    parameters:
+      - $ref: '#/components/parameters/RackId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/XRequestId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ShelfGenerate'}
+    responses:
+      '200':
+        description: Dry run - nothing was written.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GenerateDryRun'}
+      '201':
+        description: Shelves created.
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ShelvesGenerated'}
+      '400':
+        $ref: '#/components/responses/InvalidBody'
+      '415':
+        $ref: '#/components/responses/UnsupportedMediaType'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # Shelves (topology)
+  # ==========================================================================
