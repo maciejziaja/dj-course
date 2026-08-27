@@ -18,6 +18,33 @@ banner = """
 -- Zatrudniamy! https://shorturl.at/G98Ej
 """
 
+# Every INSERT above carries an explicit id, which leaves the SERIAL sequences
+# sitting at 1 - the first INSERT issued by the API would then collide on the
+# primary key. Align each sequence with the highest id actually inserted.
+sequence_alignment = """
+-- Align SERIAL sequences with the explicitly inserted ids
+DO $$
+DECLARE
+    rec RECORD;
+BEGIN
+    FOR rec IN
+        SELECT seq.relname AS sequence_name,
+               tbl.relname AS table_name,
+               att.attname AS column_name
+        FROM pg_class seq
+        JOIN pg_depend dep ON dep.objid = seq.oid AND seq.relkind = 'S'
+        JOIN pg_class tbl ON tbl.oid = dep.refobjid
+        JOIN pg_attribute att ON att.attrelid = tbl.oid AND att.attnum = dep.refobjsubid
+        JOIN pg_namespace nsp ON nsp.oid = seq.relnamespace AND nsp.nspname = 'public'
+    LOOP
+        EXECUTE format(
+            'SELECT setval(%L, COALESCE((SELECT MAX(%I) FROM %I), 0) + 1, false)',
+            rec.sequence_name, rec.column_name, rec.table_name
+        );
+    END LOOP;
+END $$;
+"""
+
 def create_sql_file():
     # Get the project root directory (wms-data-generator)
     # This file is in src/, so go up one level
@@ -41,6 +68,8 @@ def create_sql_file():
         + create_table_sql.strip()
         + "\n\n"
         + "\n".join(result.lines)
+        + "\n"
+        + sequence_alignment
     )
     stats = result.stats
 

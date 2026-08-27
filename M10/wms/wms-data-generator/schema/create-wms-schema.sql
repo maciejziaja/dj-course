@@ -34,7 +34,9 @@ CREATE TABLE warehouse (
     warehouse_id SERIAL PRIMARY KEY,
     location_id INTEGER NOT NULL REFERENCES location(location_id),
     name TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 -- Basic FK index only
 CREATE INDEX idx_warehouse_location_id ON warehouse(location_id);
@@ -43,10 +45,15 @@ CREATE INDEX idx_warehouse_location_id ON warehouse(location_id);
 CREATE TABLE zone (
     zone_id SERIAL PRIMARY KEY,
     warehouse_id INTEGER NOT NULL REFERENCES warehouse(warehouse_id),
+    code TEXT NOT NULL,
     name TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_zone_warehouse_id ON zone(warehouse_id);
+-- The code is the first segment of the composed shelf path (A-01-R001-L4)
+CREATE UNIQUE INDEX uq_zone_code ON zone(warehouse_id, code);
 
 -- 4. AISLES
 CREATE TABLE aisle (
@@ -54,9 +61,12 @@ CREATE TABLE aisle (
     zone_id INTEGER NOT NULL REFERENCES zone(zone_id),
     label TEXT NOT NULL,
     width INTEGER NOT NULL,
-    width_unit TEXT NOT NULL
+    width_unit TEXT NOT NULL CHECK (width_unit IN ('mm','cm','m')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_aisle_zone_id ON aisle(zone_id);
+CREATE UNIQUE INDEX uq_aisle_label ON aisle(zone_id, label);
 
 -- 5. RACKS
 CREATE TABLE rack (
@@ -64,19 +74,30 @@ CREATE TABLE rack (
     aisle_id INTEGER NOT NULL REFERENCES aisle(aisle_id),
     label TEXT NOT NULL,
     max_height INTEGER NOT NULL,
-    height_unit TEXT NOT NULL
+    height_unit TEXT NOT NULL CHECK (height_unit IN ('mm','cm','m')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_rack_aisle_id ON rack(aisle_id);
+CREATE UNIQUE INDEX uq_rack_label ON rack(aisle_id, label);
 
 -- 6. SHELVES
+-- max_weight is expressed in kilograms, max_volume in cubic metres.
+-- Unlike aisle.width and rack.max_height these columns carry no unit column,
+-- so the API normalises to these base units on write.
 CREATE TABLE shelf (
     shelf_id SERIAL PRIMARY KEY,
     rack_id INTEGER NOT NULL REFERENCES rack(rack_id),
     level TEXT NOT NULL,
     max_weight NUMERIC NOT NULL,
-    max_volume NUMERIC NOT NULL
+    max_volume NUMERIC NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_shelf_rack_id ON shelf(rack_id);
+CREATE UNIQUE INDEX uq_shelf_level ON shelf(rack_id, level);
+COMMENT ON COLUMN shelf.max_weight IS 'Declared capacity in kilograms (kg)';
+COMMENT ON COLUMN shelf.max_volume IS 'Declared capacity in cubic metres (m3)';
 
 -- 7. CAPACITY
 CREATE TABLE capacity (
