@@ -6,23 +6,25 @@ from faker import Faker
 fake = Faker()
 
 # Static zones, but warehouse_id is dynamic
+# Codes are explicit: initials collide (Picking Area / Packing Area both give "PA")
+# and the code is the first segment of the composed shelf path, so it must be stable.
 ZONE_NAMES = [
-    {'id': 1, 'warehouse_id': the_only_warehouse['id'], 'name': 'Bulk Storage Area', 'description': 'Area for storing large quantities of goods, usually on pallets.'},
-    {'id': 2, 'warehouse_id': the_only_warehouse['id'], 'name': 'Receiving Area', 'description': 'Zone designated for unloading and inspecting incoming goods.'},
-    {'id': 3, 'warehouse_id': the_only_warehouse['id'], 'name': 'Picking Area', 'description': 'Zone where items are picked to fulfill orders.'},
-    {'id': 4, 'warehouse_id': the_only_warehouse['id'], 'name': 'Packing Area', 'description': 'Area for packing picked items and preparing them for shipment.'},
-    {'id': 5, 'warehouse_id': the_only_warehouse['id'], 'name': 'Shipping Area', 'description': 'Zone for staging and loading outbound shipments.'},
-    {'id': 6, 'warehouse_id': the_only_warehouse['id'], 'name': 'Returns Area', 'description': 'Designated space for processing returned goods.'},
-    {'id': 7, 'warehouse_id': the_only_warehouse['id'], 'name': 'Quarantine/Inspection Area', 'description': 'Area for holding goods pending inspection or quality checks.'}
+    {'id': 1, 'warehouse_id': the_only_warehouse['id'], 'code': 'BULK', 'name': 'Bulk Storage Area', 'description': 'Area for storing large quantities of goods, usually on pallets.'},
+    {'id': 2, 'warehouse_id': the_only_warehouse['id'], 'code': 'RECV', 'name': 'Receiving Area', 'description': 'Zone designated for unloading and inspecting incoming goods.'},
+    {'id': 3, 'warehouse_id': the_only_warehouse['id'], 'code': 'PICK', 'name': 'Picking Area', 'description': 'Zone where items are picked to fulfill orders.'},
+    {'id': 4, 'warehouse_id': the_only_warehouse['id'], 'code': 'PACK', 'name': 'Packing Area', 'description': 'Area for packing picked items and preparing them for shipment.'},
+    {'id': 5, 'warehouse_id': the_only_warehouse['id'], 'code': 'SHIP', 'name': 'Shipping Area', 'description': 'Zone for staging and loading outbound shipments.'},
+    {'id': 6, 'warehouse_id': the_only_warehouse['id'], 'code': 'RET', 'name': 'Returns Area', 'description': 'Designated space for processing returned goods.'},
+    {'id': 7, 'warehouse_id': the_only_warehouse['id'], 'code': 'QC', 'name': 'Quarantine/Inspection Area', 'description': 'Area for holding goods pending inspection or quality checks.'}
 ]
 
 # ZONE_NAMES are used to run this function, fix this
 def zones_insert_sql(zones):
     def sql_str(s):
         return "'" + str(s).replace("'", "''") + "'"
-    lines = ["INSERT INTO zone (zone_id, warehouse_id, name, description) VALUES"]
+    lines = ["INSERT INTO zone (zone_id, warehouse_id, code, name, description) VALUES"]
     lines.append(",\n".join(
-        f"({zone['id']}, {zone['warehouse_id']}, {sql_str(zone['name'])}, {sql_str(zone['description'])})" for zone in zones
+        f"({zone['id']}, {zone['warehouse_id']}, {sql_str(zone['code'])}, {sql_str(zone['name'])}, {sql_str(zone['description'])})" for zone in zones
     ) + ";")
     return "\n".join(lines)
 
@@ -33,7 +35,8 @@ def generate_aisles(zones):
         {
             'id': i + 1,
             'zone_id': bulk_zone['id'],
-            'label': f"Aisle-{i+1}",
+            # No dashes: the dash separates the segments of the composed shelf path
+            'label': f"A{i+1:02d}",
             'width': random.choice([200, 250, 300, 350]),
             'width_unit': "cm"
         }
@@ -54,7 +57,7 @@ def generate_racks(aisles):
         {
             'id': i + 1,
             'aisle_id': aisles[i % len(aisles)]['id'],
-            'label': f"R-{i+1:03d}",
+            'label': f"R{i+1:03d}",
             'max_height': random.choice([350, 400, 450, 500]),
             'height_unit': "cm"
         }
@@ -71,16 +74,25 @@ def racks_insert_sql(racks):
     return "\n".join(lines)
 
 def generate_shelves(racks):
-    return [
-        {
-            'id': i + 1,
-            'rack_id': racks[i % len(racks)]['id'],
-            'level': str((i % 4) + 1),
-            'max_weight': random.randint(600, 1200),
-            'max_volume': random.randint(5, 15)
-        }
-        for i in range(DATA_QUANTITIES["NUM_SHELVES"])
-    ]
+    # Iterate rack by rack, level by level, so that (rack_id, level) is unique by
+    # construction. The old `i % NUM_RACKS` / `(i % 4) + 1` pair broke exactly when
+    # the number of racks was divisible by 4 (LARGE mode: every shelf of a rack
+    # ended up on the same level).
+    total = DATA_QUANTITIES["NUM_SHELVES"]
+    levels_per_rack = -(-total // len(racks))  # ceil
+    shelves = []
+    for rack in racks:
+        for level in range(1, levels_per_rack + 1):
+            if len(shelves) == total:
+                return shelves
+            shelves.append({
+                'id': len(shelves) + 1,
+                'rack_id': rack['id'],
+                'level': str(level),
+                'max_weight': random.randint(600, 1200),
+                'max_volume': random.randint(5, 15)
+            })
+    return shelves
 
 def shelves_insert_sql(shelves):
     def sql_str(s):

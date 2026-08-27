@@ -1,0 +1,408 @@
+###############################################################################
+# Warehouse topology API - warehouse > zone > aisle > rack > shelf
+#
+# This file doubles as the integration test for the topology endpoints: every
+# block says what it demonstrates and which status it expects. Run it top to
+# bottom against a freshly seeded database:
+#
+#     docker compose down -v && task run-wms
+#
+# The ids below are the ones a fresh SMALL seed produces (7 zones, 7 aisles,
+# 10 racks, 15 shelves, so the next free ids are 8 / 8 / 11 / 16) together with
+# the calls in this file, in order. If you run the blocks out of order, paste
+# the ids from the responses instead.
+#
+# Note the plural: /warehouses is the topology. The pre-existing /warehouse/{id}
+# (singular, in .http) returns the *employees* of a warehouse - different domain,
+# different namespace.
+###############################################################################
+
+@host = http://localhost:3001
+
+@warehouse_id = 1
+@seeded_zone_id = 1
+@seeded_shelf_id = 1
+
+# created by section 3 of this file
+@tmp_zone_id = 8
+@tmp_aisle_id = 8
+@tmp_rack_id = 11
+@tmp_shelf_id = 16
+
+# created by section 4 of this file
+@layout_zone_id = 11
+@layout_aisle_01_id = 9
+@layout_aisle_09_id = 17
+@layout_rack_id = 212
+
+
+###############################################################################
+### 2. The read path
+###############################################################################
+
+### Locations - the picker behind POST /warehouses. Expect 200.
+GET {{host}}/locations
+Accept: application/json
+
+### Locations filtered by city. Expect 200.
+GET {{host}}/locations?city=Janki
+Accept: application/json
+
+### Warehouses, paginated envelope { items, page, limit, total }. Expect 200.
+GET {{host}}/warehouses?page=1&limit=10
+Accept: application/json
+
+### One warehouse with its location embedded. Expect 200.
+GET {{host}}/warehouses/{{warehouse_id}}
+Accept: application/json
+
+### An unknown warehouse. Expect 404.
+GET {{host}}/warehouses/9999
+Accept: application/json
+
+### Layout, zones only (the default depth) - counts at every level. Expect 200.
+GET {{host}}/warehouses/{{warehouse_id}}/layout
+Accept: application/json
+
+### Layout down to racks. Expect 200.
+GET {{host}}/warehouses/{{warehouse_id}}/layout?depth=rack
+Accept: application/json
+
+### Layout down to shelves, each with its composed code. Expect 200.
+GET {{host}}/warehouses/{{warehouse_id}}/layout?depth=shelf
+Accept: application/json
+
+### An unknown depth. Expect 400.
+GET {{host}}/warehouses/{{warehouse_id}}/layout?depth=pallet
+Accept: application/json
+
+### Nested listings - sugar over the flat catalogue. Expect 200.
+GET {{host}}/warehouses/{{warehouse_id}}/zones
+Accept: application/json
+
+### Aisles of a zone. Expect 200.
+GET {{host}}/zones/{{seeded_zone_id}}/aisles
+Accept: application/json
+
+### The flat shelf catalogue - the one filter grammar in this API. Expect 200.
+GET {{host}}/shelves?warehouse={{warehouse_id}}&limit=5
+Accept: application/json
+
+### Filtered by the natural keys of the path. Expect 200.
+GET {{host}}/shelves?warehouse={{warehouse_id}}&zone=BULK&aisle=A01
+Accept: application/json
+
+### Filtered by composed code (% is a wildcard). Expect 200.
+GET {{host}}/shelves?code=BULK-A01-%25
+Accept: application/json
+
+### Filtered by declared capacity. Expect 200.
+GET {{host}}/shelves?max_weight_gte=800&max_volume_gte=5
+Accept: application/json
+
+### One shelf, by id. Expect 200.
+GET {{host}}/shelves/{{seeded_shelf_id}}
+Accept: application/json
+
+
+###############################################################################
+### 3. Single-item writes: zone > aisle > rack > shelf
+###############################################################################
+
+### A zone is a named thing, so it is always created one at a time. Expect 201.
+POST {{host}}/warehouses/{{warehouse_id}}/zones
+Content-Type: application/json
+
+{
+  "code": "TMP",
+  "name": "Scratch zone",
+  "description": "Created by topology.http"
+}
+
+### Rename it - PATCH only touches the keys you send. Expect 200.
+PATCH {{host}}/zones/{{tmp_zone_id}}
+Content-Type: application/json
+
+{
+  "name": "Scratch zone (renamed)"
+}
+
+### An aisle. Its width is stored verbatim, with the unit you sent. Expect 201.
+POST {{host}}/zones/{{tmp_zone_id}}/aisles
+Content-Type: application/json
+
+{
+  "label": "T01",
+  "width": { "value": 3200, "unit": "mm" }
+}
+
+### Widen it, this time in centimetres. Expect 200.
+PATCH {{host}}/aisles/{{tmp_aisle_id}}
+Content-Type: application/json
+
+{
+  "width": { "value": 340, "unit": "cm" }
+}
+
+### A rack. Expect 201.
+POST {{host}}/aisles/{{tmp_aisle_id}}/racks
+Content-Type: application/json
+
+{
+  "label": "R001",
+  "max_height": { "value": 6, "unit": "m" }
+}
+
+### A shelf. max_weight/max_volume have no unit column, so they are normalised
+### to kg / m3 on write - 2400 l comes back as 2.4 m3. Expect 201.
+POST {{host}}/racks/{{tmp_rack_id}}/shelves
+Content-Type: application/json
+
+{
+  "level": "1",
+  "max_weight": { "value": 800, "unit": "kg" },
+  "max_volume": { "value": 2400, "unit": "l" }
+}
+
+### A bare number means "already in the base unit" (kg / m3). Expect 200.
+PATCH {{host}}/shelves/{{tmp_shelf_id}}
+Content-Type: application/json
+
+{
+  "max_weight": 1000
+}
+
+
+###############################################################################
+### 4. The declarative path: one call builds a whole zone
+###############################################################################
+
+### Dry run first: 8 aisles x 20 racks x 5 levels = 800 shelves, nothing written.
+### A dry run answers with the status the real call would return. Expect 200.
+POST {{host}}/warehouses/{{warehouse_id}}/layout?dry_run=true
+Content-Type: application/json
+
+{
+  "naming": "{zone}-{aisle}-{rack}-L{level}",
+  "zones": [{
+    "code": "A",
+    "name": "Dry storage",
+    "aisles":  { "count": 8, "labels": "01..08",
+                 "width": { "value": 3200, "unit": "mm" } },
+    "racks":   { "per_aisle": 20, "labels": "R01..R20",
+                 "max_height": { "value": 6000, "unit": "mm" } },
+    "shelves": { "per_rack": 5, "levels": "1..5",
+                 "max_weight": { "value": 800, "unit": "kg" },
+                 "max_volume": { "value": 2.4, "unit": "m3" } }
+  }]
+}
+
+### The same call for real - 969 rows in one transaction. Expect 201.
+POST {{host}}/warehouses/{{warehouse_id}}/layout
+Content-Type: application/json
+
+{
+  "naming": "{zone}-{aisle}-{rack}-L{level}",
+  "zones": [{
+    "code": "A",
+    "name": "Dry storage",
+    "aisles":  { "count": 8, "labels": "01..08",
+                 "width": { "value": 3200, "unit": "mm" } },
+    "racks":   { "per_aisle": 20, "labels": "R01..R20",
+                 "max_height": { "value": 6000, "unit": "mm" } },
+    "shelves": { "per_rack": 5, "levels": "1..5",
+                 "max_weight": { "value": 800, "unit": "kg" },
+                 "max_volume": { "value": 2.4, "unit": "m3" } }
+  }]
+}
+
+### Growing the structure: two more aisles, with racks and shelves under them.
+### Ranges are always explicit - numbering never continues by itself. Expect 201.
+POST {{host}}/zones/{{layout_zone_id}}/aisles:generate
+Content-Type: application/json
+
+{
+  "labels": "09..10",
+  "count": 2,
+  "width": { "value": 3200, "unit": "mm" },
+  "racks": {
+    "labels": "R01..R20",
+    "max_height": { "value": 6000, "unit": "mm" },
+    "shelves": {
+      "levels": "1..5",
+      "max_weight": { "value": 800, "unit": "kg" },
+      "max_volume": { "value": 2.4, "unit": "m3" }
+    }
+  }
+}
+
+### Five more racks on aisle 09, each with two shelves. Expect 201.
+POST {{host}}/aisles/{{layout_aisle_09_id}}/racks:generate
+Content-Type: application/json
+
+{
+  "labels": "R21..R25",
+  "per_aisle": 5,
+  "max_height": { "value": 6000, "unit": "mm" },
+  "shelves": {
+    "levels": "1..2",
+    "max_weight": { "value": 800, "unit": "kg" },
+    "max_volume": { "value": 2.4, "unit": "m3" }
+  }
+}
+
+### Two more levels on rack R21, which the call above gave two. Expect 201.
+POST {{host}}/racks/{{layout_rack_id}}/shelves:generate
+Content-Type: application/json
+
+{
+  "levels": "6..7",
+  "per_rack": 2,
+  "max_weight": { "value": 800, "unit": "kg" },
+  "max_volume": { "value": 2.4, "unit": "m3" }
+}
+
+
+###############################################################################
+### 5. Bulk: read what you are about to change, then change exactly that
+###############################################################################
+
+### The ids for the bulk patch come from here - never from a filter, so an
+### accidental "update all" is not expressible. Expect 200.
+GET {{host}}/shelves?warehouse={{warehouse_id}}&zone=A&aisle=03&limit=500
+Accept: application/json
+
+### Patch the shelves you just saw. All or nothing. Expect 200.
+### (ids from the response above; these are the first three of aisle 03)
+PATCH {{host}}/shelves:bulk
+Content-Type: application/json
+
+{
+  "ids": [217, 218, 219],
+  "patch": { "max_weight": { "value": 1.2, "unit": "t" } }
+}
+
+### One unknown id and nothing at all is written. Expect 404 with { missing }.
+PATCH {{host}}/shelves:bulk
+Content-Type: application/json
+
+{
+  "ids": [217, 999999],
+  "patch": { "max_weight": 1000 }
+}
+
+
+###############################################################################
+### 6. Deletes - and the calls that are supposed to fail
+###############################################################################
+
+### A shelf that carries storage history or a live reservation cannot be
+### deleted, and a dry run says so without writing. Expect 409 in_use or
+### has_history. (If this shelf happens to be clean in your seed, the answer is
+### 200 with would_delete - pick another id from GET /shelves.)
+DELETE {{host}}/shelves/{{seeded_shelf_id}}?dry_run=true
+
+### The same, for real. Expect the same 409 - the dry run predicted it.
+DELETE {{host}}/shelves/{{seeded_shelf_id}}
+
+### A zone with children, without the flag. Expect 409 has_children + a hint.
+DELETE {{host}}/zones/{{layout_zone_id}}
+
+### With cascade, but as a dry run: what would go. Expect 200 { would_delete }.
+DELETE {{host}}/zones/{{layout_zone_id}}?cascade=true&dry_run=true
+
+### The whole 800-shelf zone, in one transaction. Expect 204.
+DELETE {{host}}/zones/{{layout_zone_id}}?cascade=true
+
+### 7. The same call once more - addressing is by id, and this id is stale.
+### Expect 404 (not 204: a repeated DELETE is not "the same intent again").
+DELETE {{host}}/zones/{{layout_zone_id}}?cascade=true
+
+### The scratch shelf, which nothing points at. Expect 204.
+DELETE {{host}}/shelves/{{tmp_shelf_id}}
+
+### The scratch zone and everything under it. Expect 204.
+DELETE {{host}}/zones/{{tmp_zone_id}}?cascade=true
+
+
+###############################################################################
+### 6b. Deliberately failing calls
+###############################################################################
+
+### A duplicate zone code in the same warehouse. Expect 409 duplicate_code.
+POST {{host}}/warehouses/{{warehouse_id}}/zones
+Content-Type: application/json
+
+{ "code": "BULK", "name": "Second bulk area" }
+
+### A dash in a label: "-" separates the segments of A-01-R001-L4. Expect 400.
+POST {{host}}/warehouses/{{warehouse_id}}/zones
+Content-Type: application/json
+
+{ "code": "CO-LD", "name": "Cold room" }
+
+### A typo in a key is a 400, never a silent no-op. Expect 400.
+POST {{host}}/warehouses/{{warehouse_id}}/zones
+Content-Type: application/json
+
+{ "code": "XX", "name": "Typo", "descriptoin": "note the spelling" }
+
+### A range that runs backwards. Expect 400.
+POST {{host}}/zones/{{seeded_zone_id}}/aisles:generate
+Content-Type: application/json
+
+{ "labels": "08..01", "width": { "value": 3200, "unit": "mm" } }
+
+### A range whose prefixes disagree. Expect 400.
+POST {{host}}/zones/{{seeded_zone_id}}/aisles:generate
+Content-Type: application/json
+
+{ "labels": "R01..A20", "width": { "value": 3200, "unit": "mm" } }
+
+### count and labels disagree - the redundant count catches the typo. Expect 400.
+POST {{host}}/zones/{{seeded_zone_id}}/aisles:generate
+Content-Type: application/json
+
+{ "count": 5, "labels": "01..08", "width": { "value": 3200, "unit": "mm" } }
+
+### Over the hard limit of 5000 shelves per request. Expect 400 limit_exceeded.
+POST {{host}}/warehouses/{{warehouse_id}}/layout?dry_run=true
+Content-Type: application/json
+
+{
+  "zones": [{
+    "code": "BIG", "name": "Too big",
+    "aisles":  { "labels": "01..50", "width": 3000 },
+    "racks":   { "labels": "R01..R50", "max_height": 6000 },
+    "shelves": { "levels": "1..5", "max_weight": 800, "max_volume": 2.4 }
+  }]
+}
+
+### A naming template other than the canonical one. The path is composed in the
+### response and never stored, so anything else would silently do nothing. 400.
+POST {{host}}/warehouses/{{warehouse_id}}/layout
+Content-Type: application/json
+
+{
+  "naming": "{zone}/{aisle}/{rack}",
+  "zones": [{ "code": "NM", "name": "Bad naming" }]
+}
+
+### An unknown unit. Expect 400.
+POST {{host}}/zones/{{seeded_zone_id}}/aisles
+Content-Type: application/json
+
+{ "label": "T99", "width": { "value": 3200, "unit": "inches" } }
+
+### An empty PATCH body. Expect 400.
+PATCH {{host}}/zones/{{seeded_zone_id}}
+Content-Type: application/json
+
+{}
+
+### page is 1-based. Expect 400.
+GET {{host}}/shelves?page=0
+
+### DELETE /warehouses is deliberately not implemented (a warehouse touches
+### storage_request and employee_warehouse). Expect 405.
+DELETE {{host}}/warehouses/{{warehouse_id}}
