@@ -1,0 +1,66 @@
+# Property-based contract testing: generate requests from openapi.yaml, throw
+# them at a running server, and check every response back against the contract.
+#
+#     task contract-fuzz            # reads this file
+#
+# This is the check the hand-written pytest suite cannot be: it invents the
+# inputs, so it finds the cases nobody thought to write down. Everything the
+# suite currently guards against - int32 ids, the `page` ceiling, control
+# characters in a filter - was found here first, as a 500.
+
+[generation]
+# Per operation, per phase. Raise it for a longer nightly run.
+max-examples = 30
+# Same inputs on every run, so a failure in CI is reproducible from the log.
+deterministic = true
+
+[checks]
+
+# Werkzeug answers an undocumented method on these paths with 404 rather than
+# 405, because no rule matches the method at all. That is framework behaviour,
+# the response is still the documented JSON envelope, and forcing a 405 would
+# mean listing it on all 41 operations for no client's benefit.
+unsupported_method.enabled = false
+
+# This check expects undeclared query parameters to be rejected. OpenAPI says
+# the opposite - a parameter the contract does not mention is not the contract's
+# business - and rejecting them would break any client that appends a
+# cache-buster. Declared parameters are still validated strictly; that is what
+# `positive_data_acceptance` and the guard itself cover.
+negative_data_rejection.enabled = false
+
+# Point the generator at rows that exist, so it spends its budget on response
+# bodies instead of on 404s. These are the ids the fixture data always has.
+[[operations]]
+include-name = "GET /shelves/{shelf_id}"
+parameters = { "path.shelf_id" = 1 }
+
+[[operations]]
+include-name = "GET /zones/{zone_id}"
+parameters = { "path.zone_id" = 1 }
+
+[[operations]]
+include-name = "GET /aisles/{aisle_id}"
+parameters = { "path.aisle_id" = 1 }
+
+[[operations]]
+include-name = "GET /racks/{rack_id}"
+parameters = { "path.rack_id" = 1 }
+
+[[operations]]
+include-name = "GET /warehouses/{warehouse_id}"
+parameters = { "path.warehouse_id" = 1 }
+
+# The four declarative writes accept a redundant count (`count`, `per_aisle`,
+# `per_rack`) that the server cross-checks against the expanded label list. JSON
+# Schema cannot express "this integer equals the length of that list once a range
+# string is expanded", so the generator produces bodies that are schema-valid and
+# legitimately refused with `400 inconsistent_request`. The contract documents
+# the rule on each field; this check is the one that cannot know about it.
+[[operations]]
+include-name-regex = "^POST /(zones|aisles|racks)/\\{\\w+\\}/\\w+:generate$"
+checks.positive_data_acceptance.enabled = false
+
+[[operations]]
+include-name = "POST /warehouses/{warehouse_id}/layout"
+checks.positive_data_acceptance.enabled = false

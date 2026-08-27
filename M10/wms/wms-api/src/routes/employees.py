@@ -5,7 +5,7 @@ from database import db_engine
 
 employees_bp = Blueprint('employees_bp', __name__)
 
-@employees_bp.route('/', methods=['GET'])
+@employees_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_employees():
     query = text('''
         SELECT

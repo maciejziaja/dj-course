@@ -11,6 +11,9 @@ from typing import Any, Dict, Optional, Type
 from flask import jsonify, request
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import HTTPException, MethodNotAllowed, NotFound
+
+from logger import logger
 
 
 class ApiError(Exception):
@@ -76,6 +79,37 @@ def register_topology_error_handlers(app) -> None:
     def _handle_integrity_error(exc: IntegrityError):
         api_error = integrity_error_to_api_error(exc)
         return jsonify(api_error.to_dict()), api_error.http_status
+
+    # Werkzeug answers an unrouted URL, a wrong method or an unhandled exception
+    # with an HTML page. For a JSON API that is a content-type the contract never
+    # promised, so the three are given the same envelope as everything else.
+    @app.errorhandler(NotFound)
+    def _handle_not_found(exc: NotFound):
+        return jsonify(ApiError('not_found', 'No endpoint matches this URL.', 404).to_dict()), 404
+
+    @app.errorhandler(MethodNotAllowed)
+    def _handle_method_not_allowed(exc: MethodNotAllowed):
+        allowed = sorted(exc.valid_methods or [])
+        error = ApiError('method_not_allowed',
+                         f'{request.method} is not allowed on this URL.', 405,
+                         allowed=allowed)
+        response = jsonify(error.to_dict())
+        if allowed:
+            response.headers['Allow'] = ', '.join(allowed)
+        return response, 405
+
+    @app.errorhandler(Exception)
+    def _handle_unexpected(exc: Exception):
+        if isinstance(exc, HTTPException):
+            return exc
+        logger.exception(f'Unhandled error on {request.method} {request.path}')
+        # Registering a catch-all handler otherwise overrides Flask's own
+        # propagation, and a debugger or a test run would lose the traceback it
+        # was about to be handed.
+        if app.config.get('PROPAGATE_EXCEPTIONS') or app.testing or app.debug:
+            raise exc
+        return jsonify(ApiError('internal_error',
+                                'The request could not be completed.', 500).to_dict()), 500
 
 
 def _format_validation_error(exc: ValidationError):

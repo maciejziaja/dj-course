@@ -210,3 +210,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Snapshot taken by `task contract-fuzz-all` before it writes to the database.
+.fuzz-snapshot.sql
+
+# Property-based testing artefacts
+schemathesis-report/
+.schemathesis/

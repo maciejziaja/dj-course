@@ -32,6 +32,8 @@ services:
       SERVICE_NAME: ${SERVICE_NAME:-wms-api}
       POSTGRES_URL: postgresql+psycopg2://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-strongpassword123}@wms-postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-deliveroo}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200}
+      # off | request | observe | strict - see wms-api/src/openapi_guard.py
+      OPENAPI_VALIDATION: ${OPENAPI_VALIDATION:-observe}
     ports:
       - "${PORT:-3001}:${PORT:-3001}"
     networks:

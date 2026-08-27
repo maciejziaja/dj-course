@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "wms-api"
 version = "0.1.0"
 description = "WMS API service"
-requires-python = ">=3.8"
+# openapi-core 0.23 requires >=3.10; the Docker image is already python:3.13-slim.
+requires-python = ">=3.10"
 dependencies = [
     "flask>=3.0.0",
     "flask-cors>=4.0.0",
@@ -14,5 +15,36 @@ dependencies = [
     "requests>=2.31.0",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
-    "pydantic>=2.0.0"
+    "pydantic>=2.0.0",
+    # Runtime enforcement of openapi.yaml - requests on the way in, responses on
+    # the way out. Ships with the service, not just with the tests: `observe`
+    # mode is meant to run in production. See src/openapi_guard.py.
+    "openapi-core[flask]>=0.23,<0.24",
+]
+
+[project.optional-dependencies]
+# Everything needed to lint the contract and test the API against it.
+dev = [
+    "pytest>=8.0",
+    "requests>=2.31.0",
+    # Structural validation of openapi.yaml itself (also pulled in by openapi-core).
+    "openapi-spec-validator>=0.8,<0.9",
+    # Property-based contract testing: generates requests from the contract and
+    # checks every response back against it.
+    "schemathesis>=4.25,<5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `src` is flat on sys.path at runtime (src/run.py), so the tests import the same way.
+pythonpath = ["src"]
+markers = [
+    "live: hits a running server over HTTP rather than the Flask test client",
+]
+filterwarnings = [
+    "error",
+    # `allowEmptyValue` is deprecated in OpenAPI 3.0, but it is the only way to
+    # say what these filters actually do - `?city=` means "no filter", and
+    # without it openapi-core rejects the empty value the frontend sends.
+    "default:Use of allowEmptyValue property is deprecated:DeprecationWarning",
 ]
