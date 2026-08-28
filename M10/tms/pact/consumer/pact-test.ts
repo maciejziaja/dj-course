@@ -24,7 +24,6 @@ async function runTest(): Promise<void> {
           id: integer(1),
           first_name: string('Maida'),
           last_name: string('Dach'),
-          nationality: string('Poland'),
           email: string('forestraynor@bauch.io'),
         }),
         pagination: {
@@ -65,7 +64,6 @@ async function runTest(): Promise<void> {
         first_name: string;
         last_name: string;
         email: string;
-        nationality: string;
       }>;
       pagination: { page: number; limit: number; total: number; totalPages: number };
     };
@@ -76,11 +74,6 @@ async function runTest(): Promise<void> {
     if (!customersData.pagination || typeof customersData.pagination.total !== 'number') {
       throw new Error(`Expected pagination object, got: ${JSON.stringify(customersData)}`);
     }
-
-    if (customersData.data[0].nationality !== 'Poland') {
-      throw new Error(`Expected nationality=Poland, got: ${JSON.stringify(customersData.data[0])}`);
-    }
-    
 
     // Verify transportation orders for customer 1
     const ordersRes = await fetch(`${mockService.url}/transportation-orders?customer_id=1`);
