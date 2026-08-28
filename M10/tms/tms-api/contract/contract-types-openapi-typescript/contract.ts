@@ -2218,6 +2218,20 @@ export interface operations {
                     "application/json": components["schemas"]["CargoLoadPlanReadModel"];
                 };
             };
+            /** @description Malformed load plan id or unsupported query parameter. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "query.weightUnit: Invalid option: expected one of \"KG\"|\"TONNE\"|\"LB\""
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description No load plan exists with the given ID. */
             404: {
                 headers: {

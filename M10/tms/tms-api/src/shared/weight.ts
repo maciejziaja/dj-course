@@ -14,14 +14,6 @@ const UNITS: Record<WeightUnit, UnitDefinition> = {
 export class Weight {
   static readonly allowedUnits: WeightUnit[] = Object.keys(UNITS) as WeightUnit[];
 
-  static isUnit(raw: unknown): raw is WeightUnit {
-    return typeof raw === 'string' && Object.keys(UNITS).includes(raw);
-  }
-
-  static parseUnit(raw: unknown): WeightUnit {
-    return Weight.isUnit(raw) ? raw : 'KG';
-  }
-
   private constructor(
     private readonly amount: number,
     private readonly unit: WeightUnit

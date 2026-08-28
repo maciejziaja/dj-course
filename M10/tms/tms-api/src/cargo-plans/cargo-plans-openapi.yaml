@@ -82,6 +82,14 @@ paths:
                       requiresSideLoading: false
                       isBulk: false
                       highSecurityRequired: false
+        '400':
+          description: Malformed load plan id or unsupported query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '../../contract/entry.yaml#/components/schemas/ErrorResponse'
+              example:
+                error: "query.weightUnit: Invalid option: expected one of \"KG\"|\"TONNE\"|\"LB\""
         '404':
           description: No load plan exists with the given ID.
           content:

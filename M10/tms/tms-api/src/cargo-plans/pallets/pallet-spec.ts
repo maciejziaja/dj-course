@@ -29,10 +29,6 @@ export class PalletSpec {
     return entry[0];
   }
 
-  static allowedTypes(): string[] {
-    return Object.keys(REGISTRY);
-  }
-
   constructor( // (!) 🤨🤨🤨 "public readonly" all the things?!
     public readonly label: string,
     public readonly material: Material,

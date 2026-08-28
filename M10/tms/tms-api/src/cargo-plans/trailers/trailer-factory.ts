@@ -24,10 +24,6 @@ export class TrailerFactory {
     return entry[0];
   }
 
-  static allowedTypes(): string[] {
-    return Object.keys(REGISTRY);
-  }
-
   static standardCurtainside(): PalletLoadableTrailerSpec {
     return {
       type: 'Standard Curtainside',

@@ -16,18 +16,6 @@ export enum CargoType {
   GENERAL = 'GENERAL',
 }
 
-const CONTRACT_TO_DOMAIN_CARGO_TYPE: Record<string, CargoType> = {
-  FOOD: CargoType.FOOD,
-  CHEMICAL: CargoType.CHEMICAL,
-  ELECTRONICS: CargoType.ELECTRONICS,
-  ADR: CargoType.DANGEROUS_GOODS,
-  GENERAL: CargoType.GENERAL,
-};
-
-export function parseCargoType(value: string): CargoType | undefined {
-  return CONTRACT_TO_DOMAIN_CARGO_TYPE[value];
-}
-
 /**
  * Specific requirements for the cargo being transported.
  */

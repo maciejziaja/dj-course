@@ -45,6 +45,7 @@ export namespace CargoPlans {
    * @summary Get load plan details
    * @request GET:/cargo-plans/{id}
    * @response `200` `CargoLoadPlanReadModel` Load plan found
+   * @response `400` `ErrorResponse` Malformed load plan id or unsupported query parameter.
    * @response `404` `ErrorResponse` No load plan exists with the given ID.
    * @response `500` `ErrorResponse`
    */
