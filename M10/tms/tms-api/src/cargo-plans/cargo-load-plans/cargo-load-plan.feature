@@ -76,7 +76,7 @@ Feature: Cargo Load Plan Aggregate
   Scenario: Temperature-controlled cargo requires climate-controlled trailer
     Given an empty load plan with standard curtainside trailer
     When I try to add a food pallet unit with weight 300 kg and temperature control required
-    Then it should fail with "Climate control required"
+    Then it should fail with "climate control required"
 
   Scenario: Unit exceeding trailer height is rejected
     Given an empty load plan with trailer having height 1500 mm

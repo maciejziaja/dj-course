@@ -263,7 +263,7 @@ export class CargoLoadPlan {
     const { capabilities: cap } = loadSpace;
 
     if (req.isTemperatureControlled && !cap.hasClimateControl) {
-      return fail(new LoadSpaceCapabilityMismatchError('Climate control required'));
+      return fail(new LoadSpaceCapabilityMismatchError('climate control required'));
     }
     if (req.requiresSideLoading && !cap.supportsSideLoading) {
       return fail(new LoadSpaceCapabilityMismatchError('side loading required'));

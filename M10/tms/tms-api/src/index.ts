@@ -46,6 +46,26 @@ app.use(
 // Mount GraphQL endpoint
 app.all('/graphql', createHandler({ schema }));
 
+// Last line of defence: anything a route forwarded (or threw synchronously)
+// answers as a 500 instead of leaving the request hanging.
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logger.error('Unhandled error in request pipeline', {
+    error: { message: err.message, stack: err.stack },
+  });
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// A rejected promise outside the request pipeline must not tear the process
+// down – Node's default policy would exit(1) and take every in-flight request
+// with it.
+process.on('unhandledRejection', (reason: unknown) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('Unhandled promise rejection', {
+    error: { message: error.message, stack: error.stack },
+  });
+});
+
 // Start gRPC server
 startGrpcServer();
 

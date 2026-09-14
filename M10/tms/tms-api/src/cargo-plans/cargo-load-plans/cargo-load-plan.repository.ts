@@ -36,7 +36,7 @@ export type CargoLoadPlanDbRow =
 export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
   public async create(plan: CargoLoadPlan): Promise<void> {
     const { id, loadSpace, status, currentLdm } = plan.getSnapshot();
-    const loadSpaceTypeKey = LoadSpaceCatalog.toTypeKey(loadSpace);
+    const loadSpaceTypeKey = loadSpace.typeKey;
     await pool.query(
       `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
        VALUES ($1, $2, $3, $4, 1)`,
@@ -49,7 +49,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
   // 🔥🔥🔥 adding or removing cargo units 🔥🔥🔥 (deep within the aggregate!)
   public async save(plan: CargoLoadPlan): Promise<void> {
     const { id, loadSpace, status, currentLdm, assignedUnits, version } = plan.getSnapshot();
-    const loadSpaceTypeKey = LoadSpaceCatalog.toTypeKey(loadSpace);
+    const loadSpaceTypeKey = loadSpace.typeKey;
 
     const client = await pool.connect();
     try {
@@ -70,7 +70,8 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
         );
         if (rowCount === 0) { // 🔥🔥🔥 optimistic check failed
           const currentVersion = await this.fetchVersion(client, id); // 🔥🔥🔥 no updates? VERSION MISMATCH!
-          await client.query('ROLLBACK'); // 🔥🔥🔥 rollback transaction
+          // The catch below rolls the transaction back – doing it here as well
+          // would issue a second ROLLBACK outside any transaction.
           throw new OptimisticLockError('CargoLoadPlan', id, version, currentVersion ?? -1);
         }
       }
@@ -84,7 +85,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
 
       for (const unit of assignedUnits) {
         const { id: unitId, spec, cargoType, weight, requirements, totalHeightMm } = unit;
-        const palletTypeKey = PalletSpec.toTypeKey(spec);
+        const palletTypeKey = spec.typeKey;
         const cargoHeightMm = totalHeightMm - spec.height;
         await client.query(
           `INSERT INTO cargo_plans.cargo_load_plan_units

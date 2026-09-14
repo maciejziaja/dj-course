@@ -23,10 +23,19 @@ export const contractCargoTypesMatchDomain: ContractCargoType extends `${CargoTy
   ? true
   : never = true;
 
+/**
+ * Zod strips unknown keys by default; the contract declares
+ * `additionalProperties: false` on every input payload, so the boundary has to
+ * reject them instead of silently dropping them. This enforces what the
+ * contract already says – it does not re-declare which keys are allowed.
+ */
+const closed = <T extends z.ZodType>(schema: T): T =>
+  schema instanceof z.ZodObject ? (schema.strict() as unknown as T) : schema;
+
 /** Request schemas per operationId, assembled from the generated contract. */
 export const requestSchemas = {
   createLoadPlan: {
-    body: endpointParams.createLoadPlan.body,
+    body: closed(endpointParams.createLoadPlan.body),
   },
   getLoadPlan: {
     params: z.object({ id: endpointParams.getLoadPlan.id }),
@@ -34,7 +43,7 @@ export const requestSchemas = {
   },
   addCargoToLoadPlan: {
     params: z.object({ id: endpointParams.addCargoToLoadPlan.id }),
-    body: endpointParams.addCargoToLoadPlan.body,
+    body: closed(endpointParams.addCargoToLoadPlan.body),
   },
   removeCargoFromLoadPlan: {
     params: z.object({
@@ -44,7 +53,7 @@ export const requestSchemas = {
   },
   changeLoadSpace: {
     params: z.object({ id: endpointParams.changeLoadSpace.id }),
-    body: endpointParams.changeLoadSpace.body,
+    body: closed(endpointParams.changeLoadSpace.body),
   },
   finalizeLoadPlan: {
     params: z.object({ id: endpointParams.finalizeLoadPlan.id }),

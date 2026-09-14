@@ -2165,7 +2165,7 @@ export interface operations {
                     "application/json": components["schemas"]["CreateLoadPlanResponse"];
                 };
             };
-            /** @description Missing or invalid loadSpaceType. */
+            /** @description Missing or unknown loadSpaceType. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2173,7 +2173,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "error": "loadSpaceType is required. Allowed: standard-curtainside, mega, reefer, van-medium, box-truck-8t"
+                     *       "error": "body.loadSpaceType: Invalid option: expected one of \"standard-curtainside\"|\"mega\"|\"reefer\"|\"van-medium\"|\"box-truck-8t\""
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2316,12 +2316,17 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Invalid request payload or business rule violation (e.g. weight/LDM exceeded, incompatible cargo). */
+            /** @description Request payload does not match the contract (unknown pallet or cargo type, non-positive weight or height, malformed id). */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "error": "body.weightKg: Too small: expected number to be >0"
+                     *     }
+                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
@@ -2334,6 +2339,34 @@ export interface operations {
                     /**
                      * @example {
                      *       "error": "Load plan 'a1b2c3d4-...' not found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan cannot accept the cargo in its current state: it is already finalized, the cargo cannot be co-loaded with what is already on the plan, or a concurrent modification won the optimistic lock. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Incompatible cargo: Cannot mix Food with Dangerous goods."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The payload is well-formed but violates a planning rule: load space weight capacity or vehicle payload exceeded, loading metres exceeded, cargo too tall or too wide, a capability the load space lacks, or a pallet that cannot carry this cargo type or weight. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Vehicle payload exceeded: Medium Van cannot carry 1415kg gross (payload 1400kg)."
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2369,16 +2402,21 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unit not found in the plan or plan is finalized. */
+            /** @description Malformed load plan or unit id. */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "error": "params.unitId: Invalid UUID"
+                     *     }
+                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description No load plan exists with the given ID. */
+            /** @description No load plan exists with the given ID, or the plan carries no unit with that ID. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2387,6 +2425,20 @@ export interface operations {
                     /**
                      * @example {
                      *       "error": "Load plan 'a1b2c3d4-...' not found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan is already finalized, or a concurrent modification won the optimistic lock. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Finalized plan cannot be modified."
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2426,7 +2478,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Invalid loadSpaceType or re-validation of existing cargo failed. */
+            /** @description Missing or unknown loadSpaceType, or malformed load plan id. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2434,7 +2486,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "error": "loadSpaceType is required. Allowed: standard-curtainside, mega, reefer, van-medium, box-truck-8t"
+                     *       "error": "body.loadSpaceType: Invalid option: expected one of \"standard-curtainside\"|\"mega\"|\"reefer\"|\"van-medium\"|\"box-truck-8t\""
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2449,6 +2501,34 @@ export interface operations {
                     /**
                      * @example {
                      *       "error": "Load plan 'a1b2c3d4-...' not found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan is already finalized, the cargo on it cannot be co-loaded, or a concurrent modification won the optimistic lock. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Finalized plan cannot be modified."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Cargo already on the plan does not fit the new load space – its capacity, payload, loading metres, dimensions or capabilities are not enough for what is loaded. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Load space capability mismatch: high security lock required"
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2479,7 +2559,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Plan cannot be finalized (empty plan or capacity exceeded). */
+            /** @description Malformed load plan id. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2487,7 +2567,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "error": "Cannot finalize empty plan."
+                     *       "error": "params.id: Invalid UUID"
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2502,6 +2582,34 @@ export interface operations {
                     /**
                      * @example {
                      *       "error": "Load plan 'a1b2c3d4-...' not found"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan is already finalized, or a concurrent modification won the optimistic lock. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Finalized plan cannot be modified."
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The plan cannot be finalized – it carries no cargo, or it exceeds the load space's loading metres. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "Cannot finalize empty plan."
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];

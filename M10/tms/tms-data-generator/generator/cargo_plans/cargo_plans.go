@@ -77,10 +77,13 @@ func GenerateCargoLoadPlans(count int) []CargoLoadPlan {
 		}
 		totalLdm = math.Round(totalLdm*100) / 100
 
-		// Ensure LDM and weight within trailer limits
+		// Ensure LDM and weight within trailer limits. Weight is GROSS – cargo
+		// plus the pallet under it – because that is what tms-api checks when it
+		// rehydrates the plan; a net-only check here would emit seed rows the
+		// aggregate rejects as violating its own invariants.
 		totalWeight := 0.0
 		for _, u := range units {
-			totalWeight += u.WeightKg
+			totalWeight += u.WeightKg + tareForPallet(u.PalletType)
 		}
 		maxWeight := maxWeightForTrailer(trailer.Type)
 		if totalWeight > maxWeight || totalLdm > maxLdmForTrailer(trailer.Type) {
@@ -91,7 +94,7 @@ func GenerateCargoLoadPlans(count int) []CargoLoadPlan {
 				totalWeight = 0
 				for _, u := range units {
 					totalLdm += ldmForPallet(u.PalletType)
-					totalWeight += u.WeightKg
+					totalWeight += u.WeightKg + tareForPallet(u.PalletType)
 				}
 			}
 			totalLdm = math.Round(totalLdm*100) / 100
@@ -307,6 +310,17 @@ func compatiblePallets(trailer trailerSpec) []palletSpec {
 		}
 	}
 	return result
+}
+
+// tareForPallet returns the weight of the empty pallet, which counts towards
+// every capacity limit in tms-api.
+func tareForPallet(p PalletType) float64 {
+	for _, spec := range palletSpecs {
+		if spec.Type == p {
+			return spec.TareKg
+		}
+	}
+	return 25
 }
 
 func ldmForPallet(p PalletType) float64 {

@@ -4,15 +4,6 @@ import { UnknownPalletTypeError } from './pallet-spec.errors';
 
 export type Material = 'Wood' | 'Plastic' | 'Metal' | 'HDPE';
 
-const REGISTRY: Record<string, () => PalletSpec> = {
-  'epal1': () => PalletSpec.epal1(),
-  'industrial': () => PalletSpec.industrial(),
-  'half': () => PalletSpec.half(),
-  'cp1': () => PalletSpec.cp1(),
-  'cp3': () => PalletSpec.cp3(),
-  'h1': () => PalletSpec.h1(),
-};
-
 /**
  * Immutable definition of a pallet type (Value Object).
  */
@@ -23,13 +14,9 @@ export class PalletSpec {
     return factory();
   }
 
-  static toTypeKey(spec: PalletSpec): string {
-    const entry = Object.entries(REGISTRY).find(([, factory]) => factory().label === spec.label);
-    if (!entry) throw new UnknownPalletTypeError(spec.label, Object.keys(REGISTRY));
-    return entry[0];
-  }
-
   constructor( // (!) 🤨🤨🤨 "public readonly" all the things?!
+    /** Key this spec is stored and requested under ("epal1"). The contract's `PalletType` value. */
+    public readonly typeKey: string,
     public readonly label: string,
     public readonly material: Material,
     public readonly allowedCargoTypes: CargoType[],
@@ -60,6 +47,9 @@ export class PalletSpec {
 
   // 🔥🔥🔥 technical validation
   private validate(): void {
+    if (!this.typeKey || this.typeKey.trim().length === 0) {
+      throw new Error('Type key cannot be empty');
+    }
     if (!this.label || this.label.trim().length === 0) {
       throw new Error('Label cannot be empty');
     }
@@ -78,26 +68,41 @@ export class PalletSpec {
   }
 
   static epal1(): PalletSpec {
-    return new PalletSpec('EPAL 1', 'Wood', [CargoType.GENERAL, CargoType.FOOD, CargoType.ELECTRONICS], 800, 1200, 144, Weight.from(4000, 'KG'), Weight.from(25, 'KG'));
+    return new PalletSpec('epal1', 'EPAL 1', 'Wood', [CargoType.GENERAL, CargoType.FOOD, CargoType.ELECTRONICS], 800, 1200, 144, Weight.from(4000, 'KG'), Weight.from(25, 'KG'));
   }
 
   static industrial(): PalletSpec {
-    return new PalletSpec('ISO-2', 'Wood', [CargoType.GENERAL, CargoType.ELECTRONICS], 1000, 1200, 162, Weight.from(1500, 'KG'), Weight.from(32, 'KG'));
+    return new PalletSpec('industrial', 'ISO-2', 'Wood', [CargoType.GENERAL, CargoType.ELECTRONICS], 1000, 1200, 162, Weight.from(1500, 'KG'), Weight.from(32, 'KG'));
   }
 
   static half(): PalletSpec {
-    return new PalletSpec('EPAL-6', 'Wood', [CargoType.GENERAL, CargoType.FOOD], 600, 800, 144, Weight.from(750, 'KG'), Weight.from(10, 'KG'));
+    return new PalletSpec('half', 'EPAL-6', 'Wood', [CargoType.GENERAL, CargoType.FOOD], 600, 800, 144, Weight.from(750, 'KG'), Weight.from(10, 'KG'));
   }
 
   static cp1(): PalletSpec {
-    return new PalletSpec('CP1', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1000, 1200, 138, Weight.from(1190, 'KG'), Weight.from(23, 'KG'));
+    return new PalletSpec('cp1', 'CP1', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1000, 1200, 138, Weight.from(1190, 'KG'), Weight.from(23, 'KG'));
   }
 
   static cp3(): PalletSpec {
-    return new PalletSpec('CP-3', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1140, 1140, 138, Weight.from(1200, 'KG'), Weight.from(22, 'KG'));
+    return new PalletSpec('cp3', 'CP-3', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1140, 1140, 138, Weight.from(1200, 'KG'), Weight.from(22, 'KG'));
   }
 
   static h1(): PalletSpec {
-    return new PalletSpec('H1', 'HDPE', [CargoType.FOOD], 800, 1200, 160, Weight.from(5000, 'KG'), Weight.from(15, 'KG'));
+    return new PalletSpec('h1', 'H1', 'HDPE', [CargoType.FOOD], 800, 1200, 160, Weight.from(5000, 'KG'), Weight.from(15, 'KG'));
   }
 }
+
+/**
+ * Lookup by the key the spec itself declares – the mapping cannot drift,
+ * because there is only one place the key is written.
+ */
+const REGISTRY: Record<string, () => PalletSpec> = Object.fromEntries(
+  [
+    PalletSpec.epal1,
+    PalletSpec.industrial,
+    PalletSpec.half,
+    PalletSpec.cp1,
+    PalletSpec.cp3,
+    PalletSpec.h1,
+  ].map(factory => [factory().typeKey, factory]),
+);

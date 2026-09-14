@@ -30,6 +30,12 @@ export type LoadSpaceKind = 'TRAILER' | 'RIGID_VEHICLE';
 export interface LoadSpaceSpec {
   /** Whether the load space is detachable from its vehicle. Drives the reservation lifecycle. */
   readonly kind: LoadSpaceKind;
+  /**
+   * Key this class is stored and requested under ("reefer"), i.e. the
+   * contract's `LoadSpaceType` value. Distinct from {@link type}, which is the
+   * label a human reads.
+   */
+  readonly typeKey: string;
   /** Categorization of the load space. Example: "Reefer", "Fiat Ducato L2H2". */
   readonly type: string;
   /** Embedded set of specific operational capabilities and features. */

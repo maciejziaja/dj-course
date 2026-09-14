@@ -10,12 +10,13 @@ import { CargoType } from './cargo/cargo.types';
 import { Weight } from '../shared/weight';
 import { type CargoPlanServiceError } from './cargo-plans.errors';
 import { requestSchemas, validateRequest } from './cargo-plans.validation';
+import { asyncHandler } from '../shared/async-handler';
 
 const router = express.Router();
 
 // ── POST / — Create a new load plan ────────────────────────────────────────
 
-router.post('/', async (
+router.post('/', asyncHandler('Failed to create load plan', async (
   req: Request<
     CargoPlans.CreateLoadPlan.RequestParams,
     CargoPlans.CreateLoadPlan.ResponseBody | ErrorResponse,
@@ -37,11 +38,11 @@ router.post('/', async (
 
   logger.info('Load plan created', { plan_id: result.value, load_space_type: body.loadSpaceType });
   res.status(201).json({ id: result.value });
-});
+}));
 
 // ── GET /:id — Get load plan details ────────────────────────────────────────
 
-router.get('/:id', async (
+router.get('/:id', asyncHandler('Failed to fetch load plan', async (
   req: Request<
     CargoPlans.GetLoadPlan.RequestParams,
     CargoPlans.GetLoadPlan.ResponseBody | ErrorResponse,
@@ -62,11 +63,11 @@ router.get('/:id', async (
     return res.status(404).json({ error: `Load plan '${params.id}' not found` });
   }
   res.json(readModel);
-});
+}));
 
 // ── POST /:id/cargo — Add cargo to plan ─────────────────────────────────────
 
-router.post('/:id/cargo', async (
+router.post('/:id/cargo', asyncHandler('Failed to add cargo to plan', async (
   req: Request<
     CargoPlans.AddCargoToLoadPlan.RequestParams,
     CargoPlans.AddCargoToLoadPlan.ResponseBody | ErrorResponse,
@@ -94,11 +95,11 @@ router.post('/:id/cargo', async (
   }
   logger.info('Cargo added to plan', { plan_id: params.id, pallet_type: body.palletType });
   res.status(204).send();
-});
+}));
 
 // ── DELETE /:id/cargo/:unitId — Remove cargo from plan ──────────────────────
 
-router.delete('/:id/cargo/:unitId', async (
+router.delete('/:id/cargo/:unitId', asyncHandler('Failed to remove cargo from plan', async (
   req: Request<
     CargoPlans.RemoveCargoFromLoadPlan.RequestParams,
     CargoPlans.RemoveCargoFromLoadPlan.ResponseBody | ErrorResponse,
@@ -122,11 +123,11 @@ router.delete('/:id/cargo/:unitId', async (
   }
   logger.info('Cargo removed from plan', { plan_id: params.id, unit_id: params.unitId });
   res.status(204).send();
-});
+}));
 
 // ── PUT /:id/load-space — Change load space ─────────────────────────────────
 
-router.put('/:id/load-space', async (
+router.put('/:id/load-space', asyncHandler('Failed to change load space', async (
   req: Request<
     CargoPlans.ChangeLoadSpace.RequestParams,
     CargoPlans.ChangeLoadSpace.ResponseBody | ErrorResponse,
@@ -150,11 +151,11 @@ router.put('/:id/load-space', async (
   }
   logger.info('Load space changed', { plan_id: params.id, load_space_type: body.loadSpaceType });
   res.status(204).send();
-});
+}));
 
 // ── POST /:id/finalize — Finalize the plan ──────────────────────────────────
 
-router.post('/:id/finalize', async (
+router.post('/:id/finalize', asyncHandler('Failed to finalize load plan', async (
   req: Request<
     CargoPlans.FinalizeLoadPlan.RequestParams,
     CargoPlans.FinalizeLoadPlan.ResponseBody | ErrorResponse,
@@ -175,7 +176,7 @@ router.post('/:id/finalize', async (
   }
   logger.info('Load plan finalized', { plan_id: params.id });
   res.status(204).send();
-});
+}));
 
 // ── Error handling ──────────────────────────────────────────────────────────
 

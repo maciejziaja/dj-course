@@ -27,7 +27,7 @@ export namespace CargoPlans {
    * @summary Create a load plan
    * @request POST:/cargo-plans
    * @response `201` `CreateLoadPlanResponse` Load plan created successfully
-   * @response `400` `ErrorResponse` Missing or invalid loadSpaceType.
+   * @response `400` `ErrorResponse` Missing or unknown loadSpaceType.
    * @response `500` `ErrorResponse`
    */
   export namespace CreateLoadPlan {
@@ -74,8 +74,10 @@ export namespace CargoPlans {
    * @summary Add cargo to a load plan
    * @request POST:/cargo-plans/{id}/cargo
    * @response `204` `void` Cargo added successfully – no body returned.
-   * @response `400` `ErrorResponse` Invalid request payload or business rule violation (e.g. weight/LDM exceeded, incompatible cargo).
+   * @response `400` `ErrorResponse` Request payload does not match the contract (unknown pallet or cargo type, non-positive weight or height, malformed id).
    * @response `404` `ErrorResponse` No load plan exists with the given ID.
+   * @response `409` `ErrorResponse` The plan cannot accept the cargo in its current state: it is already finalized, the cargo cannot be co-loaded with what is already on the plan, or a concurrent modification won the optimistic lock.
+   * @response `422` `ErrorResponse` The payload is well-formed but violates a planning rule: load space weight capacity or vehicle payload exceeded, loading metres exceeded, cargo too tall or too wide, a capability the load space lacks, or a pallet that cannot carry this cargo type or weight.
    * @response `500` `ErrorResponse`
    */
   export namespace AddCargoToLoadPlan {
@@ -100,8 +102,9 @@ export namespace CargoPlans {
    * @summary Remove cargo from a load plan
    * @request DELETE:/cargo-plans/{id}/cargo/{unitId}
    * @response `204` `void` Cargo removed successfully – no body returned.
-   * @response `400` `ErrorResponse` Unit not found in the plan or plan is finalized.
-   * @response `404` `ErrorResponse` No load plan exists with the given ID.
+   * @response `400` `ErrorResponse` Malformed load plan or unit id.
+   * @response `404` `ErrorResponse` No load plan exists with the given ID, or the plan carries no unit with that ID.
+   * @response `409` `ErrorResponse` The plan is already finalized, or a concurrent modification won the optimistic lock.
    * @response `500` `ErrorResponse`
    */
   export namespace RemoveCargoFromLoadPlan {
@@ -132,8 +135,10 @@ export namespace CargoPlans {
    * @summary Change load space
    * @request PUT:/cargo-plans/{id}/load-space
    * @response `204` `void` Load space changed successfully – no body returned.
-   * @response `400` `ErrorResponse` Invalid loadSpaceType or re-validation of existing cargo failed.
+   * @response `400` `ErrorResponse` Missing or unknown loadSpaceType, or malformed load plan id.
    * @response `404` `ErrorResponse` No load plan exists with the given ID.
+   * @response `409` `ErrorResponse` The plan is already finalized, the cargo on it cannot be co-loaded, or a concurrent modification won the optimistic lock.
+   * @response `422` `ErrorResponse` Cargo already on the plan does not fit the new load space – its capacity, payload, loading metres, dimensions or capabilities are not enough for what is loaded.
    * @response `500` `ErrorResponse`
    */
   export namespace ChangeLoadSpace {
@@ -158,8 +163,10 @@ export namespace CargoPlans {
    * @summary Finalize a load plan
    * @request POST:/cargo-plans/{id}/finalize
    * @response `204` `void` Load plan finalized successfully – no body returned.
-   * @response `400` `ErrorResponse` Plan cannot be finalized (empty plan or capacity exceeded).
+   * @response `400` `ErrorResponse` Malformed load plan id.
    * @response `404` `ErrorResponse` No load plan exists with the given ID.
+   * @response `409` `ErrorResponse` The plan is already finalized, or a concurrent modification won the optimistic lock.
+   * @response `422` `ErrorResponse` The plan cannot be finalized – it carries no cargo, or it exceeds the load space's loading metres.
    * @response `500` `ErrorResponse`
    */
   export namespace FinalizeLoadPlan {

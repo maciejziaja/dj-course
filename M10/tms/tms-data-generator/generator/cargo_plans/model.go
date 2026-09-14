@@ -58,6 +58,9 @@ type palletSpec struct {
 	LdmPerUnit   float64
 	MaxWeightKg  float64
 	BaseHeightMm int
+	// Weight of the empty pallet. tms-api judges every capacity limit on gross
+	// mass (cargo + pallet), so a generated plan has to be checked the same way.
+	TareKg float64
 }
 
 var trailerSpecs = []trailerSpec{
@@ -67,12 +70,12 @@ var trailerSpecs = []trailerSpec{
 }
 
 var palletSpecs = []palletSpec{
-	{Epal1, []CargoType{General, Food, Electronics}, 0.40, 4000, 144},
-	{Industrial, []CargoType{General, Electronics}, 0.50, 1500, 162},
-	{Half, []CargoType{General, Food}, 0.27, 750, 144},
-	{CP1, []CargoType{Chemical, DangerousGoods}, 0.50, 1190, 138},
-	{CP3, []CargoType{Chemical, DangerousGoods}, 0.48, 1200, 138},
-	{H1, []CargoType{Food}, 0.40, 5000, 160},
+	{Epal1, []CargoType{General, Food, Electronics}, 0.40, 4000, 144, 25},
+	{Industrial, []CargoType{General, Electronics}, 0.50, 1500, 162, 32},
+	{Half, []CargoType{General, Food}, 0.27, 750, 144, 10},
+	{CP1, []CargoType{Chemical, DangerousGoods}, 0.50, 1190, 138, 23},
+	{CP3, []CargoType{Chemical, DangerousGoods}, 0.48, 1200, 138, 22},
+	{H1, []CargoType{Food}, 0.40, 5000, 160, 15},
 }
 
 // PredefinedPlan holds static configuration for seeded plans used in .http test scenarios.

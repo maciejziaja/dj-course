@@ -11,25 +11,6 @@ import { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
 export { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
 
 /**
- * Every load space a plan can be made against is a **class**, never a single
- * make and model.
- *
- * Trailers were always classed this way – "reefer" is a category, not a serial
- * number. Rigid vehicles now follow the same shape: adding an Iveco Daily or a
- * VW Crafter means listing it among a class's members, not minting a new entry
- * here and widening the API contract.
- */
-const REGISTRY: Record<string, () => PalletLoadableSpace> = {
-  // Detachable trailers – the tractor unit is picked after the plan is agreed.
-  'standard-curtainside': () => LoadSpaceCatalog.standardCurtainside(),
-  'mega': () => LoadSpaceCatalog.megaTrailer(),
-  'reefer': () => LoadSpaceCatalog.refrigerated(),
-  // Rigid vehicle classes – the class determines the payload, dispatch picks the van.
-  'van-medium': () => LoadSpaceCatalog.mediumVan(),
-  'box-truck-8t': () => LoadSpaceCatalog.boxTruck8t(),
-};
-
-/**
  * Builds a class from its members, taking the **worst case** of every figure.
  *
  * Deriving rather than hand-writing the envelope is the point: it cannot drift
@@ -38,6 +19,7 @@ const REGISTRY: Record<string, () => PalletLoadableSpace> = {
  * promise capacity that some members of the class do not have.
  */
 function guaranteedEnvelope(
+  typeKey: string,
   type: string,
   capabilities: LoadSpaceCapabilities,
   members: readonly VehicleModel[],
@@ -53,6 +35,7 @@ function guaranteedEnvelope(
 
   return {
     kind: 'RIGID_VEHICLE',
+    typeKey,
     type,
     capabilities,
     canCarryPallets: true,
@@ -72,12 +55,6 @@ export class LoadSpaceCatalog {
     return factory();
   }
 
-  static toTypeKey(space: PalletLoadableSpace): string {
-    const entry = Object.entries(REGISTRY).find(([, factory]) => factory().type === space.type);
-    if (!entry) throw new UnknownLoadSpaceTypeError(space.type, Object.keys(REGISTRY));
-    return entry[0];
-  }
-
   // ── Trailer classes ───────────────────────────────────────────────────────
   // Detachable: the plan commits to a class, and which unit hauls it is settled
   // later, so no payload figure belongs here.
@@ -85,6 +62,7 @@ export class LoadSpaceCatalog {
   static standardCurtainside(): PalletLoadableSpace {
     return {
       kind: 'TRAILER',
+      typeKey: 'standard-curtainside',
       type: 'Standard Curtainside',
       capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
       canCarryPallets: true,
@@ -98,6 +76,7 @@ export class LoadSpaceCatalog {
   static megaTrailer(): PalletLoadableSpace {
     return {
       kind: 'TRAILER',
+      typeKey: 'mega',
       type: 'Mega Trailer',
       capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
       canCarryPallets: true,
@@ -111,6 +90,7 @@ export class LoadSpaceCatalog {
   static refrigerated(): PalletLoadableSpace {
     return {
       kind: 'TRAILER',
+      typeKey: 'reefer',
       type: 'Reefer',
       capabilities: { hasClimateControl: true, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
       canCarryPallets: true,
@@ -132,6 +112,7 @@ export class LoadSpaceCatalog {
   /** Ducato / Master-sized panel vans. Add a Sprinter or Crafter here, not to the registry. */
   static mediumVan(): RigidVehicleSpace {
     return guaranteedEnvelope(
+      'van-medium',
       'Medium Van',
       { hasClimateControl: false, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
       [FIAT_DUCATO_L2H2, RENAULT_MASTER_L2H2],
@@ -141,9 +122,34 @@ export class LoadSpaceCatalog {
   /** 8-tonne box-bodied rigids. */
   static boxTruck8t(): RigidVehicleSpace {
     return guaranteedEnvelope(
+      'box-truck-8t',
       '8t Box Truck',
       { hasClimateControl: false, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
       [MAN_TGL_8180_BOX],
     );
   }
 }
+
+/**
+ * Every load space a plan can be made against is a **class**, never a single
+ * make and model.
+ *
+ * Trailers were always classed this way – "reefer" is a category, not a serial
+ * number. Rigid vehicles now follow the same shape: adding an Iveco Daily or a
+ * VW Crafter means listing it among a class's members, not minting a new entry
+ * here and widening the API contract.
+ *
+ * Lookup is keyed by the key each class declares itself, so the registry and
+ * the spec cannot drift apart – there is exactly one place a key is written.
+ */
+const REGISTRY: Record<string, () => PalletLoadableSpace> = Object.fromEntries(
+  [
+    // Detachable trailers – the tractor unit is picked after the plan is agreed.
+    LoadSpaceCatalog.standardCurtainside,
+    LoadSpaceCatalog.megaTrailer,
+    LoadSpaceCatalog.refrigerated,
+    // Rigid vehicle classes – the class determines the payload, dispatch picks the van.
+    LoadSpaceCatalog.mediumVan,
+    LoadSpaceCatalog.boxTruck8t,
+  ].map(factory => [factory().typeKey, factory]),
+);

@@ -176,9 +176,7 @@ const LoadSpaceType = z.enum([
   "van-medium",
   "box-truck-8t",
 ]);
-const CreateLoadPlanInput = z
-  .object({ loadSpaceType: LoadSpaceType })
-  .passthrough();
+const CreateLoadPlanInput = z.object({ loadSpaceType: LoadSpaceType });
 const CreateLoadPlanResponse = z
   .object({ id: z.string().uuid() })
   .passthrough();
@@ -242,17 +240,13 @@ const CargoLoadPlanReadModel = z
   })
   .passthrough();
 const PalletType = z.enum(["epal1", "industrial", "half", "cp1", "cp3", "h1"]);
-const AddCargoInput = z
-  .object({
-    palletType: PalletType,
-    cargoType: CargoType,
-    weightKg: z.number().gt(0),
-    cargoHeightMm: z.number().int().gt(0),
-  })
-  .passthrough();
-const ChangeLoadSpaceInput = z
-  .object({ loadSpaceType: LoadSpaceType })
-  .passthrough();
+const AddCargoInput = z.object({
+  palletType: PalletType,
+  cargoType: CargoType,
+  weightKg: z.number().gt(0),
+  cargoHeightMm: z.number().int().gt(0),
+});
+const ChangeLoadSpaceInput = z.object({ loadSpaceType: LoadSpaceType });
 const HealthResponse = z
   .object({ status: z.string(), service: z.string() })
   .passthrough();
