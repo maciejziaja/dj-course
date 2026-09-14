@@ -169,16 +169,23 @@ const Notification = z
 const NotificationListResponse = z
   .object({ data: z.array(Notification), pagination: Pagination })
   .passthrough();
-const TrailerType = z.enum(["standard-curtainside", "mega", "reefer"]);
+const LoadSpaceType = z.enum([
+  "standard-curtainside",
+  "mega",
+  "reefer",
+  "van-medium",
+  "box-truck-8t",
+]);
 const CreateLoadPlanInput = z
-  .object({ trailerType: TrailerType })
+  .object({ loadSpaceType: LoadSpaceType })
   .passthrough();
 const CreateLoadPlanResponse = z
   .object({ id: z.string().uuid() })
   .passthrough();
 const CargoLoadPlanStatus = z.enum(["DRAFT", "FINALIZED"]);
 const WeightUnit = z.enum(["KG", "TONNE", "LB"]);
-const TrailerCapabilities = z
+const LoadSpaceKind = z.enum(["TRAILER", "RIGID_VEHICLE"]);
+const LoadSpaceCapabilities = z
   .object({
     hasClimateControl: z.boolean(),
     supportsSideLoading: z.boolean(),
@@ -186,15 +193,19 @@ const TrailerCapabilities = z
     isBulkReady: z.boolean(),
   })
   .passthrough();
-const TrailerReadModel = z
+const LoadSpaceReadModel = z
   .object({
-    type: TrailerType,
+    type: LoadSpaceType,
+    label: z.string(),
+    kind: LoadSpaceKind,
     canCarryPallets: z.boolean(),
     maxWeightCapacityKg: z.number(),
+    payloadCapacityKg: z.number().optional(),
+    fitsVehicles: z.array(z.string()).optional(),
     widthMm: z.number().int(),
     heightMm: z.number().int(),
     maxLdm: z.number(),
-    capabilities: TrailerCapabilities,
+    capabilities: LoadSpaceCapabilities,
   })
   .passthrough();
 const CargoType = z.enum(["FOOD", "CHEMICAL", "ELECTRONICS", "ADR", "GENERAL"]);
@@ -223,9 +234,10 @@ const CargoLoadPlanReadModel = z
     status: CargoLoadPlanStatus,
     version: z.number().int().gte(0),
     weightUnit: WeightUnit.default("KG"),
-    trailer: TrailerReadModel,
+    loadSpace: LoadSpaceReadModel,
     currentLdm: z.number().gte(0),
     plannedWeight: z.number().gte(0),
+    plannedGrossWeight: z.number().gte(0),
     units: z.array(PalletUnitReadModel),
   })
   .passthrough();
@@ -238,7 +250,9 @@ const AddCargoInput = z
     cargoHeightMm: z.number().int().gt(0),
   })
   .passthrough();
-const ChangeTrailerInput = z.object({ trailerType: TrailerType }).passthrough();
+const ChangeLoadSpaceInput = z
+  .object({ loadSpaceType: LoadSpaceType })
+  .passthrough();
 const HealthResponse = z
   .object({ status: z.string(), service: z.string() })
   .passthrough();
@@ -264,20 +278,21 @@ export const schemas = {
   AssignDriverInput,
   Notification,
   NotificationListResponse,
-  TrailerType,
+  LoadSpaceType,
   CreateLoadPlanInput,
   CreateLoadPlanResponse,
   CargoLoadPlanStatus,
   WeightUnit,
-  TrailerCapabilities,
-  TrailerReadModel,
+  LoadSpaceKind,
+  LoadSpaceCapabilities,
+  LoadSpaceReadModel,
   CargoType,
   CargoRequirementsInput,
   PalletUnitReadModel,
   CargoLoadPlanReadModel,
   PalletType,
   AddCargoInput,
-  ChangeTrailerInput,
+  ChangeLoadSpaceInput,
   HealthResponse,
 };
 
@@ -300,8 +315,8 @@ export const endpointParams = {
   finalizeLoadPlan: {
     id: z.string().uuid(),
   },
-  changeTrailerType: {
-    body: ChangeTrailerInput,
+  changeLoadSpace: {
+    body: ChangeLoadSpaceInput,
     id: z.string().uuid(),
   },
   getCustomers: {
@@ -367,7 +382,7 @@ export const queryParams = {
   addCargoToLoadPlan: z.object({}).strict(),
   removeCargoFromLoadPlan: z.object({}).strict(),
   finalizeLoadPlan: z.object({}).strict(),
-  changeTrailerType: z.object({}).strict(),
+  changeLoadSpace: z.object({}).strict(),
   getCustomers: z
     .object({
       page: z.string().optional().default("1"),

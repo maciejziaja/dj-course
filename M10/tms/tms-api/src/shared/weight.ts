@@ -32,6 +32,21 @@ export class Weight {
     return this.valueInKg / UNITS[targetUnit].factorToKg;
   }
 
+  /** Adds two weights. The result is expressed in kilograms. */
+  plus(other: Weight): Weight {
+    return new Weight(this.valueInKg + other.valueInKg, 'KG');
+  }
+
+  /** Totals a collection of weights, so callers never fall back to raw numbers. */
+  static sum(weights: readonly Weight[]): Weight {
+    return weights.reduce<Weight>((total, w) => total.plus(w), Weight.from(0, 'KG'));
+  }
+
+  /** True when this weight is strictly heavier than `other`. */
+  isHeavierThan(other: Weight): boolean {
+    return this.valueInKg > other.valueInKg;
+  }
+
   toUnit(targetUnit: WeightUnit): Weight {
     return new Weight(this.valueInUnit(targetUnit), targetUnit);
   }

@@ -37,7 +37,9 @@ export class PalletSpec {
     public readonly length: number, // (!) 🤨🤨🤨 same
     /** Base height of the empty pallet */
     public readonly height: number, // (!) 🤨🤨🤨 same
-    public readonly maxLoadCapacity: Weight
+    public readonly maxLoadCapacity: Weight,
+    /** Weight of the empty pallet itself. Counts against every capacity limit. */
+    public readonly tareWeight: Weight
   ) {
     this.validate();
     Object.freeze(this); // 🔥🔥🔥 immutability in runtime
@@ -48,7 +50,12 @@ export class PalletSpec {
   }
 
   isWeightExceeded(cargoWeight: Weight): boolean {
-    return cargoWeight.valueInKg > this.maxLoadCapacity.valueInKg;
+    return cargoWeight.isHeavierThan(this.maxLoadCapacity);
+  }
+
+  /** Cargo plus the pallet carrying it – what actually presses on the load floor. */
+  grossWeightOf(cargoWeight: Weight): Weight {
+    return cargoWeight.plus(this.tareWeight);
   }
 
   // 🔥🔥🔥 technical validation
@@ -65,29 +72,32 @@ export class PalletSpec {
     if (this.maxLoadCapacity.valueInKg <= 0) {
       throw new Error('Max load capacity must be a positive value');
     }
+    if (this.tareWeight.valueInKg <= 0) {
+      throw new Error('Tare weight must be a positive value');
+    }
   }
 
   static epal1(): PalletSpec {
-    return new PalletSpec('EPAL 1', 'Wood', [CargoType.GENERAL, CargoType.FOOD, CargoType.ELECTRONICS], 800, 1200, 144, Weight.from(4000, 'KG'));
+    return new PalletSpec('EPAL 1', 'Wood', [CargoType.GENERAL, CargoType.FOOD, CargoType.ELECTRONICS], 800, 1200, 144, Weight.from(4000, 'KG'), Weight.from(25, 'KG'));
   }
 
   static industrial(): PalletSpec {
-    return new PalletSpec('ISO-2', 'Wood', [CargoType.GENERAL, CargoType.ELECTRONICS], 1000, 1200, 162, Weight.from(1500, 'KG'));
+    return new PalletSpec('ISO-2', 'Wood', [CargoType.GENERAL, CargoType.ELECTRONICS], 1000, 1200, 162, Weight.from(1500, 'KG'), Weight.from(32, 'KG'));
   }
 
   static half(): PalletSpec {
-    return new PalletSpec('EPAL-6', 'Wood', [CargoType.GENERAL, CargoType.FOOD], 600, 800, 144, Weight.from(750, 'KG'));
+    return new PalletSpec('EPAL-6', 'Wood', [CargoType.GENERAL, CargoType.FOOD], 600, 800, 144, Weight.from(750, 'KG'), Weight.from(10, 'KG'));
   }
 
   static cp1(): PalletSpec {
-    return new PalletSpec('CP1', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1000, 1200, 138, Weight.from(1190, 'KG'));
+    return new PalletSpec('CP1', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1000, 1200, 138, Weight.from(1190, 'KG'), Weight.from(23, 'KG'));
   }
 
   static cp3(): PalletSpec {
-    return new PalletSpec('CP-3', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1140, 1140, 138, Weight.from(1200, 'KG'));
+    return new PalletSpec('CP-3', 'Wood', [CargoType.CHEMICAL, CargoType.DANGEROUS_GOODS], 1140, 1140, 138, Weight.from(1200, 'KG'), Weight.from(22, 'KG'));
   }
 
   static h1(): PalletSpec {
-    return new PalletSpec('H1', 'HDPE', [CargoType.FOOD], 800, 1200, 160, Weight.from(5000, 'KG'));
+    return new PalletSpec('H1', 'HDPE', [CargoType.FOOD], 800, 1200, 160, Weight.from(5000, 'KG'), Weight.from(15, 'KG'));
   }
 }

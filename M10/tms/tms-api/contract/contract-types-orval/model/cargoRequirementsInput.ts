@@ -10,11 +10,11 @@
  * Special handling requirements for a cargo unit.
  */
 export interface CargoRequirementsInput {
-  /** Cargo requires a refrigerated trailer */
+  /** Cargo requires a climate-controlled load space */
   isTemperatureControlled: boolean;
   /** Cargo must be loaded from the side */
   requiresSideLoading: boolean;
-  /** Cargo is bulk (requires bulk-ready trailer) */
+  /** Cargo is bulk (requires bulk-ready load space) */
   isBulk: boolean;
   /** Cargo requires high-security locking */
   highSecurityRequired: boolean;

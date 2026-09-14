@@ -219,7 +219,7 @@ export interface paths {
         put?: never;
         /**
          * Create a load plan
-         * @description Creates a new cargo load plan for a given trailer type.
+         * @description Creates a new cargo load plan for a given load space class – either a detachable trailer or a class of rigid vehicles.
          */
         post: operations["createLoadPlan"];
         delete?: never;
@@ -288,7 +288,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/cargo-plans/{id}/trailer": {
+    "/cargo-plans/{id}/load-space": {
         parameters: {
             query?: never;
             header?: never;
@@ -297,10 +297,10 @@ export interface paths {
         };
         get?: never;
         /**
-         * Change trailer type
-         * @description Replaces the trailer on a draft load plan. All currently assigned cargo units are re-validated against the new trailer's capabilities and capacity.
+         * Change load space
+         * @description Replaces the load space class on a draft load plan. All currently assigned cargo units are re-validated against the new class's capabilities and capacity. Switching between a trailer and a rigid vehicle class is allowed and will additionally apply (or drop) the vehicle payload rule.
          */
-        put: operations["changeTrailerType"];
+        put: operations["changeLoadSpace"];
         post?: never;
         delete?: never;
         options?: never;
@@ -319,7 +319,7 @@ export interface paths {
         put?: never;
         /**
          * Finalize a load plan
-         * @description Marks the load plan as FINALIZED. A finalized plan cannot be modified. The plan must have at least one cargo unit and must not exceed trailer capacity.
+         * @description Marks the load plan as FINALIZED. A finalized plan cannot be modified. The plan must have at least one cargo unit and must not exceed load space capacity.
          */
         post: operations["finalizeLoadPlan"];
         delete?: never;
@@ -919,13 +919,14 @@ export interface components {
             pagination: components["schemas"]["Pagination"];
         };
         /**
-         * @description Supported trailer types
+         * @description Supported load space classes. Planning always commits to a class, never to a make and model.
+         *     The first three are detachable trailers: the tractor unit is reserved later, so no payload can be checked yet. The rest are rigid vehicle classes, where the class determines the vehicle well enough to answer "can it carry this?" while planning — every figure such a class reports is the guaranteed minimum across the models in `fitsVehicles`.
          * @enum {string}
          */
-        TrailerType: "standard-curtainside" | "mega" | "reefer";
+        LoadSpaceType: "standard-curtainside" | "mega" | "reefer" | "van-medium" | "box-truck-8t";
         /** @description Payload for creating a new load plan. */
         CreateLoadPlanInput: {
-            trailerType: components["schemas"]["TrailerType"];
+            loadSpaceType: components["schemas"]["LoadSpaceType"];
         };
         /** @description Identifier of the newly created load plan. */
         CreateLoadPlanResponse: {
@@ -947,55 +948,79 @@ export interface components {
          * @enum {string}
          */
         CargoLoadPlanStatus: "DRAFT" | "FINALIZED";
-        /** @description Capabilities of the assigned trailer. */
-        TrailerCapabilities: {
+        /**
+         * @description Whether the load space is detachable from its vehicle.
+         * @enum {string}
+         */
+        LoadSpaceKind: "TRAILER" | "RIGID_VEHICLE";
+        /** @description Capabilities of the assigned load space. */
+        LoadSpaceCapabilities: {
             /**
-             * @description Trailer has temperature/climate control
+             * @description Load space has temperature/climate control
              * @example false
              */
             hasClimateControl: boolean;
             /**
-             * @description Trailer supports side loading
+             * @description Load space supports side loading
              * @example true
              */
             supportsSideLoading: boolean;
             /**
-             * @description Trailer has high-security locking
+             * @description Load space has high-security locking
              * @example false
              */
             hasHighSecurityLock: boolean;
             /**
-             * @description Trailer supports bulk cargo
+             * @description Load space supports bulk cargo
              * @example false
              */
             isBulkReady: boolean;
         };
-        /** @description Details of the trailer assigned to the load plan. */
-        TrailerReadModel: {
-            type: components["schemas"]["TrailerType"];
+        /** @description Details of the load space assigned to the load plan. */
+        LoadSpaceReadModel: {
+            type: components["schemas"]["LoadSpaceType"];
+            /**
+             * @description Human-readable name of the load space class
+             * @example Standard Curtainside
+             */
+            label: string;
+            kind: components["schemas"]["LoadSpaceKind"];
             /** @example true */
             canCarryPallets: boolean;
             /**
-             * @description Maximum weight capacity in kilograms
+             * @description Structural weight capacity of the load floor, in kilograms
              * @example 24000
              */
             maxWeightCapacityKg: number;
             /**
-             * @description Internal trailer width in millimetres
-             * @example 2400
+             * @description Lowest legal payload in the class, in kilograms, counted against gross weight (cargo plus pallets). Present only when kind is RIGID_VEHICLE – a trailer's payload depends on the tractor unit, which is not known at planning time.
+             * @example 1400
+             */
+            payloadCapacityKg?: number;
+            /**
+             * @description Concrete vehicle models that can honour a plan made against this class. Every dimension and limit reported here is the worst case across them, so dispatch may send whichever is free. Present only when kind is RIGID_VEHICLE.
+             * @example [
+             *       "Fiat Ducato L2H2",
+             *       "Renault Master L2H2"
+             *     ]
+             */
+            fitsVehicles?: string[];
+            /**
+             * @description Usable width for pallets in millimetres. For rigid vehicles this is the narrowest span between the wheel arches in the class, not the widest point of any body.
+             * @example 2480
              */
             widthMm: number;
             /**
-             * @description Internal trailer height in millimetres
+             * @description Internal load space height in millimetres
              * @example 2700
              */
             heightMm: number;
             /**
-             * @description Maximum loading metres (LDM)
+             * @description Maximum loading length in metres. For trailers this is LDM in the road-freight sense; for rigid vehicles, simply usable floor length.
              * @example 13.6
              */
             maxLdm: number;
-            capabilities: components["schemas"]["TrailerCapabilities"];
+            capabilities: components["schemas"]["LoadSpaceCapabilities"];
         };
         /**
          * @description Type of cargo being transported
@@ -1005,7 +1030,7 @@ export interface components {
         /** @description Special handling requirements for a cargo unit. */
         CargoRequirementsInput: {
             /**
-             * @description Cargo requires a refrigerated trailer
+             * @description Cargo requires a climate-controlled load space
              * @example false
              */
             isTemperatureControlled: boolean;
@@ -1015,7 +1040,7 @@ export interface components {
              */
             requiresSideLoading: boolean;
             /**
-             * @description Cargo is bulk (requires bulk-ready trailer)
+             * @description Cargo is bulk (requires bulk-ready load space)
              * @example false
              */
             isBulk: boolean;
@@ -1068,17 +1093,22 @@ export interface components {
              */
             version: number;
             weightUnit: components["schemas"]["WeightUnit"];
-            trailer: components["schemas"]["TrailerReadModel"];
+            loadSpace: components["schemas"]["LoadSpaceReadModel"];
             /**
              * @description Currently used loading metres
              * @example 2.4
              */
             currentLdm: number;
             /**
-             * @description Total weight of all assigned cargo units, expressed in the unit given by weightUnit
+             * @description Total weight of the cargo alone, expressed in the unit given by weightUnit
              * @example 600
              */
             plannedWeight: number;
+            /**
+             * @description Total weight of the cargo *plus* the pallets carrying it, expressed in the unit given by weightUnit. This is the figure capacity and vehicle payload limits are judged against.
+             * @example 625
+             */
+            plannedGrossWeight: number;
             /** @description Cargo units assigned to this plan */
             units: components["schemas"]["PalletUnitReadModel"][];
         };
@@ -1102,9 +1132,9 @@ export interface components {
              */
             cargoHeightMm: number;
         };
-        /** @description Payload for changing the trailer type on a load plan. */
-        ChangeTrailerInput: {
-            trailerType: components["schemas"]["TrailerType"];
+        /** @description Payload for changing the load space on a load plan. */
+        ChangeLoadSpaceInput: {
+            loadSpaceType: components["schemas"]["LoadSpaceType"];
         };
         /** @description Health check response body. */
         HealthResponse: {
@@ -2114,7 +2144,7 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "trailerType": "standard-curtainside"
+                 *       "loadSpaceType": "standard-curtainside"
                  *     }
                  */
                 "application/json": components["schemas"]["CreateLoadPlanInput"];
@@ -2135,7 +2165,7 @@ export interface operations {
                     "application/json": components["schemas"]["CreateLoadPlanResponse"];
                 };
             };
-            /** @description Missing or invalid trailerType. */
+            /** @description Missing or invalid loadSpaceType. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2143,7 +2173,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "error": "trailerType is required. Allowed: standard-curtainside, mega, reefer"
+                     *       "error": "loadSpaceType is required. Allowed: standard-curtainside, mega, reefer, van-medium, box-truck-8t"
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];
@@ -2181,11 +2211,13 @@ export interface operations {
                      *       "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
                      *       "status": "DRAFT",
                      *       "weightUnit": "KG",
-                     *       "trailer": {
+                     *       "loadSpace": {
                      *         "type": "standard-curtainside",
+                     *         "label": "Standard Curtainside",
+                     *         "kind": "TRAILER",
                      *         "canCarryPallets": true,
                      *         "maxWeightCapacityKg": 24000,
-                     *         "widthMm": 2400,
+                     *         "widthMm": 2480,
                      *         "heightMm": 2700,
                      *         "maxLdm": 13.6,
                      *         "capabilities": {
@@ -2198,6 +2230,7 @@ export interface operations {
                      *       "version": 3,
                      *       "currentLdm": 2.4,
                      *       "plannedWeight": 600,
+                     *       "plannedGrossWeight": 625,
                      *       "units": [
                      *         {
                      *           "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
@@ -2362,7 +2395,7 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
-    changeTrailerType: {
+    changeLoadSpace: {
         parameters: {
             query?: never;
             header?: never;
@@ -2379,21 +2412,21 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "trailerType": "reefer"
+                 *       "loadSpaceType": "van-medium"
                  *     }
                  */
-                "application/json": components["schemas"]["ChangeTrailerInput"];
+                "application/json": components["schemas"]["ChangeLoadSpaceInput"];
             };
         };
         responses: {
-            /** @description Trailer type changed successfully – no body returned. */
+            /** @description Load space changed successfully – no body returned. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Invalid trailerType or re-validation of existing cargo failed. */
+            /** @description Invalid loadSpaceType or re-validation of existing cargo failed. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2401,7 +2434,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "error": "trailerType is required. Allowed: standard-curtainside, mega, reefer"
+                     *       "error": "loadSpaceType is required. Allowed: standard-curtainside, mega, reefer, van-medium, box-truck-8t"
                      *     }
                      */
                     "application/json": components["schemas"]["ErrorResponse"];

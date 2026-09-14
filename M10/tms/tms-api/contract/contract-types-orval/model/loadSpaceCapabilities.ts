@@ -7,15 +7,15 @@
  */
 
 /**
- * Capabilities of the assigned trailer.
+ * Capabilities of the assigned load space.
  */
-export interface TrailerCapabilities {
-  /** Trailer has temperature/climate control */
+export interface LoadSpaceCapabilities {
+  /** Load space has temperature/climate control */
   hasClimateControl: boolean;
-  /** Trailer supports side loading */
+  /** Load space supports side loading */
   supportsSideLoading: boolean;
-  /** Trailer has high-security locking */
+  /** Load space has high-security locking */
   hasHighSecurityLock: boolean;
-  /** Trailer supports bulk cargo */
+  /** Load space supports bulk cargo */
   isBulkReady: boolean;
 }

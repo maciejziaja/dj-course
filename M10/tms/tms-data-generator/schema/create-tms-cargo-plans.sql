@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS cargo_plans.cargo_load_plans;
 
 CREATE TABLE cargo_plans.cargo_load_plans (
     id           UUID         PRIMARY KEY,
-    trailer_type TEXT         NOT NULL,
+    load_space_type TEXT      NOT NULL,
     status       TEXT         NOT NULL DEFAULT 'DRAFT',
     current_ldm  NUMERIC(5,2) NOT NULL DEFAULT 0,
     version      INTEGER      NOT NULL DEFAULT 0,

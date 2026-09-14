@@ -18,7 +18,7 @@ tags:
   - name: Notifications
     description: User notifications
   - name: CargoPlans
-    description: Cargo load plan management – create, assign cargo, change trailer, finalize
+    description: Cargo load plan management – create, assign cargo, change load space, finalize
   - name: Status
     description: Server status and health checks
 paths:
@@ -48,8 +48,8 @@ paths:
     $ref: '../src/cargo-plans/cargo-plans-openapi.yaml#/paths/~1cargo-plans~1{id}~1cargo'
   /cargo-plans/{id}/cargo/{unitId}:
     $ref: '../src/cargo-plans/cargo-plans-openapi.yaml#/paths/~1cargo-plans~1{id}~1cargo~1{unitId}'
-  /cargo-plans/{id}/trailer:
-    $ref: '../src/cargo-plans/cargo-plans-openapi.yaml#/paths/~1cargo-plans~1{id}~1trailer'
+  /cargo-plans/{id}/load-space:
+    $ref: '../src/cargo-plans/cargo-plans-openapi.yaml#/paths/~1cargo-plans~1{id}~1load-space'
   /cargo-plans/{id}/finalize:
     $ref: '../src/cargo-plans/cargo-plans-openapi.yaml#/paths/~1cargo-plans~1{id}~1finalize'
   /:

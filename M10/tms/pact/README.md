@@ -60,11 +60,11 @@ klient naprawdę potrzebuje, a nie listą życzeń.
 
 | # | żądanie | odpowiedź |
 |---|---|---|
-| 1 | `POST /cargo-plans` `{trailerType: standard-curtainside}` | `201` `{ id }` |
+| 1 | `POST /cargo-plans` `{loadSpaceType: standard-curtainside}` | `201` `{ id }` |
 | 2 | `POST /cargo-plans/{id}/cargo` `{epal1, GENERAL, 600 kg, 1200 mm}` | `204` |
 | 3 | `GET /cargo-plans/{id}` | `200` + read model |
 | 4 | `DELETE /cargo-plans/{id}/cargo/{unitId}` | `204` |
-| 5 | `PUT /cargo-plans/{id}/trailer` `{trailerType: mega}` | `204` |
+| 5 | `PUT /cargo-plans/{id}/load-space` `{loadSpaceType: mega}` | `204` |
 | 6 | `POST /cargo-plans/{id}/finalize` | `204` |
 
 **Scenariusz 2 – żywność nie jedzie z chemią**
@@ -80,7 +80,7 @@ treść komunikatu dopasowywana jest tylko po typie.
 
 | # | żądanie | odpowiedź |
 |---|---|---|
-| 8 | `POST /cargo-plans` `{trailerType: flatbed}` | `400` |
+| 8 | `POST /cargo-plans` `{loadSpaceType: flatbed}` | `400` |
 | 9 | `POST /cargo-plans/{id}/finalize` dla pustego planu | `422` |
 | 10 | `GET /cargo-plans/{nieznane-id}` | `404` |
 

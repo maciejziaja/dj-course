@@ -24,24 +24,56 @@ export class LdmCapacityExceededError {
   }
 }
 
-export class CargoTooTallForTrailerError {
-  readonly kind = 'CargoTooTallForTrailerError' as const;
+export class CargoTooTallForLoadSpaceError {
+  readonly kind = 'CargoTooTallForLoadSpaceError' as const;
   readonly message: string;
   constructor(
     readonly unitId: string,
     readonly unitHeightMm: number,
-    readonly trailerType: string,
-    readonly trailerHeightMm: number
+    readonly loadSpaceType: string,
+    readonly loadSpaceHeightMm: number
   ) {
-    this.message = `Unit ${unitId} is too tall (${unitHeightMm}mm) for trailer ${trailerType} (${trailerHeightMm}mm).`;
+    this.message = `Unit ${unitId} is too tall (${unitHeightMm}mm) for load space ${loadSpaceType} (${loadSpaceHeightMm}mm).`;
   }
 }
 
-export class TrailerCapabilityMismatchError {
-  readonly kind = 'TrailerCapabilityMismatchError' as const;
+export class CargoTooWideForLoadSpaceError {
+  readonly kind = 'CargoTooWideForLoadSpaceError' as const;
+  readonly message: string;
+  constructor(
+    readonly unitId: string,
+    readonly palletWidthMm: number,
+    readonly loadSpaceType: string,
+    readonly loadSpaceWidthMm: number
+  ) {
+    this.message = `Unit ${unitId} is too wide (${palletWidthMm}mm) for load space ${loadSpaceType} (${loadSpaceWidthMm}mm).`;
+  }
+}
+
+export class LoadSpaceCapabilityMismatchError {
+  readonly kind = 'LoadSpaceCapabilityMismatchError' as const;
   readonly message: string;
   constructor(readonly reason: string) {
-    this.message = `Trailer capability mismatch: ${reason}`;
+    this.message = `Load space capability mismatch: ${reason}`;
+  }
+}
+
+/**
+ * The chosen rigid vehicle cannot legally carry the planned load.
+ *
+ * Only reachable for rigid vehicles: picking one at planning time *is* picking
+ * the vehicle, so its payload has to hold now rather than at reservation time.
+ * Measured on gross weight – cargo plus the pallets carrying it.
+ */
+export class VehiclePayloadExceededError {
+  readonly kind = 'VehiclePayloadExceededError' as const;
+  readonly message: string;
+  constructor(
+    readonly vehicleType: string,
+    readonly grossKg: number,
+    readonly payloadKg: number
+  ) {
+    this.message = `Vehicle payload exceeded: ${vehicleType} cannot carry ${grossKg}kg gross (payload ${payloadKg}kg).`;
   }
 }
 
@@ -69,9 +101,11 @@ export type CargoLoadPlanDomainError =
   | PlanAlreadyFinalizedError
   | EmptyPlanError
   | WeightCapacityExceededError
+  | VehiclePayloadExceededError
   | LdmCapacityExceededError
-  | CargoTooTallForTrailerError
-  | TrailerCapabilityMismatchError
+  | CargoTooTallForLoadSpaceError
+  | CargoTooWideForLoadSpaceError
+  | LoadSpaceCapabilityMismatchError
   | IncompatibleCargoColoadingError
   | CargoUnitNotFoundError
   | PalletWeightExceedsCapacityError

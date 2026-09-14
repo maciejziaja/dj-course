@@ -1,0 +1,149 @@
+import type { LoadSpaceCapabilities, PalletLoadableSpace, RigidVehicleSpace } from './load-space-spec';
+import {
+  FIAT_DUCATO_L2H2,
+  MAN_TGL_8180_BOX,
+  RENAULT_MASTER_L2H2,
+  type VehicleModel,
+} from './vehicle-models';
+import { Weight } from '../../shared/weight';
+import { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
+
+export { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
+
+/**
+ * Every load space a plan can be made against is a **class**, never a single
+ * make and model.
+ *
+ * Trailers were always classed this way – "reefer" is a category, not a serial
+ * number. Rigid vehicles now follow the same shape: adding an Iveco Daily or a
+ * VW Crafter means listing it among a class's members, not minting a new entry
+ * here and widening the API contract.
+ */
+const REGISTRY: Record<string, () => PalletLoadableSpace> = {
+  // Detachable trailers – the tractor unit is picked after the plan is agreed.
+  'standard-curtainside': () => LoadSpaceCatalog.standardCurtainside(),
+  'mega': () => LoadSpaceCatalog.megaTrailer(),
+  'reefer': () => LoadSpaceCatalog.refrigerated(),
+  // Rigid vehicle classes – the class determines the payload, dispatch picks the van.
+  'van-medium': () => LoadSpaceCatalog.mediumVan(),
+  'box-truck-8t': () => LoadSpaceCatalog.boxTruck8t(),
+};
+
+/**
+ * Builds a class from its members, taking the **worst case** of every figure.
+ *
+ * Deriving rather than hand-writing the envelope is the point: it cannot drift
+ * from the members, and admitting a new model automatically tightens the class
+ * if that model is smaller. An average would be the dangerous shape – it would
+ * promise capacity that some members of the class do not have.
+ */
+function guaranteedEnvelope(
+  type: string,
+  capabilities: LoadSpaceCapabilities,
+  members: readonly VehicleModel[],
+): RigidVehicleSpace {
+  if (members.length === 0) {
+    throw new Error(`Load space class '${type}' must list at least one vehicle model.`);
+  }
+
+  const lowest = (figure: (m: VehicleModel) => number) => Math.min(...members.map(figure));
+  // For a rigid vehicle the load floor's limit *is* the payload – there is no
+  // separate structural figure to distinguish it from, so both read the same.
+  const payloadCapacity = Weight.from(lowest(m => m.payloadCapacity.valueInKg), 'KG');
+
+  return {
+    kind: 'RIGID_VEHICLE',
+    type,
+    capabilities,
+    canCarryPallets: true,
+    maxWeightCapacity: payloadCapacity,
+    payloadCapacity,
+    widthMm: lowest(m => m.widthMm),
+    heightMm: lowest(m => m.heightMm),
+    maxLdm: lowest(m => m.lengthM),
+    fitsVehicles: members,
+  };
+}
+
+export class LoadSpaceCatalog {
+  static fromType(type: string): PalletLoadableSpace {
+    const factory = REGISTRY[type];
+    if (!factory) throw new UnknownLoadSpaceTypeError(type, Object.keys(REGISTRY));
+    return factory();
+  }
+
+  static toTypeKey(space: PalletLoadableSpace): string {
+    const entry = Object.entries(REGISTRY).find(([, factory]) => factory().type === space.type);
+    if (!entry) throw new UnknownLoadSpaceTypeError(space.type, Object.keys(REGISTRY));
+    return entry[0];
+  }
+
+  // ── Trailer classes ───────────────────────────────────────────────────────
+  // Detachable: the plan commits to a class, and which unit hauls it is settled
+  // later, so no payload figure belongs here.
+
+  static standardCurtainside(): PalletLoadableSpace {
+    return {
+      kind: 'TRAILER',
+      type: 'Standard Curtainside',
+      capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
+      canCarryPallets: true,
+      maxWeightCapacity: Weight.from(24000, 'KG'),
+      maxLdm: 13.6,
+      widthMm: 2480,
+      heightMm: 2700
+    };
+  }
+
+  static megaTrailer(): PalletLoadableSpace {
+    return {
+      kind: 'TRAILER',
+      type: 'Mega Trailer',
+      capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
+      canCarryPallets: true,
+      maxWeightCapacity: Weight.from(24000, 'KG'),
+      maxLdm: 13.6,
+      widthMm: 2480,
+      heightMm: 3000
+    };
+  }
+
+  static refrigerated(): PalletLoadableSpace {
+    return {
+      kind: 'TRAILER',
+      type: 'Reefer',
+      capabilities: { hasClimateControl: true, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
+      canCarryPallets: true,
+      maxWeightCapacity: Weight.from(22000, 'KG'),
+      maxLdm: 13.4,
+      widthMm: 2460,
+      heightMm: 2600
+    };
+  }
+
+  // ── Rigid vehicle classes (non-TIR) ───────────────────────────────────────
+  //
+  // Capabilities are the class's, and a class may only claim what every member
+  // has. None of these vans is refrigerated or bulk-ready, and a side door with
+  // a ~1.25 m aperture is not side loading in the curtainside sense. A closed
+  // hard body with lockable doors does count as a high-security lock – harder to
+  // get into than a curtain somebody can slash.
+
+  /** Ducato / Master-sized panel vans. Add a Sprinter or Crafter here, not to the registry. */
+  static mediumVan(): RigidVehicleSpace {
+    return guaranteedEnvelope(
+      'Medium Van',
+      { hasClimateControl: false, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
+      [FIAT_DUCATO_L2H2, RENAULT_MASTER_L2H2],
+    );
+  }
+
+  /** 8-tonne box-bodied rigids. */
+  static boxTruck8t(): RigidVehicleSpace {
+    return guaranteedEnvelope(
+      '8t Box Truck',
+      { hasClimateControl: false, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
+      [MAN_TGL_8180_BOX],
+    );
+  }
+}

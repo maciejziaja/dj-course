@@ -2,7 +2,7 @@ import { CargoType, requirementsFor } from '../cargo/cargo.types';
 import { CargoLoadPlanStatus } from './cargo-load-plan.types';
 import { PalletUnit } from '../pallets/pallet-unit';
 import { PalletSpec } from '../pallets/pallet-spec';
-import type { PalletLoadableTrailerSpec } from '../trailers';
+import { isRigidVehicle, type PalletLoadableSpace } from '../load-spaces';
 import { Weight } from '../../shared/weight';
 import { ok, fail, type Result } from '../../shared/result';
 import { UUID } from '../../shared/uuid';
@@ -10,9 +10,11 @@ import {
   PlanAlreadyFinalizedError,
   EmptyPlanError,
   WeightCapacityExceededError,
+  VehiclePayloadExceededError,
   LdmCapacityExceededError,
-  CargoTooTallForTrailerError,
-  TrailerCapabilityMismatchError,
+  CargoTooTallForLoadSpaceError,
+  CargoTooWideForLoadSpaceError,
+  LoadSpaceCapabilityMismatchError,
   IncompatibleCargoColoadingError,
   CargoUnitNotFoundError,
   type CargoLoadPlanDomainError,
@@ -28,7 +30,7 @@ export interface AddCargoData {
 export class CargoLoadPlan {
   constructor(
     private readonly id: UUID<'CargoLoadPlan'>,
-    private trailer: PalletLoadableTrailerSpec,
+    private loadSpace: PalletLoadableSpace,
     private currentLdm: number,
     private assignedUnits: PalletUnit[] = [],
     private status: CargoLoadPlanStatus = CargoLoadPlanStatus.DRAFT,
@@ -37,14 +39,14 @@ export class CargoLoadPlan {
     this.assignedUnits = [...assignedUnits];
 
     // 🔥🔥🔥 Validate invariants on reconstruction – throw because corrupt state from DB is unexpected
-    const integrityResult = this.ensureLoadIntegrity(this.assignedUnits, this.trailer, this.currentLdm);
+    const integrityResult = this.ensureLoadIntegrity(this.assignedUnits, this.loadSpace, this.currentLdm);
     if (!integrityResult.success) throw integrityResult.error;
   }
 
   public getSnapshot() {
     return {
       id: this.id,
-      trailer: this.trailer,
+      loadSpace: this.loadSpace,
       status: this.status,
       currentLdm: this.currentLdm,
       assignedUnits: Object.freeze(this.assignedUnits.map(u => u.getSnapshot())),
@@ -58,8 +60,8 @@ export class CargoLoadPlan {
 
     if (this.assignedUnits.length === 0) return fail(new EmptyPlanError());
 
-    if (this.currentLdm > this.trailer.maxLdm) {
-      return fail(new LdmCapacityExceededError(this.currentLdm, this.trailer.maxLdm));
+    if (this.currentLdm > this.loadSpace.maxLdm) {
+      return fail(new LdmCapacityExceededError(this.currentLdm, this.loadSpace.maxLdm));
     }
 
     this.status = CargoLoadPlanStatus.FINALIZED;
@@ -69,7 +71,7 @@ export class CargoLoadPlan {
   public addCargoToPlan(
     data: AddCargoData,
     // 🔥🔥🔥 strategy (not double dispatch)
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableTrailerSpec) => number
+    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
@@ -81,8 +83,8 @@ export class CargoLoadPlan {
     if (!unitResult.success) return fail(unitResult.error);
 
     const candidateUnits = [...this.assignedUnits, unitResult.value];
-    const newLdm = ldmProvider(candidateUnits, this.trailer);
-    const integrityResult = this.ensureLoadIntegrity(candidateUnits, this.trailer, newLdm);
+    const newLdm = ldmProvider(candidateUnits, this.loadSpace);
+    const integrityResult = this.ensureLoadIntegrity(candidateUnits, this.loadSpace, newLdm);
     if (!integrityResult.success) return integrityResult;
 
     this.assignedUnits = candidateUnits;
@@ -92,7 +94,7 @@ export class CargoLoadPlan {
 
   public removeCargoFromPlan(
     unitId: string,
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableTrailerSpec) => number
+    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
@@ -102,8 +104,8 @@ export class CargoLoadPlan {
       return fail(new CargoUnitNotFoundError(unitId));
     }
 
-    const newLdm = ldmProvider(candidateUnits, this.trailer);
-    const integrityResult = this.ensureLoadIntegrity(candidateUnits, this.trailer, newLdm);
+    const newLdm = ldmProvider(candidateUnits, this.loadSpace);
+    const integrityResult = this.ensureLoadIntegrity(candidateUnits, this.loadSpace, newLdm);
     if (!integrityResult.success) return integrityResult;
 
     this.assignedUnits = candidateUnits;
@@ -111,18 +113,25 @@ export class CargoLoadPlan {
     return ok(undefined);
   }
 
-  public replaceTrailer(
-    newTrailer: PalletLoadableTrailerSpec,
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableTrailerSpec) => number
+  /**
+   * Swaps the load space during planning, re-validating everything already loaded.
+   *
+   * Note this may cross the trailer / rigid-vehicle divide: moving a plan from a
+   * 13.6 m trailer onto a Ducato re-runs the payload rule that only rigid
+   * vehicles are subject to.
+   */
+  public changeLoadSpace(
+    newLoadSpace: PalletLoadableSpace,
+    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
 
-    const newLdm = ldmProvider(this.assignedUnits, newTrailer);
-    const integrityResult = this.ensureLoadIntegrity(this.assignedUnits, newTrailer, newLdm);
+    const newLdm = ldmProvider(this.assignedUnits, newLoadSpace);
+    const integrityResult = this.ensureLoadIntegrity(this.assignedUnits, newLoadSpace, newLdm);
     if (!integrityResult.success) return integrityResult;
 
-    this.trailer = newTrailer;
+    this.loadSpace = newLoadSpace;
     this.currentLdm = newLdm;
     return ok(undefined);
   }
@@ -140,25 +149,30 @@ export class CargoLoadPlan {
 
   private ensureLoadIntegrity(
     units: PalletUnit[],
-    trailer: PalletLoadableTrailerSpec,
+    loadSpace: PalletLoadableSpace,
     ldm: number
   ): Result<void, CargoLoadPlanDomainError> {
     if (units.length === 0) return ok(undefined);
 
-    const weightResult = this.ensureWeightCapacityNotExceeded(units, trailer);
+    // Payload goes first: where both apply it is the more specific limit, and
+    // its message names the actual vehicle the planner has to swap out.
+    const payloadResult = this.ensureVehiclePayloadNotExceeded(units, loadSpace);
+    if (!payloadResult.success) return payloadResult;
+
+    const weightResult = this.ensureWeightCapacityNotExceeded(units, loadSpace);
     if (!weightResult.success) return weightResult;
 
-    const ldmResult = this.ensureLdmCapacityNotExceeded(ldm, trailer);
+    const ldmResult = this.ensureLdmCapacityNotExceeded(ldm, loadSpace);
     if (!ldmResult.success) return ldmResult;
 
     const coloadResult = this.ensureCargoColoadingCompatibility(units);
     if (!coloadResult.success) return coloadResult;
 
     for (const unit of units) {
-      const spatialResult = this.ensureCargoSpatialFit(unit, trailer);
+      const spatialResult = this.ensureCargoSpatialFit(unit, loadSpace);
       if (!spatialResult.success) return spatialResult;
 
-      const capabilityResult = this.ensureTrailerSatisfiesCargoRequirements(unit, trailer);
+      const capabilityResult = this.ensureLoadSpaceSatisfiesCargoRequirements(unit, loadSpace);
       if (!capabilityResult.success) return capabilityResult;
     }
 
@@ -167,55 +181,98 @@ export class CargoLoadPlan {
 
   private ensureWeightCapacityNotExceeded(
     units: PalletUnit[],
-    trailer: PalletLoadableTrailerSpec
+    loadSpace: PalletLoadableSpace
   ): Result<void, CargoLoadPlanDomainError> {
-    // 🤨🤨🤨 so unit's weight is of type Weight (VO) but their sum totalWeightKg is a primitive (number)?
-    // (╯°□°)╯︵ ┻━┻ 
-    const totalWeightKg = units.reduce((sum, u) => sum + u.getSnapshot().weight.valueInKg, 0);
-    if (totalWeightKg > trailer.maxWeightCapacity.valueInKg) {
-      return fail(new WeightCapacityExceededError(totalWeightKg, trailer.maxWeightCapacity.valueInKg));
+    const totalWeight = this.grossWeightOf(units);
+    if (totalWeight.isHeavierThan(loadSpace.maxWeightCapacity)) {
+      return fail(new WeightCapacityExceededError(totalWeight.valueInKg, loadSpace.maxWeightCapacity.valueInKg));
     }
     return ok(undefined);
+  }
+
+  /**
+   * The one rule rigid vehicles add: can this van actually carry the load?
+   *
+   * For a trailer there is no answer to give yet – the plan commits to a trailer
+   * type and the rig that hauls it is settled later, so payload is somebody
+   * else's check. For a rigid vehicle the load space *is* the vehicle, so the
+   * question has to be answered while planning.
+   */
+  private ensureVehiclePayloadNotExceeded(
+    units: PalletUnit[],
+    loadSpace: PalletLoadableSpace
+  ): Result<void, VehiclePayloadExceededError> {
+    if (!isRigidVehicle(loadSpace)) return ok(undefined);
+
+    const totalWeight = this.grossWeightOf(units);
+    if (totalWeight.isHeavierThan(loadSpace.payloadCapacity)) {
+      return fail(new VehiclePayloadExceededError(
+        loadSpace.type,
+        totalWeight.valueInKg,
+        loadSpace.payloadCapacity.valueInKg,
+      ));
+    }
+    return ok(undefined);
+  }
+
+  /** Cargo *and* the pallets under it – 33 europallets are 825kg of timber. */
+  private grossWeightOf(units: PalletUnit[]): Weight {
+    return Weight.sum(units.map(u => u.getSnapshot().grossWeight));
   }
 
   private ensureLdmCapacityNotExceeded(
     ldm: number,
-    trailer: PalletLoadableTrailerSpec
+    loadSpace: PalletLoadableSpace
   ): Result<void, CargoLoadPlanDomainError> {
-    if (ldm > trailer.maxLdm) {
-      return fail(new LdmCapacityExceededError(ldm, trailer.maxLdm));
+    if (ldm > loadSpace.maxLdm) {
+      return fail(new LdmCapacityExceededError(ldm, loadSpace.maxLdm));
     }
     return ok(undefined);
   }
 
+  /**
+   * Both dimensions that can stop a pallet from going in at all.
+   *
+   * Width matters now that load spaces can be vans: LdmCalculator starts a new
+   * row for a unit that fits no existing one, which silently accommodates a
+   * pallet wider than the floor itself. Nothing in the catalog is that wide
+   * today – the narrowest space (Master, 1380mm) still clears the widest pallet
+   * (CP-3, 1140mm) – but the margin used to be 1340mm on a trailer and is 240mm
+   * now, so the rule is worth stating rather than relying on.
+   */
   private ensureCargoSpatialFit(
     unit: PalletUnit,
-    trailer: PalletLoadableTrailerSpec
-  ): Result<void, CargoTooTallForTrailerError> {
-    if (unit.getSnapshot().totalHeightMm > trailer.heightMm) {
-      return fail(new CargoTooTallForTrailerError(unit.getSnapshot().id, unit.getSnapshot().totalHeightMm, trailer.type, trailer.heightMm));
+    loadSpace: PalletLoadableSpace
+  ): Result<void, CargoTooTallForLoadSpaceError | CargoTooWideForLoadSpaceError> {
+    const { id, totalHeightMm, spec } = unit.getSnapshot();
+
+    if (totalHeightMm > loadSpace.heightMm) {
+      return fail(new CargoTooTallForLoadSpaceError(id, totalHeightMm, loadSpace.type, loadSpace.heightMm));
+    }
+    if (spec.width > loadSpace.widthMm) {
+      return fail(new CargoTooWideForLoadSpaceError(id, spec.width, loadSpace.type, loadSpace.widthMm));
     }
     return ok(undefined);
   }
 
-  private ensureTrailerSatisfiesCargoRequirements(
+  private ensureLoadSpaceSatisfiesCargoRequirements(
     unit: PalletUnit,
-    trailer: PalletLoadableTrailerSpec
-  ): Result<void, TrailerCapabilityMismatchError> {
+    loadSpace: PalletLoadableSpace
+  ): Result<void, LoadSpaceCapabilityMismatchError> {
     const { requirements: req } = unit.getSnapshot();
-    const { capabilities: cap } = trailer;
+    const { capabilities: cap } = loadSpace;
 
     if (req.isTemperatureControlled && !cap.hasClimateControl) {
-      return fail(new TrailerCapabilityMismatchError('Climate control required'));
+      return fail(new LoadSpaceCapabilityMismatchError('Climate control required'));
     }
     if (req.requiresSideLoading && !cap.supportsSideLoading) {
-      return fail(new TrailerCapabilityMismatchError('side loading required'));
+      return fail(new LoadSpaceCapabilityMismatchError('side loading required'));
     }
     if (req.highSecurityRequired && !cap.hasHighSecurityLock) {
-      return fail(new TrailerCapabilityMismatchError('high security lock required'));
+      return fail(new LoadSpaceCapabilityMismatchError('high security lock required'));
     }
     if (req.isBulk && !cap.isBulkReady) {
-      return fail(new TrailerCapabilityMismatchError('bulk-ready trailer required'));
+      return fail(new LoadSpaceCapabilityMismatchError('bulk-ready load space required'));
     }
 
     return ok(undefined);

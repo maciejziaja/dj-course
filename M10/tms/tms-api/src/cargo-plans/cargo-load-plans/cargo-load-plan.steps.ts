@@ -3,35 +3,46 @@ import assert from 'assert';
 
 import { CargoLoadPlan, type AddCargoData } from './cargo-load-plan';
 import { LdmCalculator } from '../ldm/ldm-calculator';
-import { TrailerFactory } from '../trailers';
+import { LoadSpaceCatalog } from '../load-spaces';
 import { CargoType } from '../cargo/cargo.types';
 import { CargoLoadPlanStatus } from './cargo-load-plan.types';
 import type { PalletUnit } from '../pallets/pallet-unit';
-import type { PalletLoadableTrailerSpec } from '../trailers';
+import type { PalletLoadableSpace } from '../load-spaces';
 import { Weight } from '../../shared/weight';
 import { UUID } from '../../shared/uuid';
 
-const ldmProvider = (u: PalletUnit[], t: PalletLoadableTrailerSpec) => LdmCalculator.calculate(u, t);
+const ldmProvider = (u: PalletUnit[], t: PalletLoadableSpace) => LdmCalculator.calculate(u, t);
 
-function trailerWithMaxWeight(maxWeightKg: number): PalletLoadableTrailerSpec {
+function trailerWithMaxWeight(maxWeightKg: number): PalletLoadableSpace {
   return {
-    ...TrailerFactory.standardCurtainside(),
+    ...LoadSpaceCatalog.standardCurtainside(),
     maxWeightCapacity: Weight.from(maxWeightKg, 'KG'),
   };
 }
 
-function trailerWithMaxLdm(maxLdm: number): PalletLoadableTrailerSpec {
+function trailerWithMaxLdm(maxLdm: number): PalletLoadableSpace {
   return {
-    ...TrailerFactory.standardCurtainside(),
+    ...LoadSpaceCatalog.standardCurtainside(),
     maxLdm,
   };
 }
 
-function trailerWithHeight(heightMm: number): PalletLoadableTrailerSpec {
+function spaceWithWidth(widthMm: number): PalletLoadableSpace {
   return {
-    ...TrailerFactory.standardCurtainside(),
+    ...LoadSpaceCatalog.mediumVan(),
+    widthMm,
+  };
+}
+
+function trailerWithHeight(heightMm: number): PalletLoadableSpace {
+  return {
+    ...LoadSpaceCatalog.standardCurtainside(),
     heightMm,
   };
+}
+
+function newPlan(loadSpace: PalletLoadableSpace): CargoLoadPlan {
+  return new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), loadSpace, 0, [], CargoLoadPlanStatus.DRAFT);
 }
 
 interface CargoLoadPlanWorld {
@@ -40,43 +51,62 @@ interface CargoLoadPlanWorld {
 }
 
 Given('an empty load plan with standard curtainside trailer', function (this: CargoLoadPlanWorld) {
-  const trailer = TrailerFactory.standardCurtainside();
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(LoadSpaceCatalog.standardCurtainside());
 });
 
 Given('an empty load plan with trailer having max weight {int} kg', function (this: CargoLoadPlanWorld, maxWeight: number) {
-  const trailer = trailerWithMaxWeight(maxWeight);
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(trailerWithMaxWeight(maxWeight));
 });
 
 Given('an empty load plan with trailer having max LDM {float} m', function (this: CargoLoadPlanWorld, maxLdm: number) {
-  const trailer = trailerWithMaxLdm(maxLdm);
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(trailerWithMaxLdm(maxLdm));
 });
 
 Given('an empty load plan with trailer having height {int} mm', function (this: CargoLoadPlanWorld, heightMm: number) {
-  const trailer = trailerWithHeight(heightMm);
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(trailerWithHeight(heightMm));
 });
 
 Given('a load plan with standard curtainside trailer', function (this: CargoLoadPlanWorld) {
-  const trailer = TrailerFactory.standardCurtainside();
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(LoadSpaceCatalog.standardCurtainside());
 });
 
 Given('a load plan with refrigerated trailer', function (this: CargoLoadPlanWorld) {
-  const trailer = TrailerFactory.refrigerated();
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(LoadSpaceCatalog.refrigerated());
 });
 
 Given('a load plan with trailer having max weight {int} kg', function (this: CargoLoadPlanWorld, maxWeight: number) {
-  const trailer = trailerWithMaxWeight(maxWeight);
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(trailerWithMaxWeight(maxWeight));
 });
 
 Given('a load plan with trailer having max LDM {float} m', function (this: CargoLoadPlanWorld, maxLdm: number) {
-  const trailer = trailerWithMaxLdm(maxLdm);
-  this.plan = new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), trailer, 0, [], CargoLoadPlanStatus.DRAFT);
+  this.plan = newPlan(trailerWithMaxLdm(maxLdm));
+});
+
+// ── Rigid vehicles (non-TIR) ─────────────────────────────────────────────────
+
+Given('an empty load plan with load space having width {int} mm', function (this: CargoLoadPlanWorld, widthMm: number) {
+  this.plan = newPlan(spaceWithWidth(widthMm));
+});
+
+When('I try to add a chemical pallet unit on a {string} pallet with weight {int} kg', function (this: CargoLoadPlanWorld, palletType: string, weight: number) {
+  assert(this.plan);
+  const data: AddCargoData = { palletType, cargoType: CargoType.CHEMICAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const result = this.plan.addCargoToPlan(data, ldmProvider);
+  if (!result.success) this.lastError = result.error;
+});
+
+Given('an empty load plan with load space {string}', function (this: CargoLoadPlanWorld, loadSpaceType: string) {
+  this.plan = newPlan(LoadSpaceCatalog.fromType(loadSpaceType));
+});
+
+Given('a load plan with load space {string}', function (this: CargoLoadPlanWorld, loadSpaceType: string) {
+  this.plan = newPlan(LoadSpaceCatalog.fromType(loadSpaceType));
+});
+
+When('I try to change the load space to {string}', function (this: CargoLoadPlanWorld, loadSpaceType: string) {
+  assert(this.plan);
+  const result = this.plan.changeLoadSpace(LoadSpaceCatalog.fromType(loadSpaceType), ldmProvider);
+  if (!result.success) this.lastError = result.error;
 });
 
 Given('the plan has a general cargo pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
@@ -127,9 +157,9 @@ When('I try to remove pallet unit with id {string}', function (this: CargoLoadPl
   if (!result.success) this.lastError = result.error;
 });
 
-When('I try to replace trailer with mega trailer', function (this: CargoLoadPlanWorld) {
+When('I try to change the load space to mega trailer', function (this: CargoLoadPlanWorld) {
   assert(this.plan);
-  const result = this.plan.replaceTrailer(TrailerFactory.megaTrailer(), ldmProvider);
+  const result = this.plan.changeLoadSpace(LoadSpaceCatalog.megaTrailer(), ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
 
@@ -170,6 +200,18 @@ Then('the plan status should be FINALIZED', function (this: CargoLoadPlanWorld) 
 Then('the plan status should be DRAFT', function (this: CargoLoadPlanWorld) {
   assert(this.plan);
   assert.strictEqual(this.plan.isFinalized(), false);
+});
+
+Then('the plan should contain {int} cargo unit(s)', function (this: CargoLoadPlanWorld, expectedCount: number) {
+  assert(this.plan);
+  assert.strictEqual(this.plan.getSnapshot().assignedUnits.length, expectedCount);
+});
+
+Then('the planned gross weight should be {int} kg', function (this: CargoLoadPlanWorld, expectedKg: number) {
+  assert(this.plan);
+  const gross = this.plan.getSnapshot().assignedUnits
+    .reduce((sum, u) => sum + u.grossWeight.valueInKg, 0);
+  assert.strictEqual(gross, expectedKg);
 });
 
 Then('it should fail with {string}', function (this: CargoLoadPlanWorld, expectedSubstring: string) {

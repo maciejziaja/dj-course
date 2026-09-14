@@ -35,6 +35,8 @@ export class PalletUnit {
       cargoType: this.cargoType,
       requirements: this.requirements,
       weight: this.weight,
+      /** Cargo plus the pallet itself – what every capacity limit is measured against. */
+      grossWeight: this.spec.grossWeightOf(this.weight),
       totalHeightMm: this.totalHeightMm,
     };
   }

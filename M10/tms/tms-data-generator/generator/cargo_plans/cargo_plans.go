@@ -336,7 +336,7 @@ func GeneratePlanInsertStatements(plans []CargoLoadPlan) string {
 
 	var sb strings.Builder
 	sb.Grow(len(plans) * 200)
-	sb.WriteString("INSERT INTO cargo_plans.cargo_load_plans (id, trailer_type, status, current_ldm, version, created_at, updated_at) VALUES\n")
+	sb.WriteString("INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version, created_at, updated_at) VALUES\n")
 
 	for i, p := range plans {
 		sb.WriteString(fmt.Sprintf("    ('%s', '%s', '%s', %.2f, %d, '%s'::timestamptz, '%s'::timestamptz)",

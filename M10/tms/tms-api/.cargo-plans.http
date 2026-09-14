@@ -9,8 +9,33 @@
 @planIdAdrDraftReefer = 88888888-8888-4888-a888-888888888808
 @unitIdFoodFinalizedFirst = 11111111-1111-4111-a111-000000000001
 @unitIdChemicalDraftFirst = 66666666-6666-4666-a666-000000000001
-@planIdNotExist = 00000000-dead-4bee-f000-000000000000
-@unitIdNotExist = 00000000-dead-4bee-f000-000000000001
+# Poprawne UUID-y v4, których nie ma w bazie – żeby testować 404, a nie walidację formatu.
+@planIdNotExist = 00000000-0000-4000-8000-000000000000
+@unitIdNotExist = 00000000-0000-4000-8000-000000000001
+
+# ════════════════════════════════════════════════════════════════════════════
+# MODEL: KLASA przestrzeni ładunkowej, nie marka i model
+#
+# Plan zawsze deklaruje KLASĘ. Klasy są dwojakiego rodzaju (pole `kind`):
+#
+#   TRAILER        – naczepa odczepiana. Ciągnik rezerwuje się później, więc
+#                    ładowności zestawu nie da się jeszcze sprawdzić.
+#                    standard-curtainside | mega | reefer
+#
+#   RIGID_VEHICLE  – klasa ciężarówek ze zintegrowaną zabudową. Klasa przesądza
+#                    o pojeździe na tyle, że jego ładowność (`payloadCapacityKg`)
+#                    sprawdzamy już przy planowaniu.
+#                    van-medium | box-truck-8t
+#
+# GWARANTOWANE MINIMUM: każda liczba klasy to najgorszy przypadek po jej
+# członkach (pole `fitsVehicles`), nigdy średnia. Dzięki temu dyspozytor wysyła
+# dowolny pojazd z klasy, a plan nadal się zgadza. Cena: ładunek, który zmieściłby
+# się tylko w większym członku klasy, zostanie odrzucony.
+#
+# MASA BRUTTO: wszystkie limity wagowe liczą towar RAZEM Z PALETĄ.
+# Tary: epal1 25 kg, industrial 32 kg, half 10 kg, cp1 23 kg, cp3 22 kg, h1 15 kg.
+# Read model pokazuje obie liczby: `plannedWeight` (netto) i `plannedGrossWeight`.
+# ════════════════════════════════════════════════════════════════════════════
 
 ### Plan z żywnością (FOOD) – Reefer, jednostki jednorodne
 GET {{baseUrl}}/cargo-plans/{{planIdFood}}
@@ -32,14 +57,14 @@ Accept: application/json
 GET {{baseUrl}}/cargo-plans/{{planIdDangerousGoods}}
 Accept: application/json
 
-### Opcjonalnie: weightUnit (domyślnie KG)
+### Opcjonalnie: weightUnit (domyślnie KG) – przelicza netto i brutto
 GET {{baseUrl}}/cargo-plans/{{planIdFood}}?weightUnit=LB
 Accept: application/json
 
 # ADD CARGO – walidacja reguł domenowych
 # Uruchom 1–2 przed testami (tworzą plany DRAFT), potem 3–12 w kolejności.
-# Wymagania cargo są teraz auto-derywowane z cargoType – nie trzeba ich wysyłać w payloadzie.
-# Mapa: FOOD→isTemperatureControlled, ELECTRONICS+ADR→highSecurityRequired, reszta→brak specjalnych wymagań.
+# Wymagania cargo są auto-derywowane z cargoType – nie trzeba ich wysyłać w payloadzie.
+# Mapa: FOOD→isTemperatureControlled, ELECTRONICS+ADR→highSecurityRequired, reszta→brak.
 
 
 
@@ -49,17 +74,17 @@ Accept: application/json
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{ "trailerType": "standard-curtainside" }
+{ "loadSpaceType": "standard-curtainside" }
 
 ### 2. (EXPECTED SUCCESS) Create plan reefer – dla testów FOOD+CHEMICAL coloading, too tall
 # @name createPlanReefer
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{ "trailerType": "reefer" }
+{ "loadSpaceType": "reefer" }
 
 
-### Plan 
+### Plan
 GET {{baseUrl}}/cargo-plans/{{createPlanStandard.id}}
 Accept: application/json
 
@@ -109,65 +134,62 @@ Content-Type: application/json
   "cargoHeightMm": 1200
 }
 
-### 7. (EXPECTED FAIL) – Nadwaga: paleta przekracza pojemność naczepy (standard 24t, Reefer 22t)
-# Tworzymy nowy plan i dodajemy jedną gigantyczną paletę – epal1 max 4000kg per pallet
-# Zamiast tego: dodaj 6×4000kg = 24t, potem 7. paleta → 28t > 24t
-# Wymaga osobnego planu z 6 paletami. Użyjemy createPlanOverweight – najpierw go dodaj.
+### 7. (setup) Plan do testu nadwagi na firance (24 t)
+# UWAGA: limit liczy MASĘ BRUTTO. epal1 z ładunkiem 4000 kg waży 4025 kg,
+# więc 24 t wyczerpuje się po 5 paletach (20 125 kg), a odbija dopiero 6.
 # @name createPlanOverweight
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{ "trailerType": "standard-curtainside" }
+{ "loadSpaceType": "standard-curtainside" }
 
-### 8a–8f. (EXPECTED FAIL) Dodaj 6 palet po 4000kg (epal1 max) = 24t dokładnie
-# @name addOverweight1
+### 8a. (EXPECTED SUCCESS) 4000 kg towaru + 25 kg palety = 4 025 kg brutto
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 8b
+### 8b. (EXPECTED SUCCESS) łącznie 8 050 kg
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 8c
+### 8c. (EXPECTED SUCCESS) łącznie 12 075 kg
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 8d
+### 8d. (EXPECTED SUCCESS) łącznie 16 100 kg
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 8e
+### 8e. (EXPECTED SUCCESS) łącznie 20 125 kg – tyle mieści 24-tonowa firanka
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 8f
+### 9. (EXPECTED FAIL) – 6. paleta: 24 150 kg brutto > 24 000 kg
+# Bez wliczania palet (5×4000 = 20 000, 6×4000 = 24 000) ta paleta by przeszła.
 POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
 
-### 9. (EXPECTED FAIL) – Nadwaga: 7. paleta → 28t > max 24t
-POST {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}/cargo
-Content-Type: application/json
+### 9b. Podejrzyj netto vs brutto
+GET {{baseUrl}}/cargo-plans/{{createPlanOverweight.id}}
+Accept: application/json
 
-{"palletType":"epal1","cargoType":"GENERAL","weightKg":4000,"cargoHeightMm":1000}
-
-### 10. (EXPECTED FAIL) – Paleta za wysoka dla Reefer (2600mm). EPAL1: 144 + 2500 = 2644mm > 2600mm
+### 10. (setup) – Paleta za wysoka dla Reefer (2600 mm). EPAL1: 144 + 2500 = 2644 mm
 # @name createPlanTall
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{ "trailerType": "reefer" }
+{ "loadSpaceType": "reefer" }
 
 ### 11. (EXPECTED FAIL) – cargoHeightMm 2500 → totalHeight 2644 > 2600
 POST {{baseUrl}}/cargo-plans/{{createPlanTall.id}}/cargo
@@ -175,20 +197,20 @@ Content-Type: application/json
 
 {"palletType":"epal1","cargoType":"GENERAL","weightKg":500,"cargoHeightMm":2500}
 
-### 12. (EXPECTED FAIL) – Trailer bez klimatyzacji: FOOD wymaga isTemperatureControlled, standard-curtainside nie ma
+### 12. (setup) – Przestrzeń bez klimatyzacji: FOOD wymaga isTemperatureControlled
 # @name createPlanNoClimate
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{ "trailerType": "standard-curtainside" }
+{ "loadSpaceType": "standard-curtainside" }
 
-### 13. (EXPECTED FAIL) – FOOD auto-derywuje isTemperatureControlled: true → standard-curtainside nie ma hasClimateControl
+### 13. (EXPECTED FAIL) – FOOD auto-derywuje isTemperatureControlled → firanka nie ma hasClimateControl
 POST {{baseUrl}}/cargo-plans/{{createPlanNoClimate.id}}/cargo
 Content-Type: application/json
 
 {"palletType":"h1","cargoType":"FOOD","weightKg":400,"cargoHeightMm":1200}
 
-### 14. (EXPECTED FAIL) – highSecurityRequired: ADR/ELECTRONICS auto-derywuje highSecurityRequired: true → standard-curtainside nie ma hasHighSecurityLock
+### 14. (EXPECTED FAIL) – highSecurityRequired: ADR/ELECTRONICS wymagają zamka, firanka go nie ma
 POST {{baseUrl}}/cargo-plans/{{createPlanStandard.id}}/cargo
 Content-Type: application/json
 
@@ -212,10 +234,10 @@ DELETE {{baseUrl}}/cargo-plans/{{planIdChemicalDraft}}/cargo/{{unitIdChemicalDra
 ### 17. (EXPECTED FAIL) – Plan nie istnieje (404)
 DELETE {{baseUrl}}/cargo-plans/{{planIdNotExist}}/cargo/{{unitIdChemicalDraftFirst}}
 
-### 18. (EXPECTED FAIL) – Jednostka o podanym ID nie należy do planu (400)
+### 18. (EXPECTED FAIL) – Jednostka o podanym ID nie należy do planu (404)
 DELETE {{baseUrl}}/cargo-plans/{{planIdChemicalDraft}}/cargo/{{unitIdNotExist}}
 
-### 19. (EXPECTED FAIL) – Plan jest już sfinalizowany, usuwanie zabronione (400)
+### 19. (EXPECTED FAIL) – Plan jest już sfinalizowany, usuwanie zabronione (409)
 # planIdFood = 11111111 (FINALIZED), unitIdFoodFinalizedFirst to jedna z jego palet
 DELETE {{baseUrl}}/cargo-plans/{{planIdFood}}/cargo/{{unitIdFoodFinalizedFirst}}
 
@@ -223,43 +245,44 @@ DELETE {{baseUrl}}/cargo-plans/{{planIdFood}}/cargo/{{unitIdFoodFinalizedFirst}}
 
 
 
-# CHANGE TRAILER – PUT /cargo-plans/{id}/trailer
-# Podmienia naczepę w planie DRAFT. Po zmianie wszystkie przypisane jednostki są
-# re-walidowane pod kątem możliwości nowej naczepy i jej pojemności.
+# CHANGE LOAD SPACE – PUT /cargo-plans/{id}/load-space
+# Podmienia przestrzeń ładunkową w planie DRAFT. Po zmianie wszystkie przypisane
+# jednostki są re-walidowane pod kątem możliwości i pojemności nowej przestrzeni.
+# Wolno przechodzić między naczepą a pojazdem sztywnym – wtedy dochodzi (albo
+# znika) reguła ładowności pojazdu.
 # Dane z seed: planIdGeneralDraftMega (77777777, mega, DRAFT) i planIdAdrDraftReefer (88888888, reefer, DRAFT)
 
-### 20. (EXPECTED SUCCESS) Zmień naczepę z mega na standard-curtainside (GENERAL – brak specjalnych wymagań)
-PUT {{baseUrl}}/cargo-plans/{{planIdGeneralDraftMega}}/trailer
+### 20. (EXPECTED SUCCESS) Zmień z mega na standard-curtainside (GENERAL – brak specjalnych wymagań)
+PUT {{baseUrl}}/cargo-plans/{{planIdGeneralDraftMega}}/load-space
 Content-Type: application/json
 
-{"trailerType": "standard-curtainside"}
+{"loadSpaceType": "standard-curtainside"}
 
-### 21. (EXPECTED FAIL) – Nieprawidłowy typ naczepy (400)
-PUT {{baseUrl}}/cargo-plans/{{planIdGeneralDraftMega}}/trailer
+### 21. (EXPECTED FAIL) – Nieznany typ przestrzeni (400, odbite przez kontrakt)
+PUT {{baseUrl}}/cargo-plans/{{planIdGeneralDraftMega}}/load-space
 Content-Type: application/json
 
-{"trailerType": "flatbed"}
+{"loadSpaceType": "flatbed"}
 
-### 22. (EXPECTED FAIL) – Re-walidacja: ładunek ADR wymaga highSecurityLock, standard-curtainside go nie ma (400)
+### 22. (EXPECTED FAIL) – Re-walidacja: ADR wymaga zamka, standard-curtainside go nie ma (422)
 # planIdAdrDraftReefer (88888888, reefer, DRAFT) ma palety ADR (highSecurityRequired=true)
-# standard-curtainside ma hasHighSecurityLock: false → re-walidacja odrzuca
-PUT {{baseUrl}}/cargo-plans/{{planIdAdrDraftReefer}}/trailer
+PUT {{baseUrl}}/cargo-plans/{{planIdAdrDraftReefer}}/load-space
 Content-Type: application/json
 
-{"trailerType": "standard-curtainside"}
+{"loadSpaceType": "standard-curtainside"}
 
 ### 23. (EXPECTED FAIL) – Plan nie istnieje (404)
-PUT {{baseUrl}}/cargo-plans/{{planIdNotExist}}/trailer
+PUT {{baseUrl}}/cargo-plans/{{planIdNotExist}}/load-space
 Content-Type: application/json
 
-{"trailerType": "mega"}
+{"loadSpaceType": "mega"}
 
-### 24. (EXPECTED FAIL) – Plan sfinalizowany, zmiana naczepy zabroniona (400)
+### 24. (EXPECTED FAIL) – Plan sfinalizowany, zmiana przestrzeni zabroniona (409)
 # planIdChemical = 22222222 (FINALIZED)
-PUT {{baseUrl}}/cargo-plans/{{planIdChemical}}/trailer
+PUT {{baseUrl}}/cargo-plans/{{planIdChemical}}/load-space
 Content-Type: application/json
 
-{"trailerType": "mega"}
+{"loadSpaceType": "mega"}
 
 
 
@@ -272,7 +295,7 @@ Content-Type: application/json
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{"trailerType": "mega"}
+{"loadSpaceType": "mega"}
 
 ### 26. (setup) Dodaj jednostkę do planu przed finalizacją
 POST {{baseUrl}}/cargo-plans/{{createPlanToFinalize.id}}/cargo
@@ -286,19 +309,221 @@ POST {{baseUrl}}/cargo-plans/{{createPlanToFinalize.id}}/finalize
 
 
 
-
 ### 28. (setup) Utwórz pusty plan do testu błędu finalizacji
 # @name createEmptyPlanToFinalize
 POST {{baseUrl}}/cargo-plans
 Content-Type: application/json
 
-{"trailerType": "standard-curtainside"}
+{"loadSpaceType": "standard-curtainside"}
 
-### 29. (EXPECTED FAIL) – Nie można sfinalizować pustego planu (brak jednostek) (400)
+### 29. (EXPECTED FAIL) – Nie można sfinalizować pustego planu (422)
 POST {{baseUrl}}/cargo-plans/{{createEmptyPlanToFinalize.id}}/finalize
 
-### 30. (EXPECTED FAIL) – Plan już sfinalizowany, powtórna finalizacja zabroniona (400)
+### 30. (EXPECTED FAIL) – Plan już sfinalizowany, powtórna finalizacja zabroniona (409)
 POST {{baseUrl}}/cargo-plans/{{createPlanToFinalize.id}}/finalize
 
 ### 31. (EXPECTED FAIL) – Plan nie istnieje (404)
 POST {{baseUrl}}/cargo-plans/{{planIdNotExist}}/finalize
+
+
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# KLASY POJAZDÓW SZTYWNYCH (nie-TIRy)
+#
+# van-medium – koperta liczona z członków klasy:
+#                            szer.użyt.  długość  wysokość  ładowność
+#   Fiat Ducato L2H2           1422 mm    3,12 m   1662 mm   1440 kg
+#   Renault Master L2H2        1380 mm    3,08 m   1894 mm   1400 kg
+#   ────────────────────────────────────────────────────────────────
+#   GWARANCJA KLASY            1380 mm    3,08 m   1662 mm   1400 kg
+#                              ↑Master    ↑Master  ↑Ducato   ↑Master
+#
+# box-truck-8t – jeden członek, MAN TGL 8.180 ze skrzynią:
+#   GWARANCJA KLASY            2450 mm    6,20 m   2400 mm   3500 kg
+#
+# Koperta miesza się po członkach: wysokość ogranicza Ducato (niższy dach),
+# resztę Master. Dodanie Sprintera czy Craftera to dopisanie modelu do klasy –
+# koperta dociśnie się sama, kontrakt się nie zmieni.
+#
+# Szerokość to prześwit MIĘDZY NADKOLAMI (palety stoją na podłodze), a nie
+# najszerszy punkt zabudowy. Zdolności: brak chłodni i brak trybu bulk, ale
+# zamknięta twarda zabudowa liczy się jako hasHighSecurityLock.
+# ════════════════════════════════════════════════════════════════════════════
+
+### 32. (setup) Plan na klasie van-medium
+# @name createPlanVan
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}
+
+### 33. Podejrzyj klasę – kind = RIGID_VEHICLE, payloadCapacityKg 1400, fitsVehicles z 2 modelami
+GET {{baseUrl}}/cargo-plans/{{createPlanVan.id}}
+Accept: application/json
+
+### 34. (EXPECTED FAIL) – FOOD na busie: wymaga chłodni, żaden bus z klasy jej nie ma (422)
+POST {{baseUrl}}/cargo-plans/{{createPlanVan.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"h1","cargoType":"FOOD","weightKg":200,"cargoHeightMm":400}
+
+### 35. (EXPECTED SUCCESS) – ELECTRONICS na busie: wymaga zamka, twarda zabudowa go ma
+POST {{baseUrl}}/cargo-plans/{{createPlanVan.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"ELECTRONICS","weightKg":300,"cargoHeightMm":400}
+
+
+# ── Ładowność: reguła, której naczepy nie mają ──────────────────────────────
+
+### 36. (setup) Świeży plan na van-medium do testu ładowności
+# @name createPlanVanPayload
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}
+
+### 37. (EXPECTED FAIL) – 1390 kg towaru mieści się w 1400 kg… ale z paletą to 1415 kg (422)
+# To jest cała różnica między planowaniem na naczepę a na pojazd sztywny:
+# tu nie ma „później", w którym ktoś sprawdzi, czy pojazd to uwiezie.
+POST {{baseUrl}}/cargo-plans/{{createPlanVanPayload.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":1390,"cargoHeightMm":300}
+
+### 38. (EXPECTED SUCCESS) – 1375 kg + 25 kg palety = dokładnie 1400 kg, granica domknięta
+POST {{baseUrl}}/cargo-plans/{{createPlanVanPayload.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":1375,"cargoHeightMm":300}
+
+### 39. Sprawdź: plannedWeight 1375, plannedGrossWeight 1400
+GET {{baseUrl}}/cargo-plans/{{createPlanVanPayload.id}}
+Accept: application/json
+
+
+### 39b. (EXPECTED FAIL) – 1410 kg: Ducato (1440 kg) by to wziął, Master (1400 kg) nie.
+# Klasa gwarantuje minimum, więc odrzuca. To jest CENA elastycznego dispatchu –
+# żeby wykorzystać te 40 kg, trzeba by planować na konkretny model, a nie klasę.
+POST {{baseUrl}}/cargo-plans/{{createPlanVanPayload.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":1410,"cargoHeightMm":300}
+
+
+# ── Długość podłogi: bus kończy się szybciej niż ładowność ──────────────────
+
+### 40. (setup) Plan na van-medium do testu długości
+# @name createPlanVanFloor
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}
+
+### 41. (EXPECTED SUCCESS) 1. epal1 – 1,2 m z 3,08 m
+POST {{baseUrl}}/cargo-plans/{{createPlanVanFloor.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":100,"cargoHeightMm":300}
+
+### 42. (EXPECTED SUCCESS) 2. epal1 – 2,4 m z 3,08 m
+# Paleta 800 mm + 800 mm = 1600 mm > 1380 mm prześwitu, więc druga idzie w NOWY rząd
+POST {{baseUrl}}/cargo-plans/{{createPlanVanFloor.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":100,"cargoHeightMm":300}
+
+### 43. (EXPECTED FAIL) 3. epal1 – 3,6 m > 3,08 m (422)
+# Uwaga: model nie umie obracać palet, więc mieści 2 europalety.
+# Realny bus L2 wozi 3 (ładowane w poprzek). Znane ograniczenie LdmCalculator.
+POST {{baseUrl}}/cargo-plans/{{createPlanVanFloor.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":100,"cargoHeightMm":300}
+
+
+# ── Finalizacja planu na klasie pojazdów sztywnych ──────────────────────────
+
+### 44. (setup) Plan na van-medium
+# @name createPlanVanFinal
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}
+
+### 45. (EXPECTED SUCCESS) – 1000 kg mieści się bez problemu
+POST {{baseUrl}}/cargo-plans/{{createPlanVanFinal.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":1000,"cargoHeightMm":300}
+
+### 46. (EXPECTED SUCCESS) Finalizacja planu na klasie pojazdów sztywnych
+POST {{baseUrl}}/cargo-plans/{{createPlanVanFinal.id}}/finalize
+
+
+# ── box-truck-8t: szeroka zabudowa, 3 palety w rzędzie ──────────────────────
+
+### 47. (setup) Plan na klasie box-truck-8t
+# @name createPlanBox
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "box-truck-8t"}
+
+### 48. (EXPECTED SUCCESS) 1. epal1
+POST {{baseUrl}}/cargo-plans/{{createPlanBox.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":300,"cargoHeightMm":500}
+
+### 49. (EXPECTED SUCCESS) 2. epal1
+POST {{baseUrl}}/cargo-plans/{{createPlanBox.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":300,"cargoHeightMm":500}
+
+### 50. (EXPECTED SUCCESS) 3. epal1 – 3 × 800 mm = 2400 mm mieści się w 2450 mm
+POST {{baseUrl}}/cargo-plans/{{createPlanBox.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":300,"cargoHeightMm":500}
+
+### 51. Sprawdź: 3 palety obok siebie to JEDEN rząd → currentLdm = 1.2, nie 3.6
+GET {{baseUrl}}/cargo-plans/{{createPlanBox.id}}
+Accept: application/json
+
+
+# ── Przejścia między naczepą a pojazdem sztywnym ────────────────────────────
+
+### 52. (setup) Plan na firance z ładunkiem 1430 kg
+# @name createPlanSwap
+POST {{baseUrl}}/cargo-plans
+Content-Type: application/json
+
+{"loadSpaceType": "standard-curtainside"}
+
+### 53. (EXPECTED SUCCESS) 1430 kg na 24-tonowej firance – żadnej reguły ładowności pojazdu
+POST {{baseUrl}}/cargo-plans/{{createPlanSwap.id}}/cargo
+Content-Type: application/json
+
+{"palletType":"epal1","cargoType":"GENERAL","weightKg":1430,"cargoHeightMm":300}
+
+### 54. (EXPECTED FAIL) – Przeniesienie tego samego ładunku na van-medium uruchamia regułę ładowności (422)
+PUT {{baseUrl}}/cargo-plans/{{createPlanSwap.id}}/load-space
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}
+
+### 55. (EXPECTED SUCCESS) – Ale na box-truck-8t (3500 kg) już się mieści
+PUT {{baseUrl}}/cargo-plans/{{createPlanSwap.id}}/load-space
+Content-Type: application/json
+
+{"loadSpaceType": "box-truck-8t"}
+
+### 56. (EXPECTED FAIL) – Zwężenie przestrzeni: 3 palety z box-truck-8t (1 rząd, 1,2 m)
+# na van-medium to 3 osobne rzędy = 3,6 m > 3,08 m. Ta sama zawartość, inna geometria (422).
+PUT {{baseUrl}}/cargo-plans/{{createPlanBox.id}}/load-space
+Content-Type: application/json
+
+{"loadSpaceType": "van-medium"}

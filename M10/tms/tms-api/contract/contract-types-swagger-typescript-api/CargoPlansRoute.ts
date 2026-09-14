@@ -13,7 +13,7 @@
 import {
   AddCargoInput,
   CargoLoadPlanReadModel,
-  ChangeTrailerInput,
+  ChangeLoadSpaceInput,
   CreateLoadPlanInput,
   CreateLoadPlanResponse,
   WeightUnit,
@@ -21,13 +21,13 @@ import {
 
 export namespace CargoPlans {
   /**
-   * @description Creates a new cargo load plan for a given trailer type.
+   * @description Creates a new cargo load plan for a given load space class – either a detachable trailer or a class of rigid vehicles.
    * @tags CargoPlans
    * @name CreateLoadPlan
    * @summary Create a load plan
    * @request POST:/cargo-plans
    * @response `201` `CreateLoadPlanResponse` Load plan created successfully
-   * @response `400` `ErrorResponse` Missing or invalid trailerType.
+   * @response `400` `ErrorResponse` Missing or invalid loadSpaceType.
    * @response `500` `ErrorResponse`
    */
   export namespace CreateLoadPlan {
@@ -126,17 +126,17 @@ export namespace CargoPlans {
   }
 
   /**
-   * @description Replaces the trailer on a draft load plan. All currently assigned cargo units are re-validated against the new trailer's capabilities and capacity.
+   * @description Replaces the load space class on a draft load plan. All currently assigned cargo units are re-validated against the new class's capabilities and capacity. Switching between a trailer and a rigid vehicle class is allowed and will additionally apply (or drop) the vehicle payload rule.
    * @tags CargoPlans
-   * @name ChangeTrailerType
-   * @summary Change trailer type
-   * @request PUT:/cargo-plans/{id}/trailer
-   * @response `204` `void` Trailer type changed successfully – no body returned.
-   * @response `400` `ErrorResponse` Invalid trailerType or re-validation of existing cargo failed.
+   * @name ChangeLoadSpace
+   * @summary Change load space
+   * @request PUT:/cargo-plans/{id}/load-space
+   * @response `204` `void` Load space changed successfully – no body returned.
+   * @response `400` `ErrorResponse` Invalid loadSpaceType or re-validation of existing cargo failed.
    * @response `404` `ErrorResponse` No load plan exists with the given ID.
    * @response `500` `ErrorResponse`
    */
-  export namespace ChangeTrailerType {
+  export namespace ChangeLoadSpace {
     export type RequestParams = {
       /**
        * UUID of the load plan
@@ -146,13 +146,13 @@ export namespace CargoPlans {
       id: string;
     };
     export type RequestQuery = {};
-    export type RequestBody = ChangeTrailerInput;
+    export type RequestBody = ChangeLoadSpaceInput;
     export type RequestHeaders = {};
     export type ResponseBody = void;
   }
 
   /**
-   * @description Marks the load plan as FINALIZED. A finalized plan cannot be modified. The plan must have at least one cargo unit and must not exceed trailer capacity.
+   * @description Marks the load plan as FINALIZED. A finalized plan cannot be modified. The plan must have at least one cargo unit and must not exceed load space capacity.
    * @tags CargoPlans
    * @name FinalizeLoadPlan
    * @summary Finalize a load plan

@@ -6,7 +6,7 @@ import { CargoLoadPlan } from './cargo-load-plan';
 import { CargoLoadPlanStatus } from './cargo-load-plan.types';
 import { PalletUnit } from '../pallets/pallet-unit';
 import { PalletSpec } from '../pallets/pallet-spec';
-import { TrailerFactory } from '../trailers';
+import { LoadSpaceCatalog } from '../load-spaces';
 import { Weight } from '../../shared/weight';
 import type { PoolClient } from 'pg';
 
@@ -22,10 +22,12 @@ export interface CargoLoadPlanRepository {
  * Derived from the API contract – no domain objects.
  */
 export type CargoLoadPlanDbRow =
-  Omit<CargoLoadPlanReadModel, 'weightUnit' | 'plannedWeight' | 'units'> & {
+  Omit<CargoLoadPlanReadModel, 'weightUnit' | 'plannedWeight' | 'plannedGrossWeight' | 'units'> & {
     readonly units: ReadonlyArray<
       Omit<PalletUnitReadModel, 'weight'> & {
         readonly weightKg: number;
+        /** Weight of the pallet itself – counted towards every capacity limit. */
+        readonly tareWeightKg: number;
         readonly description?: string | null;
       }
     >;
@@ -33,21 +35,21 @@ export type CargoLoadPlanDbRow =
 
 export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
   public async create(plan: CargoLoadPlan): Promise<void> {
-    const { id, trailer, status, currentLdm } = plan.getSnapshot();
-    const trailerTypeKey = TrailerFactory.toTypeKey(trailer);
+    const { id, loadSpace, status, currentLdm } = plan.getSnapshot();
+    const loadSpaceTypeKey = LoadSpaceCatalog.toTypeKey(loadSpace);
     await pool.query(
-      `INSERT INTO cargo_plans.cargo_load_plans (id, trailer_type, status, current_ldm, version)
+      `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
        VALUES ($1, $2, $3, $4, 1)`,
-      [id, trailerTypeKey, status, currentLdm],
+      [id, loadSpaceTypeKey, status, currentLdm],
     );
   }
 
   // 🔥🔥🔥 save supports multiple operations for the plan:
-  // modifying properties of the plan (trailer type, status, current LDM)
+  // modifying properties of the plan (load space type, status, current LDM)
   // 🔥🔥🔥 adding or removing cargo units 🔥🔥🔥 (deep within the aggregate!)
   public async save(plan: CargoLoadPlan): Promise<void> {
-    const { id, trailer, status, currentLdm, assignedUnits, version } = plan.getSnapshot();
-    const trailerTypeKey = TrailerFactory.toTypeKey(trailer);
+    const { id, loadSpace, status, currentLdm, assignedUnits, version } = plan.getSnapshot();
+    const loadSpaceTypeKey = LoadSpaceCatalog.toTypeKey(loadSpace);
 
     const client = await pool.connect();
     try {
@@ -55,16 +57,16 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
 
       if (version === 0) {
         await client.query(
-          `INSERT INTO cargo_plans.cargo_load_plans (id, trailer_type, status, current_ldm, version)
+          `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
            VALUES ($1, $2, $3, $4, 1)`,
-          [id, trailerTypeKey, status, currentLdm],
+          [id, loadSpaceTypeKey, status, currentLdm],
         );
       } else {
         const { rowCount } = await client.query(
           `UPDATE cargo_plans.cargo_load_plans
-           SET trailer_type = $1, status = $2, current_ldm = $3, version = version + 1
+           SET load_space_type = $1, status = $2, current_ldm = $3, version = version + 1
            WHERE id = $4 AND version = $5`, // 🔥🔥🔥 optimistic lock check
-          [trailerTypeKey, status, currentLdm, id, version], // 🔥🔥🔥 currentLDM - is derived from the all units dimensions (like a local cache), and is also transactionally consistent (within 1 row)
+          [loadSpaceTypeKey, status, currentLdm, id, version], // 🔥🔥🔥 currentLDM - is derived from the all units dimensions (like a local cache), and is also transactionally consistent (within 1 row)
         );
         if (rowCount === 0) { // 🔥🔥🔥 optimistic check failed
           const currentVersion = await this.fetchVersion(client, id); // 🔥🔥🔥 no updates? VERSION MISMATCH!
@@ -116,7 +118,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
 
   public async findById(id: string): Promise<CargoLoadPlan | null> {
     const { rows: planRows } = await pool.query(
-      `SELECT id, trailer_type, status, current_ldm, version
+      `SELECT id, load_space_type, status, current_ldm, version
        FROM cargo_plans.cargo_load_plans
        WHERE id = $1`,
       [id],
@@ -125,7 +127,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
     if (planRows.length === 0) return null;
 
     const row = planRows[0];
-    const trailer = TrailerFactory.fromType(row.trailer_type);
+    const loadSpace = LoadSpaceCatalog.fromType(row.load_space_type);
 
     const { rows: unitRows } = await pool.query(
       `SELECT id, pallet_type, cargo_type, weight_kg, cargo_height_mm,
@@ -154,7 +156,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
 
     return new CargoLoadPlan(
       UUID.from<'CargoLoadPlan'>(row.id),
-      trailer,
+      loadSpace,
       parseFloat(row.current_ldm),
       units,
       row.status as CargoLoadPlanStatus,

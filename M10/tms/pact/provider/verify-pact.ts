@@ -60,11 +60,11 @@ async function resetOwnedPlans(): Promise<void> {
   await pool.query('DELETE FROM cargo_plans.cargo_load_plans WHERE id = ANY($1::uuid[])', [OWNED_PLAN_IDS]);
 }
 
-async function insertPlan(planId: string, trailerType: string, currentLdm: number): Promise<void> {
+async function insertPlan(planId: string, loadSpaceType: string, currentLdm: number): Promise<void> {
   await pool.query(
-    `INSERT INTO cargo_plans.cargo_load_plans (id, trailer_type, status, current_ldm, version)
+    `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
      VALUES ($1, $2, 'DRAFT', $3, 3)`,
-    [planId, trailerType, currentLdm],
+    [planId, loadSpaceType, currentLdm],
   );
 }
 
@@ -98,7 +98,7 @@ const stateHandlers = {
     await resetOwnedPlans();
     await insertPlan(
       param(params, 'planId', PLAN_DRAFT_WITH_CARGO),
-      param(params, 'trailerType', 'standard-curtainside'),
+      param(params, 'loadSpaceType', 'standard-curtainside'),
       0,
     );
   },
@@ -107,7 +107,7 @@ const stateHandlers = {
     await resetOwnedPlans();
     const planId = param(params, 'planId', PLAN_DRAFT_WITH_CARGO);
     // two epal1 (800 mm wide) side by side in a 2480 mm trailer => one 1200 mm row
-    await insertPlan(planId, param(params, 'trailerType', 'standard-curtainside'), 1.2);
+    await insertPlan(planId, param(params, 'loadSpaceType', 'standard-curtainside'), 1.2);
     await insertUnit(param(params, 'firstUnitId', UNIT_ONE), planId, 'epal1', 'GENERAL');
     await insertUnit(param(params, 'secondUnitId', UNIT_TWO), planId, 'epal1', 'GENERAL');
   },
@@ -115,7 +115,7 @@ const stateHandlers = {
   'a draft load plan exists with a CHEMICAL cargo unit': async (params: StateParams): Promise<void> => {
     await resetOwnedPlans();
     const planId = param(params, 'planId', PLAN_WITH_CHEMICAL);
-    await insertPlan(planId, param(params, 'trailerType', 'standard-curtainside'), 1.2);
+    await insertPlan(planId, param(params, 'loadSpaceType', 'standard-curtainside'), 1.2);
     await insertUnit(param(params, 'unitId', UNIT_CHEMICAL), planId, 'cp1', 'CHEMICAL');
   },
 

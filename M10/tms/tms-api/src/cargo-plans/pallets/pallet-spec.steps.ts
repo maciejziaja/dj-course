@@ -79,7 +79,8 @@ When(
       const material = parseMaterial(materialStr);
       const allowedCargoTypes = parseCargoTypes(cargoTypesStr);
       const { width, length, height } = parseDimensions(dimensionsStr);
-      this.lastSpec = new PalletSpec(label, material, allowedCargoTypes, width, length, height, Weight.from(maxLoadKg, 'KG'));
+      // Tare is not what these scenarios exercise – a representative wooden pallet keeps them focused.
+      this.lastSpec = new PalletSpec(label, material, allowedCargoTypes, width, length, height, Weight.from(maxLoadKg, 'KG'), Weight.from(25, 'KG'));
     } catch (e) {
       this.lastError = e as Error;
     }

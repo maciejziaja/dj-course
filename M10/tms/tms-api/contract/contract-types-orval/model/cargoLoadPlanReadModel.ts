@@ -6,8 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CargoLoadPlanStatus } from './cargoLoadPlanStatus';
+import type { LoadSpaceReadModel } from './loadSpaceReadModel';
 import type { PalletUnitReadModel } from './palletUnitReadModel';
-import type { TrailerReadModel } from './trailerReadModel';
 import type { WeightUnit } from './weightUnit';
 
 /**
@@ -23,17 +23,22 @@ export interface CargoLoadPlanReadModel {
    */
   version: number;
   weightUnit: WeightUnit;
-  trailer: TrailerReadModel;
+  loadSpace: LoadSpaceReadModel;
   /**
    * Currently used loading metres
    * @minimum 0
    */
   currentLdm: number;
   /**
-   * Total weight of all assigned cargo units, expressed in the unit given by weightUnit
+   * Total weight of the cargo alone, expressed in the unit given by weightUnit
    * @minimum 0
    */
   plannedWeight: number;
+  /**
+   * Total weight of the cargo *plus* the pallets carrying it, expressed in the unit given by weightUnit. This is the figure capacity and vehicle payload limits are judged against.
+   * @minimum 0
+   */
+  plannedGrossWeight: number;
   /** Cargo units assigned to this plan */
   units: PalletUnitReadModel[];
 }

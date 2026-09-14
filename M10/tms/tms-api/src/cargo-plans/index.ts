@@ -13,13 +13,17 @@ export { CargoLoadPlanStatus } from './cargo-load-plans/cargo-load-plan.types';
 export { PalletSpec, type Material } from './pallets/pallet-spec';
 export { UnknownPalletTypeError } from './pallets/pallet-spec.errors';
 export {
-  type TrailerCapabilities,
-  type TrailerSpec,
-  type PalletLoadableTrailerSpec,
+  type LoadSpaceCapabilities,
+  type LoadSpaceKind,
+  type LoadSpaceSpec,
+  type PalletLoadableSpace,
+  type RigidVehicleSpace,
+  type VehicleModel,
   isPalletLoadable,
-  TrailerFactory,
-  UnknownTrailerTypeError,
-} from './trailers';
+  isRigidVehicle,
+  LoadSpaceCatalog,
+  UnknownLoadSpaceTypeError,
+} from './load-spaces';
 
 // Entities
 export { PalletUnit } from './pallets/pallet-unit';
@@ -40,7 +44,7 @@ export {
   type CreateLoadPlanCommand,
   type AddCargoCommand,
   type RemoveCargoCommand,
-  type ChangeTrailerCommand,
+  type ChangeLoadSpaceCommand,
 } from './cargo-plans.commands';
 
 // Application Service

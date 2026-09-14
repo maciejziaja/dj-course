@@ -1,11 +1,14 @@
 import { PalletUnit } from '../pallets/pallet-unit';
-import type { PalletLoadableTrailerSpec } from '../trailers';
+import type { PalletLoadableSpace } from '../load-spaces';
 
 /**
  * Domain Service for calculating LDM.
+ *
+ * Works unchanged for vans: rows are packed against the usable floor width, and
+ * a van simply declares a narrower one (the span between its wheel arches).
  */
 export class LdmCalculator {
-  public static calculate(units: PalletUnit[], trailer: PalletLoadableTrailerSpec): number {
+  public static calculate(units: PalletUnit[], loadSpace: PalletLoadableSpace): number {
     if (units.length === 0) return 0;
 
     const sortedUnits = [...units].sort((a, b) => b.getSnapshot().spec.length - a.getSnapshot().spec.length);
@@ -15,7 +18,7 @@ export class LdmCalculator {
       let placed = false;
       for (const row of rows) {
         const rowWidth = row.reduce((sum, u) => sum + u.getSnapshot().spec.width, 0);
-        if (rowWidth + unit.getSnapshot().spec.width <= trailer.widthMm) {
+        if (rowWidth + unit.getSnapshot().spec.width <= loadSpace.widthMm) {
           row.push(unit);
           placed = true;
           break;

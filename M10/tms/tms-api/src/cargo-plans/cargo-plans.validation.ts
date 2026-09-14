@@ -3,7 +3,7 @@
  *
  * Every schema used here is generated from the OpenAPI contract
  * (`npm run generate:types:openapi-zod-client`). The HTTP boundary must not
- * re-declare what the contract already states (allowed pallet / trailer / cargo
+ * re-declare what the contract already states (allowed pallet / load space / cargo
  * types, uuid formats, numeric ranges), and the domain must not parse HTTP
  * input at all – it only guards its own invariants.
  */
@@ -42,9 +42,9 @@ export const requestSchemas = {
       unitId: endpointParams.removeCargoFromLoadPlan.unitId,
     }),
   },
-  changeTrailerType: {
-    params: z.object({ id: endpointParams.changeTrailerType.id }),
-    body: endpointParams.changeTrailerType.body,
+  changeLoadSpace: {
+    params: z.object({ id: endpointParams.changeLoadSpace.id }),
+    body: endpointParams.changeLoadSpace.body,
   },
   finalizeLoadPlan: {
     params: z.object({ id: endpointParams.finalizeLoadPlan.id }),

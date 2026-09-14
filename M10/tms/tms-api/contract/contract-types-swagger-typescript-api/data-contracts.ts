@@ -16,6 +16,9 @@ export type PalletType = "epal1" | "industrial" | "half" | "cp1" | "cp3" | "h1";
 /** Type of cargo being transported */
 export type CargoType = "FOOD" | "CHEMICAL" | "ELECTRONICS" | "ADR" | "GENERAL";
 
+/** Whether the load space is detachable from its vehicle. */
+export type LoadSpaceKind = "TRAILER" | "RIGID_VEHICLE";
+
 /** Current status of the load plan */
 export type CargoLoadPlanStatus = "DRAFT" | "FINALIZED";
 
@@ -25,8 +28,16 @@ export type CargoLoadPlanStatus = "DRAFT" | "FINALIZED";
  */
 export type WeightUnit = "KG" | "TONNE" | "LB";
 
-/** Supported trailer types */
-export type TrailerType = "standard-curtainside" | "mega" | "reefer";
+/**
+ * Supported load space classes. Planning always commits to a class, never to a make and model.
+ * The first three are detachable trailers: the tractor unit is reserved later, so no payload can be checked yet. The rest are rigid vehicle classes, where the class determines the vehicle well enough to answer "can it carry this?" while planning — every figure such a class reports is the guaranteed minimum across the models in `fitsVehicles`.
+ */
+export type LoadSpaceType =
+  | "standard-curtainside"
+  | "mega"
+  | "reefer"
+  | "van-medium"
+  | "box-truck-8t";
 
 /** Pagination metadata attached to list responses. */
 export interface Pagination {
@@ -650,8 +661,11 @@ export interface NotificationListResponse {
 
 /** Payload for creating a new load plan. */
 export interface CreateLoadPlanInput {
-  /** Supported trailer types */
-  trailerType: TrailerType;
+  /**
+   * Supported load space classes. Planning always commits to a class, never to a make and model.
+   * The first three are detachable trailers: the tractor unit is reserved later, so no payload can be checked yet. The rest are rigid vehicle classes, where the class determines the vehicle well enough to answer "can it carry this?" while planning — every figure such a class reports is the guaranteed minimum across the models in `fitsVehicles`.
+   */
+  loadSpaceType: LoadSpaceType;
 }
 
 /** Identifier of the newly created load plan. */
@@ -664,64 +678,84 @@ export interface CreateLoadPlanResponse {
   id: string;
 }
 
-/** Capabilities of the assigned trailer. */
-export interface TrailerCapabilities {
+/** Capabilities of the assigned load space. */
+export interface LoadSpaceCapabilities {
   /**
-   * Trailer has temperature/climate control
+   * Load space has temperature/climate control
    * @example false
    */
   hasClimateControl: boolean;
   /**
-   * Trailer supports side loading
+   * Load space supports side loading
    * @example true
    */
   supportsSideLoading: boolean;
   /**
-   * Trailer has high-security locking
+   * Load space has high-security locking
    * @example false
    */
   hasHighSecurityLock: boolean;
   /**
-   * Trailer supports bulk cargo
+   * Load space supports bulk cargo
    * @example false
    */
   isBulkReady: boolean;
 }
 
-/** Details of the trailer assigned to the load plan. */
-export interface TrailerReadModel {
-  /** Supported trailer types */
-  type: TrailerType;
+/** Details of the load space assigned to the load plan. */
+export interface LoadSpaceReadModel {
+  /**
+   * Supported load space classes. Planning always commits to a class, never to a make and model.
+   * The first three are detachable trailers: the tractor unit is reserved later, so no payload can be checked yet. The rest are rigid vehicle classes, where the class determines the vehicle well enough to answer "can it carry this?" while planning — every figure such a class reports is the guaranteed minimum across the models in `fitsVehicles`.
+   */
+  type: LoadSpaceType;
+  /**
+   * Human-readable name of the load space class
+   * @example "Standard Curtainside"
+   */
+  label: string;
+  /** Whether the load space is detachable from its vehicle. */
+  kind: LoadSpaceKind;
   /** @example true */
   canCarryPallets: boolean;
   /**
-   * Maximum weight capacity in kilograms
+   * Structural weight capacity of the load floor, in kilograms
    * @example 24000
    */
   maxWeightCapacityKg: number;
   /**
-   * Internal trailer width in millimetres
-   * @example 2400
+   * Lowest legal payload in the class, in kilograms, counted against gross weight (cargo plus pallets). Present only when kind is RIGID_VEHICLE – a trailer's payload depends on the tractor unit, which is not known at planning time.
+   * @example 1400
+   */
+  payloadCapacityKg?: number;
+  /**
+   * Concrete vehicle models that can honour a plan made against this class. Every dimension and limit reported here is the worst case across them, so dispatch may send whichever is free. Present only when kind is RIGID_VEHICLE.
+   * @example ["Fiat Ducato L2H2","Renault Master L2H2"]
+   */
+  fitsVehicles?: string[];
+  /**
+   * Usable width for pallets in millimetres. For rigid vehicles this is the narrowest span between the wheel arches in the class, not the widest point of any body.
+   * @example 2480
    */
   widthMm: number;
   /**
-   * Internal trailer height in millimetres
+   * Internal load space height in millimetres
    * @example 2700
    */
   heightMm: number;
   /**
-   * Maximum loading metres (LDM)
+   * Maximum loading length in metres. For trailers this is LDM in the road-freight sense; for rigid vehicles, simply usable floor length.
    * @example 13.6
    */
   maxLdm: number;
-  /** Capabilities of the assigned trailer. */
-  capabilities: TrailerCapabilities;
+  /** Capabilities of the assigned load space. */
+  capabilities: LoadSpaceCapabilities;
 }
 
 /** Special handling requirements for a cargo unit. */
 export interface CargoRequirementsInput {
   /**
-   * Cargo requires a refrigerated trailer
+   * Cargo requires a climate-controlled load space
    * @example false
    */
   isTemperatureControlled: boolean;
@@ -731,7 +765,7 @@ export interface CargoRequirementsInput {
    */
   requiresSideLoading: boolean;
   /**
-   * Cargo is bulk (requires bulk-ready trailer)
+   * Cargo is bulk (requires bulk-ready load space)
    * @example false
    */
   isBulk: boolean;
@@ -795,8 +829,8 @@ export interface CargoLoadPlanReadModel {
   version: number;
   /** Unit of weight measurement */
   weightUnit: WeightUnit;
-  /** Details of the trailer assigned to the load plan. */
-  trailer: TrailerReadModel;
+  /** Details of the load space assigned to the load plan. */
+  loadSpace: LoadSpaceReadModel;
   /**
    * Currently used loading metres
    * @min 0
@@ -804,11 +838,17 @@ export interface CargoLoadPlanReadModel {
    */
   currentLdm: number;
   /**
-   * Total weight of all assigned cargo units, expressed in the unit given by weightUnit
+   * Total weight of the cargo alone, expressed in the unit given by weightUnit
    * @min 0
    * @example 600
    */
   plannedWeight: number;
+  /**
+   * Total weight of the cargo *plus* the pallets carrying it, expressed in the unit given by weightUnit. This is the figure capacity and vehicle payload limits are judged against.
+   * @min 0
+   * @example 625
+   */
+  plannedGrossWeight: number;
   /** Cargo units assigned to this plan */
   units: PalletUnitReadModel[];
 }
@@ -835,10 +875,13 @@ export interface AddCargoInput {
   cargoHeightMm: number;
 }
 
-/** Payload for changing the trailer type on a load plan. */
-export interface ChangeTrailerInput {
-  /** Supported trailer types */
-  trailerType: TrailerType;
+/** Payload for changing the load space on a load plan. */
+export interface ChangeLoadSpaceInput {
+  /**
+   * Supported load space classes. Planning always commits to a class, never to a make and model.
+   * The first three are detachable trailers: the tractor unit is reserved later, so no payload can be checked yet. The rest are rigid vehicle classes, where the class determines the vehicle well enough to answer "can it carry this?" while planning — every figure such a class reports is the guaranteed minimum across the models in `fitsVehicles`.
+   */
+  loadSpaceType: LoadSpaceType;
 }
 
 /** Health check response body. */

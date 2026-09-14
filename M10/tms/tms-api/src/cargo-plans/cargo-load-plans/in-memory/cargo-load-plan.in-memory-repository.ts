@@ -2,18 +2,18 @@ import { CargoLoadPlan } from '../cargo-load-plan';
 import type { CargoLoadPlanRepository } from '../cargo-load-plan.repository';
 import type { CargoLoadPlanDbRow } from '../cargo-load-plan.repository';
 import type { InMemoryCargoLoadPlanReadStore } from './cargo-load-plan.in-memory-queries';
-import { toTrailerReadModel } from '../../trailers';
+import { toLoadSpaceReadModel } from '../../load-spaces';
 import type {
   CargoLoadPlanStatus as ContractCargoLoadPlanStatus,
   CargoType as ContractCargoType,
 } from '../../../types/data-contracts';
 
 function projectToRow(plan: CargoLoadPlan): CargoLoadPlanDbRow {
-  const { id, trailer, status, currentLdm, assignedUnits, version } = plan.getSnapshot();
+  const { id, loadSpace, status, currentLdm, assignedUnits, version } = plan.getSnapshot();
   return {
     id,
     status: status as unknown as ContractCargoLoadPlanStatus,
-    trailer: toTrailerReadModel(trailer),
+    loadSpace: toLoadSpaceReadModel(loadSpace),
     currentLdm,
     version,
     units: assignedUnits.map(({ id, spec, cargoType, weight, totalHeightMm, requirements }) => {
@@ -22,6 +22,7 @@ function projectToRow(plan: CargoLoadPlan): CargoLoadPlanDbRow {
         palletLabel: spec.label,
         cargoType: cargoType as unknown as ContractCargoType,
         weightKg: weight.valueInKg,
+        tareWeightKg: spec.tareWeight.valueInKg,
         totalHeightMm,
         requirements,
       };

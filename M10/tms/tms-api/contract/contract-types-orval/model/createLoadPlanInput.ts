@@ -5,11 +5,11 @@
  * Transportation Management System API
  * OpenAPI spec version: 1.0.0
  */
-import type { TrailerType } from './trailerType';
+import type { LoadSpaceType } from './loadSpaceType';
 
 /**
  * Payload for creating a new load plan.
  */
 export interface CreateLoadPlanInput {
-  trailerType: TrailerType;
+  loadSpaceType: LoadSpaceType;
 }

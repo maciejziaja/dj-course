@@ -124,7 +124,9 @@ async function verifyTmsFrontendContract(): Promise<void> {
 // a console script talking to a running TMS would contain. Driving *it* (rather than
 // hand-writing expectations) is what makes the generated pact honest.
 
-type TrailerType = 'standard-curtainside' | 'mega' | 'reefer';
+type LoadSpaceType =
+  | 'standard-curtainside' | 'mega' | 'reefer'
+  | 'van-medium' | 'box-truck-8t';
 type PalletType = 'epal1' | 'industrial' | 'half' | 'cp1' | 'cp3' | 'h1';
 type CargoType = 'FOOD' | 'CHEMICAL' | 'ELECTRONICS' | 'ADR' | 'GENERAL';
 type LoadPlanJson = Record<string, any>;
@@ -135,8 +137,8 @@ type ApiResult<T> =
 class CargoPlansClient {
   constructor(private readonly baseUrl: string) {}
 
-  async createPlan(trailerType: TrailerType): Promise<ApiResult<string>> {
-    const res = await this.send('POST', '/cargo-plans', { trailerType });
+  async createPlan(loadSpaceType: LoadSpaceType): Promise<ApiResult<string>> {
+    const res = await this.send('POST', '/cargo-plans', { loadSpaceType });
     if (!res.ok) return this.toFailure(res);
     const body = (await res.json()) as { id: string };
     expect(typeof body.id === 'string' && body.id.length > 0, `no id in ${JSON.stringify(body)}`);
@@ -162,8 +164,8 @@ class CargoPlansClient {
     return res.ok ? { ok: true, status: res.status, value: undefined } : this.toFailure(res);
   }
 
-  async changeTrailer(planId: string, trailerType: TrailerType): Promise<ApiResult<void>> {
-    const res = await this.send('PUT', `/cargo-plans/${planId}/trailer`, { trailerType });
+  async changeLoadSpace(planId: string, loadSpaceType: LoadSpaceType): Promise<ApiResult<void>> {
+    const res = await this.send('PUT', `/cargo-plans/${planId}/load-space`, { loadSpaceType });
     return res.ok ? { ok: true, status: res.status, value: undefined } : this.toFailure(res);
   }
 
@@ -214,7 +216,7 @@ const STATE = {
 
 const WITH_CARGO_PARAMS = {
   planId: PLAN_DRAFT_WITH_CARGO,
-  trailerType: 'standard-curtainside',
+  loadSpaceType: 'standard-curtainside',
   firstUnitId: UNIT_ONE,
   secondUnitId: UNIT_TWO,
 };
@@ -227,7 +229,7 @@ const WITH_CARGO_PARAMS = {
 // nobody reads.
 //
 //   v1 – everything the API offers
-//   v2 – drops trailer.capabilities and units[].requirements. Narrowing is safe: the
+//   v2 – drops loadSpace.capabilities and units[].requirements. Narrowing is safe: the
 //        provider may keep returning them, Pact only checks what was asked for.
 //   v3 – renames units[].requirements to units[].handlingRequirements. Breaking: the
 //        provider has no such field, so verification must fail.
@@ -241,8 +243,10 @@ const planEnvelope = {
   plannedWeight: number(1200),
 };
 
-const trailerCore = {
-  type: like('Standard Curtainside'),
+const loadSpaceCore = {
+  type: like('standard-curtainside'),
+  label: like('Standard Curtainside'),
+  kind: like('TRAILER'),
   canCarryPallets: boolean(true),
   maxWeightCapacityKg: number(24000),
   widthMm: integer(2480),
@@ -281,14 +285,14 @@ function required<T>(value: T | undefined, field: string): T {
 
 /** The fields the CLI renders for every variant. */
 function readCommonPlan(json: LoadPlanJson): { status: string; unitCount: number } {
-  const trailer = required(json.trailer, 'trailer');
+  const loadSpace = required(json.loadSpace, 'loadSpace');
   required(json.id, 'id');
   required(json.version, 'version');
   required(json.weightUnit, 'weightUnit');
   required(json.currentLdm, 'currentLdm');
   required(json.plannedWeight, 'plannedWeight');
-  required(trailer.type, 'trailer.type');
-  required(trailer.maxWeightCapacityKg, 'trailer.maxWeightCapacityKg');
+  required(loadSpace.type, 'loadSpace.type');
+  required(loadSpace.maxWeightCapacityKg, 'loadSpace.maxWeightCapacityKg');
 
   const units = required(json.units, 'units') as LoadPlanJson[];
   units.forEach((unit) => {
@@ -312,16 +316,16 @@ interface ContractVariant {
 const VARIANTS: Record<string, ContractVariant> = {
   v1: {
     note: 'full read model',
-    defaultVersion: '1.0.0',
+    defaultVersion: '1.1.0',
     getPlanResponseBody: {
       ...planEnvelope,
-      trailer: { ...trailerCore, capabilities: capabilitiesShape },
+      loadSpace: { ...loadSpaceCore, capabilities: capabilitiesShape },
       units: eachLike({ ...unitCore, requirements: requirementsShape }),
     },
     readPlan(json) {
       const summary = readCommonPlan(json);
-      const capabilities = required(json.trailer.capabilities, 'trailer.capabilities');
-      required(capabilities.hasClimateControl, 'trailer.capabilities.hasClimateControl');
+      const capabilities = required(json.loadSpace.capabilities, 'loadSpace.capabilities');
+      required(capabilities.hasClimateControl, 'loadSpace.capabilities.hasClimateControl');
       (json.units as LoadPlanJson[]).forEach((unit) => {
         const requirements = required(unit.requirements, 'units[].requirements');
         required(requirements.isTemperatureControlled, 'units[].requirements.isTemperatureControlled');
@@ -331,11 +335,11 @@ const VARIANTS: Record<string, ContractVariant> = {
   },
 
   v2: {
-    note: 'slim read model – no trailer capabilities, no cargo requirements',
-    defaultVersion: '2.0.0',
+    note: 'slim read model – no load space capabilities, no cargo requirements',
+    defaultVersion: '2.1.0',
     getPlanResponseBody: {
       ...planEnvelope,
-      trailer: trailerCore,
+      loadSpace: loadSpaceCore,
       units: eachLike(unitCore),
     },
     readPlan: readCommonPlan,
@@ -343,10 +347,10 @@ const VARIANTS: Record<string, ContractVariant> = {
 
   v3: {
     note: 'renamed field – units[].handlingRequirements instead of units[].requirements',
-    defaultVersion: '3.0.0',
+    defaultVersion: '3.1.0',
     getPlanResponseBody: {
       ...planEnvelope,
-      trailer: trailerCore,
+      loadSpace: loadSpaceCore,
       units: eachLike({ ...unitCore, handlingRequirements: requirementsShape }),
     },
     readPlan(json) {
@@ -383,7 +387,7 @@ async function verifyCargoPlannerContract(): Promise<void> {
       method: 'POST',
       path: '/cargo-plans',
       headers: { 'Content-Type': JSON_CONTENT_TYPE },
-      body: { trailerType: 'standard-curtainside' },
+      body: { loadSpaceType: 'standard-curtainside' },
     })
     .willRespondWith({
       status: 201,
@@ -394,7 +398,7 @@ async function verifyCargoPlannerContract(): Promise<void> {
   cargoPlanner
     .given(STATE.draftPlanWithoutCargo, {
       planId: PLAN_DRAFT_WITH_CARGO,
-      trailerType: 'standard-curtainside',
+      loadSpaceType: 'standard-curtainside',
     })
     .uponReceiving('a request to add a GENERAL cargo unit to a draft plan')
     .withRequest({
@@ -423,12 +427,12 @@ async function verifyCargoPlannerContract(): Promise<void> {
 
   cargoPlanner
     .given(STATE.draftPlanWithTwoGeneralUnits, WITH_CARGO_PARAMS)
-    .uponReceiving('a request to swap the trailer of a draft plan for a mega trailer')
+    .uponReceiving('a request to swap the load space of a draft plan for a mega trailer')
     .withRequest({
       method: 'PUT',
-      path: `/cargo-plans/${PLAN_DRAFT_WITH_CARGO}/trailer`,
+      path: `/cargo-plans/${PLAN_DRAFT_WITH_CARGO}/load-space`,
       headers: { 'Content-Type': JSON_CONTENT_TYPE },
-      body: { trailerType: 'mega' },
+      body: { loadSpaceType: 'mega' },
     })
     .willRespondWith({ status: 204 });
 
@@ -443,7 +447,7 @@ async function verifyCargoPlannerContract(): Promise<void> {
   cargoPlanner
     .given(STATE.draftPlanWithChemicalUnit, {
       planId: PLAN_WITH_CHEMICAL,
-      trailerType: 'standard-curtainside',
+      loadSpaceType: 'standard-curtainside',
       unitId: UNIT_CHEMICAL,
     })
     .uponReceiving('a request to add FOOD to a plan that already carries CHEMICAL cargo')
@@ -463,21 +467,21 @@ async function verifyCargoPlannerContract(): Promise<void> {
 
   cargoPlanner
     .given(STATE.acceptsNewPlans)
-    .uponReceiving('a request to create a load plan on a trailer type the TMS does not know')
+    .uponReceiving('a request to create a load plan on a load space type the TMS does not know')
     .withRequest({
       method: 'POST',
       path: '/cargo-plans',
       headers: { 'Content-Type': JSON_CONTENT_TYPE },
-      body: { trailerType: 'flatbed' },
+      body: { loadSpaceType: 'flatbed' },
     })
     .willRespondWith({
       status: 400,
       headers: { 'Content-Type': JSON_CONTENT_TYPE },
-      body: { error: like("Unknown trailerType: 'flatbed'. Allowed: standard-curtainside, mega, reefer") },
+      body: { error: like("Unknown loadSpaceType: 'flatbed'") },
     });
 
   cargoPlanner
-    .given(STATE.draftPlanWithoutCargo, { planId: PLAN_DRAFT_EMPTY, trailerType: 'standard-curtainside' })
+    .given(STATE.draftPlanWithoutCargo, { planId: PLAN_DRAFT_EMPTY, loadSpaceType: 'standard-curtainside' })
     .uponReceiving('a request to finalize a plan that has no cargo on it')
     .withRequest({ method: 'POST', path: `/cargo-plans/${PLAN_DRAFT_EMPTY}/finalize` })
     .willRespondWith({
@@ -499,7 +503,7 @@ async function verifyCargoPlannerContract(): Promise<void> {
   await cargoPlanner.executeTest(async (mockService) => {
     const client = new CargoPlansClient(mockService.url);
 
-    // Scenario 1 – create → add cargo → inspect → remove → re-trailer → finalize
+    // Scenario 1 – create → add cargo → inspect → remove → swap load space → finalize
     const created = await client.createPlan('standard-curtainside');
     expect(created.ok && created.status === 201, `create plan returned ${created.status}`);
 
@@ -523,12 +527,12 @@ async function verifyCargoPlannerContract(): Promise<void> {
     const removed = await client.removeCargo(PLAN_DRAFT_WITH_CARGO, UNIT_ONE);
     expect(removed.ok && removed.status === 204, `remove cargo returned ${removed.status}`);
 
-    const reTrailered = await client.changeTrailer(PLAN_DRAFT_WITH_CARGO, 'mega');
-    expect(reTrailered.ok && reTrailered.status === 204, `change trailer returned ${reTrailered.status}`);
+    const reSpaced = await client.changeLoadSpace(PLAN_DRAFT_WITH_CARGO, 'mega');
+    expect(reSpaced.ok && reSpaced.status === 204, `change load space returned ${reSpaced.status}`);
 
     const finalized = await client.finalizePlan(PLAN_DRAFT_WITH_CARGO);
     expect(finalized.ok && finalized.status === 204, `finalize returned ${finalized.status}`);
-    console.log('  ✔ CargoPlannerCli – create → add cargo → inspect → remove → re-trailer → finalize');
+    console.log('  ✔ CargoPlannerCli – create → add cargo → inspect → remove → swap load space → finalize');
 
     // Scenario 2 – the TMS refuses to co-load food with chemicals
     const coload = await client.addCargo(PLAN_WITH_CHEMICAL, {
@@ -551,7 +555,7 @@ async function verifyCargoPlannerContract(): Promise<void> {
 
     const missing = await client.getPlan(PLAN_UNKNOWN);
     expect(!missing.ok && missing.status === 404, `expected HTTP 404, got ${missing.status}`);
-    console.log('  ✔ CargoPlannerCli – unknown trailer 400, empty plan 422, unknown plan 404');
+    console.log('  ✔ CargoPlannerCli – unknown load space 400, empty plan 422, unknown plan 404');
   });
 }
 

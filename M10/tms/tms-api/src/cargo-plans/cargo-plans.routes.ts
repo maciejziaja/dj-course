@@ -30,12 +30,12 @@ router.post('/', async (
   }
   const { body } = validation.data;
 
-  const result = await service.createLoadPlan({ trailerType: body.trailerType });
+  const result = await service.createLoadPlan({ loadSpaceType: body.loadSpaceType });
   if (!result.success) {
     return handleResultError(res, result.error, 'Failed to create load plan');
   }
 
-  logger.info('Load plan created', { plan_id: result.value, trailer_type: body.trailerType });
+  logger.info('Load plan created', { plan_id: result.value, load_space_type: body.loadSpaceType });
   res.status(201).json({ id: result.value });
 });
 
@@ -124,31 +124,31 @@ router.delete('/:id/cargo/:unitId', async (
   res.status(204).send();
 });
 
-// ── PUT /:id/trailer — Change trailer type ──────────────────────────────────
+// ── PUT /:id/load-space — Change load space ─────────────────────────────────
 
-router.put('/:id/trailer', async (
+router.put('/:id/load-space', async (
   req: Request<
-    CargoPlans.ChangeTrailerType.RequestParams,
-    CargoPlans.ChangeTrailerType.ResponseBody | ErrorResponse,
-    CargoPlans.ChangeTrailerType.RequestBody,
-    CargoPlans.ChangeTrailerType.RequestQuery
+    CargoPlans.ChangeLoadSpace.RequestParams,
+    CargoPlans.ChangeLoadSpace.ResponseBody | ErrorResponse,
+    CargoPlans.ChangeLoadSpace.RequestBody,
+    CargoPlans.ChangeLoadSpace.RequestQuery
   >,
-  res: Response<CargoPlans.ChangeTrailerType.ResponseBody | ErrorResponse>,
+  res: Response<CargoPlans.ChangeLoadSpace.ResponseBody | ErrorResponse>,
 ) => {
-  const validation = validateRequest(requestSchemas.changeTrailerType, req);
+  const validation = validateRequest(requestSchemas.changeLoadSpace, req);
   if (!validation.success) {
     return res.status(400).json({ error: validation.error });
   }
   const { params, body } = validation.data;
 
-  const result = await service.changeTrailerType({
+  const result = await service.changeLoadSpace({
     loadPlanId: params.id,
-    trailerType: body.trailerType,
+    loadSpaceType: body.loadSpaceType,
   });
   if (!result.success) {
-    return handleResultError(res, result.error, 'Failed to change trailer type');
+    return handleResultError(res, result.error, 'Failed to change load space');
   }
-  logger.info('Trailer type changed', { plan_id: params.id, trailer_type: body.trailerType });
+  logger.info('Load space changed', { plan_id: params.id, load_space_type: body.loadSpaceType });
   res.status(204).send();
 });
 
@@ -201,13 +201,19 @@ function handleResultError(
     case 'WeightCapacityExceededError':
       logger.warn(context, { error: err.message });
       return res.status(422).json({ error: err.message });
+    case 'VehiclePayloadExceededError':
+      logger.warn(context, { error: err.message });
+      return res.status(422).json({ error: err.message });
     case 'LdmCapacityExceededError':
       logger.warn(context, { error: err.message });
       return res.status(422).json({ error: err.message });
-    case 'CargoTooTallForTrailerError':
+    case 'CargoTooTallForLoadSpaceError':
       logger.warn(context, { error: err.message });
       return res.status(422).json({ error: err.message });
-    case 'TrailerCapabilityMismatchError':
+    case 'CargoTooWideForLoadSpaceError':
+      logger.warn(context, { error: err.message });
+      return res.status(422).json({ error: err.message });
+    case 'LoadSpaceCapabilityMismatchError':
       logger.warn(context, { error: err.message });
       return res.status(422).json({ error: err.message });
     case 'IncompatibleCargoColoadingError':
