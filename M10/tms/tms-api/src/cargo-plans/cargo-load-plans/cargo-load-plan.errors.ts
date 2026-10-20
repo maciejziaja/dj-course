@@ -63,7 +63,8 @@ export class LoadSpaceCapabilityMismatchError {
  *
  * Only reachable for rigid vehicles: picking one at planning time *is* picking
  * the vehicle, so its payload has to hold now rather than at reservation time.
- * Measured on gross weight – cargo plus the pallets carrying it.
+ * Measured on gross weight – cargo plus the pallets carrying it – and only
+ * raised once the load goes past the payload plus the tolerated overload.
  */
 export class VehiclePayloadExceededError {
   readonly kind = 'VehiclePayloadExceededError' as const;
@@ -71,9 +72,10 @@ export class VehiclePayloadExceededError {
   constructor(
     readonly vehicleType: string,
     readonly grossKg: number,
-    readonly payloadKg: number
+    readonly payloadKg: number,
+    readonly toleranceKg: number
   ) {
-    this.message = `Vehicle payload exceeded: ${vehicleType} cannot carry ${grossKg}kg gross (payload ${payloadKg}kg).`;
+    this.message = `Vehicle payload exceeded: ${vehicleType} cannot carry ${grossKg}kg gross (payload ${payloadKg}kg + ${toleranceKg}kg tolerance).`;
   }
 }
 

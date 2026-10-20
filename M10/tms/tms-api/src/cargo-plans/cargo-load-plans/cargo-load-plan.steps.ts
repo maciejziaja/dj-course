@@ -221,3 +221,9 @@ Then('it should fail with {string}', function (this: CargoLoadPlanWorld, expecte
     `Expected error message to contain "${expectedSubstring}" but got: ${this.lastError!.message}`
   );
 });
+
+Then('the load space should be {string}', function (this: CargoLoadPlanWorld, loadSpaceType: string) {
+  assert(this.plan);
+  assert.strictEqual(this.lastError, undefined, `Unexpected error: ${this.lastError?.message}`);
+  assert.strictEqual(this.plan.getSnapshot().loadSpace.typeKey, loadSpaceType);
+});

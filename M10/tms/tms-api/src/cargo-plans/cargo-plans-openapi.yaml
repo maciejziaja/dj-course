@@ -165,7 +165,7 @@ paths:
               schema:
                 $ref: '../../contract/entry.yaml#/components/schemas/ErrorResponse'
               example:
-                error: "Vehicle payload exceeded: Medium Van cannot carry 1415kg gross (payload 1400kg)."
+                error: "Vehicle payload exceeded: Medium Van cannot carry 1615kg gross (payload 1400kg + 200kg tolerance)."
         '500':
           $ref: '../../contract/entry.yaml#/components/responses/InternalServerError'
 
@@ -497,7 +497,8 @@ components:
             Lowest legal payload in the class, in kilograms, counted against
             gross weight (cargo plus pallets). Present only when kind is
             RIGID_VEHICLE – a trailer's payload depends on the tractor unit,
-            which is not known at planning time.
+            which is not known at planning time. Planning tolerates a gross
+            load of up to 200 kg over this figure.
           example: 1400
         fitsVehicles:
           type: array

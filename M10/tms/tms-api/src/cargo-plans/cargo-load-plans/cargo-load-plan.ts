@@ -2,7 +2,12 @@ import { CargoType, requirementsFor } from '../cargo/cargo.types';
 import { CargoLoadPlanStatus } from './cargo-load-plan.types';
 import { PalletUnit } from '../pallets/pallet-unit';
 import { PalletSpec } from '../pallets/pallet-spec';
-import { isRigidVehicle, type PalletLoadableSpace } from '../load-spaces';
+import {
+  isRigidVehicle,
+  permittedGrossLoad,
+  GVW_OVERLOAD_TOLERANCE,
+  type PalletLoadableSpace,
+} from '../load-spaces';
 import { Weight } from '../../shared/weight';
 import { ok, fail, type Result } from '../../shared/result';
 import { UUID } from '../../shared/uuid';
@@ -183,6 +188,11 @@ export class CargoLoadPlan {
     units: PalletUnit[],
     loadSpace: PalletLoadableSpace
   ): Result<void, CargoLoadPlanDomainError> {
+    // A rigid vehicle's floor limit *is* its payload (see guaranteedEnvelope),
+    // so the payload rule – tolerance included – is the one that judges it.
+    // Checking it here again would quietly cancel that tolerance.
+    if (isRigidVehicle(loadSpace)) return ok(undefined);
+
     const totalWeight = this.grossWeightOf(units);
     if (totalWeight.isHeavierThan(loadSpace.maxWeightCapacity)) {
       return fail(new WeightCapacityExceededError(totalWeight.valueInKg, loadSpace.maxWeightCapacity.valueInKg));
@@ -197,6 +207,8 @@ export class CargoLoadPlan {
    * type and the rig that hauls it is settled later, so payload is somebody
    * else's check. For a rigid vehicle the load space *is* the vehicle, so the
    * question has to be answered while planning.
+   *
+   * The answer allows for {@link GVW_OVERLOAD_TOLERANCE} over the legal payload.
    */
   private ensureVehiclePayloadNotExceeded(
     units: PalletUnit[],
@@ -205,11 +217,12 @@ export class CargoLoadPlan {
     if (!isRigidVehicle(loadSpace)) return ok(undefined);
 
     const totalWeight = this.grossWeightOf(units);
-    if (totalWeight.isHeavierThan(loadSpace.payloadCapacity)) {
+    if (totalWeight.isHeavierThan(permittedGrossLoad(loadSpace))) {
       return fail(new VehiclePayloadExceededError(
         loadSpace.type,
         totalWeight.valueInKg,
         loadSpace.payloadCapacity.valueInKg,
+        GVW_OVERLOAD_TOLERANCE.valueInKg,
       ));
     }
     return ok(undefined);

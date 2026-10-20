@@ -15,3 +15,4 @@ export {
   MAN_TGL_8180_BOX,
 } from './vehicle-models';
 export { toLoadSpaceReadModel } from './load-space.readmodel';
+export { GVW_OVERLOAD_TOLERANCE, permittedGrossLoad } from './payload-tolerance';
