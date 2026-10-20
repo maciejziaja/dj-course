@@ -9,6 +9,8 @@ import {
   type PalletLoadableSpace,
 } from '../load-spaces';
 import { Weight } from '../../shared/weight';
+import type { Length } from '../../shared/length';
+import type { LoadingMeters } from '../ldm/loading-meters';
 import { ok, fail, type Result } from '../../shared/result';
 import { UUID } from '../../shared/uuid';
 import {
@@ -29,14 +31,17 @@ export interface AddCargoData {
   palletType: string;
   cargoType: CargoType;
   weight: Weight;
-  cargoHeightMm: number;
+  cargoHeight: Length;
 }
+
+/** Strategy computing the LDM a set of units occupies in a given load space. */
+export type LdmProvider = (units: PalletUnit[], loadSpace: PalletLoadableSpace) => LoadingMeters;
 
 export class CargoLoadPlan {
   constructor(
     private readonly id: UUID<'CargoLoadPlan'>,
     private loadSpace: PalletLoadableSpace,
-    private currentLdm: number,
+    private currentLdm: LoadingMeters,
     private assignedUnits: PalletUnit[] = [],
     private status: CargoLoadPlanStatus = CargoLoadPlanStatus.DRAFT,
     private version: number = 0
@@ -65,8 +70,8 @@ export class CargoLoadPlan {
 
     if (this.assignedUnits.length === 0) return fail(new EmptyPlanError());
 
-    if (this.currentLdm > this.loadSpace.maxLdm) {
-      return fail(new LdmCapacityExceededError(this.currentLdm, this.loadSpace.maxLdm));
+    if (this.currentLdm.exceeds(this.loadSpace.maxLdm)) {
+      return fail(new LdmCapacityExceededError(this.currentLdm.value, this.loadSpace.maxLdm.value));
     }
 
     this.status = CargoLoadPlanStatus.FINALIZED;
@@ -76,7 +81,7 @@ export class CargoLoadPlan {
   public addCargoToPlan(
     data: AddCargoData,
     // 🔥🔥🔥 strategy (not double dispatch)
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
+    ldmProvider: LdmProvider
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
@@ -84,7 +89,7 @@ export class CargoLoadPlan {
     const spec = PalletSpec.fromType(data.palletType);
     const requirements = requirementsFor(data.cargoType);
 
-    const unitResult = PalletUnit.create(spec, data.cargoType, requirements, data.weight, data.cargoHeightMm);
+    const unitResult = PalletUnit.create(spec, data.cargoType, requirements, data.weight, data.cargoHeight);
     if (!unitResult.success) return fail(unitResult.error);
 
     const candidateUnits = [...this.assignedUnits, unitResult.value];
@@ -99,7 +104,7 @@ export class CargoLoadPlan {
 
   public removeCargoFromPlan(
     unitId: string,
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
+    ldmProvider: LdmProvider
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
@@ -127,7 +132,7 @@ export class CargoLoadPlan {
    */
   public changeLoadSpace(
     newLoadSpace: PalletLoadableSpace,
-    ldmProvider: (u: PalletUnit[], t: PalletLoadableSpace) => number
+    ldmProvider: LdmProvider
   ): Result<void, CargoLoadPlanDomainError> {
     const guardResult = this.ensurePlanNotFinalized();
     if (!guardResult.success) return guardResult;
@@ -155,7 +160,7 @@ export class CargoLoadPlan {
   private ensureLoadIntegrity(
     units: PalletUnit[],
     loadSpace: PalletLoadableSpace,
-    ldm: number
+    ldm: LoadingMeters
   ): Result<void, CargoLoadPlanDomainError> {
     if (units.length === 0) return ok(undefined);
 
@@ -234,11 +239,11 @@ export class CargoLoadPlan {
   }
 
   private ensureLdmCapacityNotExceeded(
-    ldm: number,
+    ldm: LoadingMeters,
     loadSpace: PalletLoadableSpace
   ): Result<void, CargoLoadPlanDomainError> {
-    if (ldm > loadSpace.maxLdm) {
-      return fail(new LdmCapacityExceededError(ldm, loadSpace.maxLdm));
+    if (ldm.exceeds(loadSpace.maxLdm)) {
+      return fail(new LdmCapacityExceededError(ldm.value, loadSpace.maxLdm.value));
     }
     return ok(undefined);
   }
@@ -257,13 +262,13 @@ export class CargoLoadPlan {
     unit: PalletUnit,
     loadSpace: PalletLoadableSpace
   ): Result<void, CargoTooTallForLoadSpaceError | CargoTooWideForLoadSpaceError> {
-    const { id, totalHeightMm, spec } = unit.getSnapshot();
+    const { id, totalHeight, spec } = unit.getSnapshot();
 
-    if (totalHeightMm > loadSpace.heightMm) {
-      return fail(new CargoTooTallForLoadSpaceError(id, totalHeightMm, loadSpace.type, loadSpace.heightMm));
+    if (totalHeight.exceeds(loadSpace.height)) {
+      return fail(new CargoTooTallForLoadSpaceError(id, totalHeight.valueInMm, loadSpace.type, loadSpace.height.valueInMm));
     }
-    if (spec.width > loadSpace.widthMm) {
-      return fail(new CargoTooWideForLoadSpaceError(id, spec.width, loadSpace.type, loadSpace.widthMm));
+    if (spec.width.exceeds(loadSpace.width)) {
+      return fail(new CargoTooWideForLoadSpaceError(id, spec.width.valueInMm, loadSpace.type, loadSpace.width.valueInMm));
     }
     return ok(undefined);
   }

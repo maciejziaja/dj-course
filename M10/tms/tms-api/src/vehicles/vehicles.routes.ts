@@ -9,6 +9,7 @@ import {
   deleteVehicle,
 } from './vehicles.queries';
 import logger from '../logger';
+import { Volume } from '../shared/volume';
 import { parsePositiveInt, parsePathId } from '../shared/query-parsers';
 import { ErrorResponse } from '../types/data-contracts';
 import { Vehicles } from '../types/VehiclesRoute';
@@ -129,7 +130,7 @@ router.post(
         make: body.make ?? undefined,
         model: body.model ?? undefined,
         year: body.year ?? undefined,
-        fuel_tank_capacity: body.fuel_tank_capacity ?? undefined,
+        fuel_tank_capacity: body.fuel_tank_capacity != null ? Volume.from(body.fuel_tank_capacity, 'L') : undefined,
       });
       logger.info('Vehicle created', { vehicle_id: vehicle.id });
       res.status(201).json(vehicle);
@@ -171,7 +172,7 @@ router.put(
         make: body.make ?? undefined,
         model: body.model ?? undefined,
         year: body.year ?? undefined,
-        fuel_tank_capacity: body.fuel_tank_capacity ?? undefined,
+        fuel_tank_capacity: body.fuel_tank_capacity != null ? Volume.from(body.fuel_tank_capacity, 'L') : undefined,
       });
       if (!vehicle) {
         return res.status(404).json({

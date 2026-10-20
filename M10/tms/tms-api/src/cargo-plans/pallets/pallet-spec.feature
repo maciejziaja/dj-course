@@ -24,7 +24,7 @@ Feature: Pallet Spec Value Object
 
   Scenario: Cannot create pallet spec with negative length
     When I try to create pallet spec with label "Bad" material Wood cargo types "GENERAL" dimensions "800x-100x144" max load 4000
-    Then it should fail with "Dimensions must be positive"
+    Then it should fail with "Length cannot be negative"
 
   Scenario: Cannot create pallet spec with zero height
     When I try to create pallet spec with label "Bad" material Wood cargo types "GENERAL" dimensions "800x1200x0" max load 4000

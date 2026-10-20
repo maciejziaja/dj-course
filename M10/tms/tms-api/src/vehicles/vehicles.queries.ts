@@ -2,6 +2,7 @@ import { count, eq, sql } from 'drizzle-orm';
 import { db } from '../drizzle/drizzle.js';
 import { vehicles, type NewVehicle } from '../drizzle/schema.js';
 import logger from '../logger.js';
+import type { Volume } from '../shared/volume.js';
 
 export const getVehicles = async (params: {
   limit: number;
@@ -49,7 +50,7 @@ export const createVehicle = async (data: {
   make?: string;
   model?: string;
   year?: number;
-  fuel_tank_capacity?: number;
+  fuel_tank_capacity?: Volume;
 }) => {
   try {
     const [{ nextId }] = await db
@@ -61,7 +62,7 @@ export const createVehicle = async (data: {
       make: data.make ?? null,
       model: data.model ?? '',
       year: data.year ?? null,
-      fuel_tank_capacity: data.fuel_tank_capacity?.toString() ?? null,
+      fuel_tank_capacity: data.fuel_tank_capacity?.valueInLitres.toString() ?? null,
     };
 
     const [created] = await db.insert(vehicles).values(newVehicle).returning();
@@ -79,7 +80,7 @@ export const updateVehicle = async (
     make?: string;
     model?: string;
     year?: number;
-    fuel_tank_capacity?: number;
+    fuel_tank_capacity?: Volume;
   }
 ) => {
   try {
@@ -90,7 +91,7 @@ export const updateVehicle = async (
         ...(data.model !== undefined && { model: data.model }),
         ...(data.year !== undefined && { year: data.year }),
         ...(data.fuel_tank_capacity !== undefined && {
-          fuel_tank_capacity: data.fuel_tank_capacity.toString(),
+          fuel_tank_capacity: data.fuel_tank_capacity.valueInLitres.toString(),
         }),
       })
       .where(eq(vehicles.id, parseInt(id)))

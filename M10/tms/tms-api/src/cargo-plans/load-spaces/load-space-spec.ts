@@ -1,4 +1,6 @@
 import { Weight } from '../../shared/weight';
+import type { Length } from '../../shared/length';
+import type { LoadingMeters } from '../ldm/loading-meters';
 import type { VehicleModel } from './vehicle-models';
 
 /** Defines specific functional features of a cargo load space. */
@@ -51,23 +53,23 @@ export type PalletLoadableSpace = LoadSpaceSpec & {
   /** Explicit requirement for pallet loading capability. Example: True. */
   readonly canCarryPallets: true;
   /**
-   * Usable horizontal span for pallets, in millimetres. Example: 2480.
+   * Usable horizontal span for pallets. Example: 2480 mm.
    *
    * For vans this is the span **between the wheel arches**, not the widest
    * point of the body: pallets are floor-loaded, so the arches are what limits
    * how many fit side by side.
    */
-  readonly widthMm: number;
-  /** Internal vertical clearance of the load space in millimetres. Example: 2700. */
-  readonly heightMm: number;
+  readonly width: Length;
+  /** Internal vertical clearance of the load space. Example: 2700 mm. */
+  readonly height: Length;
   /**
-   * Maximum loading length available for cargo placement, in metres. Example: 13.6 (typical for TIR 😎).
+   * Maximum loading length available for cargo placement. Example: 13.6 ldm (typical for TIR 😎).
    *
    * For trailers this is LDM in the road-freight sense (1 ldm = 1 running metre
    * of a 2.4 m wide floor). For rigid vehicles, whose floors are far narrower
-   * than 2.4 m, the same number simply means usable floor length in metres.
+   * than 2.4 m, the same figure simply means usable floor length in metres.
    */
-  readonly maxLdm: number;
+  readonly maxLdm: LoadingMeters;
 };
 
 /**
@@ -96,7 +98,7 @@ export type RigidVehicleSpace = PalletLoadableSpace & {
 };
 
 export function isPalletLoadable(spec: LoadSpaceSpec): spec is PalletLoadableSpace {
-  return spec.canCarryPallets === true && 'widthMm' in spec && 'maxLdm' in spec;
+  return spec.canCarryPallets === true && 'width' in spec && 'maxLdm' in spec;
 }
 
 export function isRigidVehicle(spec: PalletLoadableSpace): spec is RigidVehicleSpace {

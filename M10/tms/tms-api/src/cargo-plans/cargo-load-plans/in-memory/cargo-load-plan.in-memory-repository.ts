@@ -14,16 +14,16 @@ function projectToRow(plan: CargoLoadPlan): CargoLoadPlanDbRow {
     id,
     status: status as unknown as ContractCargoLoadPlanStatus,
     loadSpace: toLoadSpaceReadModel(loadSpace),
-    currentLdm,
+    currentLdm: currentLdm.value,
     version,
-    units: assignedUnits.map(({ id, spec, cargoType, weight, totalHeightMm, requirements }) => {
+    units: assignedUnits.map(({ id, spec, cargoType, weight, totalHeight, requirements }) => {
       return {
         id,
         palletLabel: spec.label,
         cargoType: cargoType as unknown as ContractCargoType,
         weightKg: weight.valueInKg,
         tareWeightKg: spec.tareWeight.valueInKg,
-        totalHeightMm,
+        totalHeightMm: totalHeight.valueInMm,
         requirements,
       };
     }),

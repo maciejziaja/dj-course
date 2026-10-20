@@ -12,6 +12,7 @@ export { CargoLoadPlanStatus } from './cargo-load-plans/cargo-load-plan.types';
 // Value Objects
 export { PalletSpec, type Material } from './pallets/pallet-spec';
 export { UnknownPalletTypeError } from './pallets/pallet-spec.errors';
+export { LoadingMeters } from './ldm/loading-meters';
 export {
   type LoadSpaceCapabilities,
   type LoadSpaceKind,

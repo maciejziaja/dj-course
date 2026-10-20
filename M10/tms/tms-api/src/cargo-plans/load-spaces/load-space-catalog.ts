@@ -6,6 +6,8 @@ import {
   type VehicleModel,
 } from './vehicle-models';
 import { Weight } from '../../shared/weight';
+import { Length } from '../../shared/length';
+import { LoadingMeters } from '../ldm/loading-meters';
 import { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
 
 export { UnknownLoadSpaceTypeError } from './load-space-catalog.errors';
@@ -28,10 +30,10 @@ function guaranteedEnvelope(
     throw new Error(`Load space class '${type}' must list at least one vehicle model.`);
   }
 
-  const lowest = (figure: (m: VehicleModel) => number) => Math.min(...members.map(figure));
+  const shortest = (dimension: (m: VehicleModel) => Length) => Length.min(members.map(dimension));
   // For a rigid vehicle the load floor's limit *is* the payload – there is no
   // separate structural figure to distinguish it from, so both read the same.
-  const payloadCapacity = Weight.from(lowest(m => m.payloadCapacity.valueInKg), 'KG');
+  const payloadCapacity = Weight.from(Math.min(...members.map(m => m.payloadCapacity.valueInKg)), 'KG');
 
   return {
     kind: 'RIGID_VEHICLE',
@@ -41,9 +43,10 @@ function guaranteedEnvelope(
     canCarryPallets: true,
     maxWeightCapacity: payloadCapacity,
     payloadCapacity,
-    widthMm: lowest(m => m.widthMm),
-    heightMm: lowest(m => m.heightMm),
-    maxLdm: lowest(m => m.lengthM),
+    width: shortest(m => m.width),
+    height: shortest(m => m.height),
+    // A van floor is far narrower than 2.4 m, so its "LDM" is plainly the floor length.
+    maxLdm: LoadingMeters.fromOccupiedFloorLength(shortest(m => m.length)),
     fitsVehicles: members,
   };
 }
@@ -67,9 +70,9 @@ export class LoadSpaceCatalog {
       capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
       canCarryPallets: true,
       maxWeightCapacity: Weight.from(24000, 'KG'),
-      maxLdm: 13.6,
-      widthMm: 2480,
-      heightMm: 2700
+      maxLdm: LoadingMeters.of(13.6),
+      width: Length.from(2480, 'MM'),
+      height: Length.from(2700, 'MM'),
     };
   }
 
@@ -81,9 +84,9 @@ export class LoadSpaceCatalog {
       capabilities: { hasClimateControl: false, supportsSideLoading: true, hasHighSecurityLock: false, isBulkReady: false },
       canCarryPallets: true,
       maxWeightCapacity: Weight.from(24000, 'KG'),
-      maxLdm: 13.6,
-      widthMm: 2480,
-      heightMm: 3000
+      maxLdm: LoadingMeters.of(13.6),
+      width: Length.from(2480, 'MM'),
+      height: Length.from(3000, 'MM'),
     };
   }
 
@@ -95,9 +98,9 @@ export class LoadSpaceCatalog {
       capabilities: { hasClimateControl: true, supportsSideLoading: false, hasHighSecurityLock: true, isBulkReady: false },
       canCarryPallets: true,
       maxWeightCapacity: Weight.from(22000, 'KG'),
-      maxLdm: 13.4,
-      widthMm: 2460,
-      heightMm: 2600
+      maxLdm: LoadingMeters.of(13.4),
+      width: Length.from(2460, 'MM'),
+      height: Length.from(2600, 'MM'),
     };
   }
 

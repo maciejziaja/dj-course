@@ -2,6 +2,7 @@ import { pool } from '../../database';
 import type { WeightUnit } from '../../shared/weight';
 import type { CargoLoadPlanReadModel } from '../../types/data-contracts';
 import { PalletSpec } from '../pallets/pallet-spec';
+import { Length } from '../../shared/length';
 import { LoadSpaceCatalog, toLoadSpaceReadModel } from '../load-spaces';
 import type { CargoLoadPlanDbRow } from './cargo-load-plan.repository';
 import { toReadModel } from './cargo-load-plan.readmodel';
@@ -54,7 +55,7 @@ export class SqlCargoLoadPlanQueries implements CargoLoadPlanQueries {
           description: u.description ?? null,
           weightKg: parseFloat(u.weight_kg),
           tareWeightKg: spec.tareWeight.valueInKg,
-          totalHeightMm: spec.height + parseInt(u.cargo_height_mm, 10),
+          totalHeightMm: spec.height.plus(Length.from(parseInt(u.cargo_height_mm, 10), 'MM')).valueInMm,
           requirements: {
             isTemperatureControlled: u.is_temperature_controlled,
             requiresSideLoading: u.requires_side_loading,

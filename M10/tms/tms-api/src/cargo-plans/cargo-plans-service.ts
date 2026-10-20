@@ -3,6 +3,7 @@ import { ok, fail, type Result } from '../shared/result';
 import { CargoLoadPlan } from './cargo-load-plans/cargo-load-plan';
 import type { PalletUnit } from './pallets/pallet-unit';
 import { LdmCalculator } from './ldm/ldm-calculator';
+import { LoadingMeters } from './ldm/loading-meters';
 import { LoadSpaceCatalog, type PalletLoadableSpace } from './load-spaces';
 import type { CargoLoadPlanRepository } from './cargo-load-plans/cargo-load-plan.repository';
 import type { CargoLoadPlanQueries, CargoLoadPlanReadModel } from './cargo-load-plans/cargo-load-plan.queries';
@@ -48,7 +49,7 @@ export class CargoPlansService implements CargoPlansApplicationService {
   async createLoadPlan(command: CreateLoadPlanCommand): Promise<Result<string, CargoPlanServiceError>> {
     const loadSpace = LoadSpaceCatalog.fromType(command.loadSpaceType);
     const id = UUID.newUUID<'CargoLoadPlan'>();
-    const plan = new CargoLoadPlan(id, loadSpace, 0);
+    const plan = new CargoLoadPlan(id, loadSpace, LoadingMeters.zero());
     try {
       await this.repository.create(plan);
     } catch (e) {

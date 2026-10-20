@@ -1,5 +1,7 @@
 import { PalletUnit } from '../pallets/pallet-unit';
 import type { PalletLoadableSpace } from '../load-spaces';
+import { Length } from '../../shared/length';
+import { LoadingMeters } from './loading-meters';
 
 /**
  * Domain Service for calculating LDM.
@@ -8,17 +10,19 @@ import type { PalletLoadableSpace } from '../load-spaces';
  * a van simply declares a narrower one (the span between its wheel arches).
  */
 export class LdmCalculator {
-  public static calculate(units: PalletUnit[], loadSpace: PalletLoadableSpace): number {
-    if (units.length === 0) return 0;
+  public static calculate(units: PalletUnit[], loadSpace: PalletLoadableSpace): LoadingMeters {
+    if (units.length === 0) return LoadingMeters.zero();
 
-    const sortedUnits = [...units].sort((a, b) => b.getSnapshot().spec.length - a.getSnapshot().spec.length);
+    const sortedUnits = [...units].sort(
+      (a, b) => b.getSnapshot().spec.length.valueInMm - a.getSnapshot().spec.length.valueInMm
+    );
     const rows: PalletUnit[][] = [[]];
 
     for (const unit of sortedUnits) {
       let placed = false;
       for (const row of rows) {
-        const rowWidth = row.reduce((sum, u) => sum + u.getSnapshot().spec.width, 0);
-        if (rowWidth + unit.getSnapshot().spec.width <= loadSpace.widthMm) {
+        const rowWidth = Length.sum(row.map(u => u.getSnapshot().spec.width));
+        if (!rowWidth.plus(unit.getSnapshot().spec.width).exceeds(loadSpace.width)) {
           row.push(unit);
           placed = true;
           break;
@@ -27,12 +31,12 @@ export class LdmCalculator {
       if (!placed) rows.push([unit]);
     }
 
-    const totalLdmMm = rows.reduce((acc, row) => {
-      if (row.length === 0) return acc;
-      const maxDepthInRow = Math.max(...row.map(u => u.getSnapshot().spec.length));
-      return acc + maxDepthInRow;
-    }, 0);
+    const occupiedFloorLength = Length.sum(
+      rows
+        .filter(row => row.length > 0)
+        .map(row => Length.max(row.map(u => u.getSnapshot().spec.length)))
+    );
 
-    return Number((totalLdmMm / 1000).toFixed(2));
+    return LoadingMeters.fromOccupiedFloorLength(occupiedFloorLength);
   }
 }

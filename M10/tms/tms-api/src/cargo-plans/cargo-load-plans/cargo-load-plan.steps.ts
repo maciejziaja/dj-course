@@ -10,6 +10,8 @@ import type { PalletUnit } from '../pallets/pallet-unit';
 import type { PalletLoadableSpace } from '../load-spaces';
 import { Weight } from '../../shared/weight';
 import { UUID } from '../../shared/uuid';
+import { Length } from '../../shared/length';
+import { LoadingMeters } from '../ldm/loading-meters';
 
 const ldmProvider = (u: PalletUnit[], t: PalletLoadableSpace) => LdmCalculator.calculate(u, t);
 
@@ -23,26 +25,26 @@ function trailerWithMaxWeight(maxWeightKg: number): PalletLoadableSpace {
 function trailerWithMaxLdm(maxLdm: number): PalletLoadableSpace {
   return {
     ...LoadSpaceCatalog.standardCurtainside(),
-    maxLdm,
+    maxLdm: LoadingMeters.of(maxLdm),
   };
 }
 
 function spaceWithWidth(widthMm: number): PalletLoadableSpace {
   return {
     ...LoadSpaceCatalog.mediumVan(),
-    widthMm,
+    width: Length.from(widthMm, 'MM'),
   };
 }
 
 function trailerWithHeight(heightMm: number): PalletLoadableSpace {
   return {
     ...LoadSpaceCatalog.standardCurtainside(),
-    heightMm,
+    height: Length.from(heightMm, 'MM'),
   };
 }
 
 function newPlan(loadSpace: PalletLoadableSpace): CargoLoadPlan {
-  return new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), loadSpace, 0, [], CargoLoadPlanStatus.DRAFT);
+  return new CargoLoadPlan(UUID.from<'CargoLoadPlan'>('plan-1'), loadSpace, LoadingMeters.zero(), [], CargoLoadPlanStatus.DRAFT);
 }
 
 interface CargoLoadPlanWorld {
@@ -90,7 +92,7 @@ Given('an empty load plan with load space having width {int} mm', function (this
 
 When('I try to add a chemical pallet unit on a {string} pallet with weight {int} kg', function (this: CargoLoadPlanWorld, palletType: string, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType, cargoType: CargoType.CHEMICAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType, cargoType: CargoType.CHEMICAL, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
@@ -111,13 +113,13 @@ When('I try to change the load space to {string}', function (this: CargoLoadPlan
 
 Given('the plan has a general cargo pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   this.plan.addCargoToPlan(data, ldmProvider);
 });
 
 Given('the plan has a food pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'h1', cargoType: CargoType.FOOD, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'h1', cargoType: CargoType.FOOD, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   this.plan.addCargoToPlan(data, ldmProvider);
 });
 
@@ -139,14 +141,14 @@ When('I finalize the plan', function (this: CargoLoadPlanWorld) {
 
 When('I try to add a general cargo pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
 
 When('I try to add another general cargo pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
@@ -165,21 +167,21 @@ When('I try to change the load space to mega trailer', function (this: CargoLoad
 
 When('I try to add a dangerous goods pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'cp1', cargoType: CargoType.DANGEROUS_GOODS, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'cp1', cargoType: CargoType.DANGEROUS_GOODS, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
 
 When('I try to add a chemical pallet unit with weight {int} kg', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'cp1', cargoType: CargoType.CHEMICAL, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'cp1', cargoType: CargoType.CHEMICAL, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
 
 When('I try to add a food pallet unit with weight {int} kg and temperature control required', function (this: CargoLoadPlanWorld, weight: number) {
   assert(this.plan);
-  const data: AddCargoData = { palletType: 'h1', cargoType: CargoType.FOOD, weight: Weight.from(weight, 'KG'), cargoHeightMm: 100 };
+  const data: AddCargoData = { palletType: 'h1', cargoType: CargoType.FOOD, weight: Weight.from(weight, 'KG'), cargoHeight: Length.from(100, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });
@@ -187,7 +189,7 @@ When('I try to add a food pallet unit with weight {int} kg and temperature contr
 When('I try to add a general cargo pallet unit with total height {int} mm and weight {int} kg', function (this: CargoLoadPlanWorld, totalHeightMm: number, weightKg: number) {
   assert(this.plan);
   const epal1BaseHeightMm = 144;
-  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weightKg, 'KG'), cargoHeightMm: totalHeightMm - epal1BaseHeightMm };
+  const data: AddCargoData = { palletType: 'epal1', cargoType: CargoType.GENERAL, weight: Weight.from(weightKg, 'KG'), cargoHeight: Length.from(totalHeightMm - epal1BaseHeightMm, 'MM') };
   const result = this.plan.addCargoToPlan(data, ldmProvider);
   if (!result.success) this.lastError = result.error;
 });

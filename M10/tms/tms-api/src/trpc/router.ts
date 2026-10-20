@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { router, publicProcedure } from './trpc';
+import { Volume } from '../shared/volume';
 import {
   getVehicles,
   getVehicleById,
@@ -8,6 +9,9 @@ import {
   updateVehicle,
   deleteVehicle,
 } from '../vehicles/vehicles.queries';
+
+/** Fuel tank capacity arrives in litres; the guard mirrors Volume's own invariant. */
+const fuelTankCapacity = z.number().nonnegative().transform(litres => Volume.from(litres, 'L'));
 
 export const appRouter = router({
   getVehicles: publicProcedure
@@ -33,7 +37,7 @@ export const appRouter = router({
         make: z.string().optional(),
         model: z.string().optional(),
         year: z.number().optional(),
-        fuel_tank_capacity: z.number().optional(),
+        fuel_tank_capacity: fuelTankCapacity.optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -48,7 +52,7 @@ export const appRouter = router({
           make: z.string().optional(),
           model: z.string().optional(),
           year: z.number().optional(),
-          fuel_tank_capacity: z.number().optional(),
+          fuel_tank_capacity: fuelTankCapacity.optional(),
         }),
       })
     )

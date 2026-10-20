@@ -1,5 +1,6 @@
 import type { CargoType } from './cargo/cargo.types';
 import type { Weight } from '../shared/weight';
+import type { Length } from '../shared/length';
 
 export interface CreateLoadPlanCommand {
   loadSpaceType: string;
@@ -10,7 +11,7 @@ export interface AddCargoCommand {
   palletType: string;
   cargoType: CargoType;
   weight: Weight;
-  cargoHeightMm: number;
+  cargoHeight: Length;
 }
 
 export interface RemoveCargoCommand {

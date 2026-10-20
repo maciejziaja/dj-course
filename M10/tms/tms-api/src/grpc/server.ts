@@ -10,6 +10,7 @@ import {
   deleteVehicle,
 } from '../vehicles/vehicles.queries.js';
 import logger from '../logger.js';
+import { Volume } from '../shared/volume.js';
 
 const PROTO_PATH = resolve(__dirname, '../../proto/vehicle.proto');
 
@@ -90,7 +91,7 @@ const serviceHandlers = {
         make: make || undefined,
         model: model || undefined,
         year: year || undefined,
-        fuel_tank_capacity: fuel_tank_capacity || undefined,
+        fuel_tank_capacity: fuel_tank_capacity ? Volume.from(fuel_tank_capacity, 'L') : undefined,
       });
       callback(null, mapVehicleToProto(vehicle));
     } catch (error: unknown) {
@@ -110,7 +111,7 @@ const serviceHandlers = {
         ...(make !== undefined && { make }),
         ...(model !== undefined && { model }),
         ...(year !== undefined && { year }),
-        ...(fuel_tank_capacity !== undefined && { fuel_tank_capacity }),
+        ...(fuel_tank_capacity !== undefined && { fuel_tank_capacity: Volume.from(fuel_tank_capacity, 'L') }),
       });
       if (!vehicle) {
         return callback({

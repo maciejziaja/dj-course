@@ -8,6 +8,7 @@ import { PalletUnit } from './pallet-unit';
 import { PalletSpec } from './pallet-spec';
 import { CargoType } from '../cargo/cargo.types';
 import { Weight } from '../../shared/weight';
+import { Length } from '../../shared/length';
 
 type PalletSpecKey = 'EPAL1' | 'H1' | 'CP1' | 'Industrial' | 'Half';
 
@@ -61,7 +62,7 @@ When(
       requiresSideLoading: false,
       isBulk: false,
       highSecurityRequired: false,
-    }, Weight.from(weightKg, 'KG'), cargoHeightMm);
+    }, Weight.from(weightKg, 'KG'), Length.from(cargoHeightMm, 'MM'));
     if (result.success) {
       this.lastUnit = result.value;
     } else {
@@ -80,7 +81,7 @@ When(
       requiresSideLoading: false,
       isBulk: false,
       highSecurityRequired: false,
-    }, Weight.from(weightKg, 'KG'), cargoHeightMm);
+    }, Weight.from(weightKg, 'KG'), Length.from(cargoHeightMm, 'MM'));
     if (!result.success) {
       this.lastError = new Error(result.error.message);
     }
@@ -94,9 +95,9 @@ Then('the pallet unit should be created successfully', function (this: PalletUni
 Then('total height should be {int} mm', function (this: PalletUnitWorld, expectedMm: number) {
   assert(this.lastUnit, 'Expected pallet unit to exist');
   assert.strictEqual(
-    this.lastUnit!.getSnapshot().totalHeightMm,
+    this.lastUnit!.getSnapshot().totalHeight.valueInMm,
     expectedMm,
-    `Expected totalHeightMm=${expectedMm}, got ${this.lastUnit!.getSnapshot().totalHeightMm}`
+    `Expected total height ${expectedMm} mm, got ${this.lastUnit!.getSnapshot().totalHeight}`
   );
 });
 

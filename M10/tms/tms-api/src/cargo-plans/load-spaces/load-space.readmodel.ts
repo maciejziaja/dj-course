@@ -16,9 +16,9 @@ export function toLoadSpaceReadModel(space: PalletLoadableSpace): LoadSpaceReadM
     payloadCapacityKg: isRigidVehicle(space) ? space.payloadCapacity.valueInKg : undefined,
     // Makes the guarantee visible: any of these can honour a plan that fits.
     fitsVehicles: isRigidVehicle(space) ? space.fitsVehicles.map(v => v.name) : undefined,
-    widthMm: space.widthMm,
-    heightMm: space.heightMm,
-    maxLdm: space.maxLdm,
+    widthMm: space.width.valueInMm,
+    heightMm: space.height.valueInMm,
+    maxLdm: space.maxLdm.value,
     capabilities: space.capabilities,
   };
 }
