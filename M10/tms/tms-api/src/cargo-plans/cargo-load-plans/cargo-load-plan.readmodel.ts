@@ -26,19 +26,13 @@ export function toReadModel(
     loadSpace: row.loadSpace,
     currentLdm: row.currentLdm,
     plannedWeight: round(
-      Weight.from(
-        row.units.reduce((sum, u) => sum + u.weightKg, 0),
-        'KG',
-      ).valueInUnit(weightUnit),
+      Weight.sum(row.units.map(u => Weight.from(u.weightKg, 'KG'))).valueInUnit(weightUnit),
     ),
     // What the capacity and payload rules actually judge: cargo plus pallets.
     plannedGrossWeight: round(
-      Weight.from(
-        row.units.reduce((sum, u) => sum + u.weightKg + u.tareWeightKg, 0),
-        'KG',
-      ).valueInUnit(weightUnit),
+      Weight.sum(row.units.map(u => Weight.from(u.grossWeightKg, 'KG'))).valueInUnit(weightUnit),
     ),
-    units: row.units.map(({ weightKg, tareWeightKg, description, ...unit }) => ({
+    units: row.units.map(({ weightKg, grossWeightKg, description, ...unit }) => ({
       ...unit,
       description: description ?? undefined,
       weight: round(Weight.from(weightKg, 'KG').valueInUnit(weightUnit)),

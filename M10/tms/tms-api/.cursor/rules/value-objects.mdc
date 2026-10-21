@@ -1,0 +1,52 @@
+---
+description: Measures (weight, length, loading metres, volume) are value objects – their arithmetic never leaks into domain code
+globs: src/**/*.ts
+alwaysApply: true
+---
+
+# Measure Value Objects
+
+Measures are modelled as value objects: `Weight`, `Length`, `Volume` (`src/shared/`) and
+`LoadingMeters` (`src/cargo-plans/ldm/`). They exist so that every calculation on a measure
+lives in exactly one place.
+
+## Rule: compute with the value object, never with its number
+
+Domain and application code must not unwrap a measure (`valueInKg`, `valueInMm`, `valueInLdm`,
+`valueInLitres`, `valueInUnit`) to add, compare, sum or pick extremes. If the operation is
+missing, **add it to the value object** (with a cucumber scenario) instead of doing it inline.
+
+```typescript
+// ❌ BAD – a domain rule computed on raw numbers
+const payload = Weight.from(Math.min(...members.map(m => m.payloadCapacity.valueInKg)), 'KG');
+if (spec.width.valueInMm > loadSpace.width.valueInMm) { ... }
+row.units.reduce((sum, u) => sum + u.weightKg + u.tareWeightKg, 0);
+
+// ✅ GOOD – the value object owns the operation
+const payload = Weight.min(members.map(m => m.payloadCapacity));
+if (spec.width.exceeds(loadSpace.width)) { ... }
+Weight.sum(units.map(u => spec.grossWeightOf(u.weight)));
+```
+
+## Rule: a domain formula is written once
+
+A formula combining measures (gross weight = cargo + tare, total height = pallet base + cargo)
+belongs to the domain object that owns it (`PalletSpec.grossWeightOf`, `PalletSpec.totalHeightWith`).
+Projections and read models **call** it – they never re-derive it.
+
+## Where unwrapping is allowed
+
+Only at the edges, where the outside world speaks numbers:
+
+- persistence: `*.repository.ts`, `in-memory/`
+- read side: `*.queries.ts`, `*.readmodel.ts`
+- HTTP boundary: `*.routes.ts`, `*.validation.ts`
+- error construction: `new XxxError(actual.valueInKg, max.valueInKg)` – wording a message
+- the measure value objects themselves
+
+## Enforcement
+
+`src/architecture/domain-arithmetic.feature` scans `src/cargo-plans` and fails on any unwrapped
+measure or `Math.min`/`Math.max` outside the places listed above. It runs with
+`npm run test:cucumber`. If it fails, move the logic into the value object; do not widen the
+allow-list in the step definitions without a reason stated in the code.

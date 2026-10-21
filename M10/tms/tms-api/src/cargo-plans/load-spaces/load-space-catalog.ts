@@ -33,7 +33,7 @@ function guaranteedEnvelope(
   const shortest = (dimension: (m: VehicleModel) => Length) => Length.min(members.map(dimension));
   // For a rigid vehicle the load floor's limit *is* the payload – there is no
   // separate structural figure to distinguish it from, so both read the same.
-  const payloadCapacity = Weight.from(Math.min(...members.map(m => m.payloadCapacity.valueInKg)), 'KG');
+  const payloadCapacity = Weight.min(members.map(m => m.payloadCapacity));
 
   return {
     kind: 'RIGID_VEHICLE',

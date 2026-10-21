@@ -34,6 +34,10 @@ Feature: Length Value Object
 
   # ── Comparison ──────────────────────────────────────────────────────────────
 
+  Scenario: Lengths in mixed units sort from the longest
+    Given the lengths "800 MM, 1.2 M, 114 CM"
+    Then sorted from the longest they should be "1200 MM, 1140 MM, 800 MM"
+
   Scenario: A length equal to the limit does not exceed it
     Given a length of 2480 MM
     Then 2480 MM should not exceed the length

@@ -60,6 +60,11 @@ export class Length {
     return lengths;
   }
 
+  /** Sort comparator: negative when `a` is shorter, positive when longer. */
+  static compare(a: Length, b: Length): number {
+    return a.valueInMm - b.valueInMm;
+  }
+
   /** True when this length is strictly greater than `other`. */
   exceeds(other: Length): boolean {
     return this.valueInMm > other.valueInMm;

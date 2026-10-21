@@ -28,8 +28,8 @@ export type CargoLoadPlanDbRow =
     readonly units: ReadonlyArray<
       Omit<PalletUnitReadModel, 'weight'> & {
         readonly weightKg: number;
-        /** Weight of the pallet itself – counted towards every capacity limit. */
-        readonly tareWeightKg: number;
+        /** Cargo plus the pallet carrying it – what every capacity limit is measured against. */
+        readonly grossWeightKg: number;
         readonly description?: string | null;
       }
     >;
@@ -42,7 +42,7 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
     await pool.query(
       `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
        VALUES ($1, $2, $3, $4, 1)`,
-      [id, loadSpaceTypeKey, status, currentLdm.value],
+      [id, loadSpaceTypeKey, status, currentLdm.valueInLdm],
     );
   }
 
@@ -61,14 +61,14 @@ export class SqlCargoLoadPlanRepository implements CargoLoadPlanRepository {
         await client.query(
           `INSERT INTO cargo_plans.cargo_load_plans (id, load_space_type, status, current_ldm, version)
            VALUES ($1, $2, $3, $4, 1)`,
-          [id, loadSpaceTypeKey, status, currentLdm.value],
+          [id, loadSpaceTypeKey, status, currentLdm.valueInLdm],
         );
       } else {
         const { rowCount } = await client.query(
           `UPDATE cargo_plans.cargo_load_plans
            SET load_space_type = $1, status = $2, current_ldm = $3, version = version + 1
            WHERE id = $4 AND version = $5`, // 🔥🔥🔥 optimistic lock check
-          [loadSpaceTypeKey, status, currentLdm.value, id, version], // 🔥🔥🔥 currentLDM - is derived from the all units dimensions (like a local cache), and is also transactionally consistent (within 1 row)
+          [loadSpaceTypeKey, status, currentLdm.valueInLdm, id, version], // 🔥🔥🔥 currentLDM - is derived from the all units dimensions (like a local cache), and is also transactionally consistent (within 1 row)
         );
         if (rowCount === 0) { // 🔥🔥🔥 optimistic check failed
           const currentVersion = await this.fetchVersion(client, id); // 🔥🔥🔥 no updates? VERSION MISMATCH!

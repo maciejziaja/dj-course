@@ -18,7 +18,7 @@ export function toLoadSpaceReadModel(space: PalletLoadableSpace): LoadSpaceReadM
     fitsVehicles: isRigidVehicle(space) ? space.fitsVehicles.map(v => v.name) : undefined,
     widthMm: space.width.valueInMm,
     heightMm: space.height.valueInMm,
-    maxLdm: space.maxLdm.value,
+    maxLdm: space.maxLdm.valueInLdm,
     capabilities: space.capabilities,
   };
 }

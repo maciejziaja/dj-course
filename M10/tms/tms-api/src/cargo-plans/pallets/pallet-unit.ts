@@ -35,8 +35,7 @@ export class PalletUnit {
       /** Cargo plus the pallet itself – what every capacity limit is measured against. */
       grossWeight: this.spec.grossWeightOf(this.weight),
       cargoHeight: this.cargoHeight,
-      /** Pallet base plus the cargo stacked on it – what must clear the load space ceiling. */
-      totalHeight: this.spec.height.plus(this.cargoHeight),
+      totalHeight: this.spec.totalHeightWith(this.cargoHeight),
     };
   }
 

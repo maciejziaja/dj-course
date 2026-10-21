@@ -49,6 +49,11 @@ export class PalletSpec {
     return cargoWeight.plus(this.tareWeight);
   }
 
+  /** Pallet base plus the cargo stacked on it – what must clear the load space ceiling. */
+  totalHeightWith(cargoHeight: Length): Length {
+    return this.height.plus(cargoHeight);
+  }
+
   // 🔥🔥🔥 technical validation
   private validate(): void {
     if (!this.typeKey || this.typeKey.trim().length === 0) {
@@ -63,10 +68,10 @@ export class PalletSpec {
     if (this.width.isZero() || this.length.isZero() || this.height.isZero()) {
       throw new Error('Dimensions must be positive values');
     }
-    if (this.maxLoadCapacity.valueInKg <= 0) {
+    if (this.maxLoadCapacity.isZero()) {
       throw new Error('Max load capacity must be a positive value');
     }
-    if (this.tareWeight.valueInKg <= 0) {
+    if (this.tareWeight.isZero()) {
       throw new Error('Tare weight must be a positive value');
     }
   }

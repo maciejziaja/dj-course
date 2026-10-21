@@ -71,7 +71,7 @@ export class CargoLoadPlan {
     if (this.assignedUnits.length === 0) return fail(new EmptyPlanError());
 
     if (this.currentLdm.exceeds(this.loadSpace.maxLdm)) {
-      return fail(new LdmCapacityExceededError(this.currentLdm.value, this.loadSpace.maxLdm.value));
+      return fail(new LdmCapacityExceededError(this.currentLdm.valueInLdm, this.loadSpace.maxLdm.valueInLdm));
     }
 
     this.status = CargoLoadPlanStatus.FINALIZED;
@@ -243,7 +243,7 @@ export class CargoLoadPlan {
     loadSpace: PalletLoadableSpace
   ): Result<void, CargoLoadPlanDomainError> {
     if (ldm.exceeds(loadSpace.maxLdm)) {
-      return fail(new LdmCapacityExceededError(ldm.value, loadSpace.maxLdm.value));
+      return fail(new LdmCapacityExceededError(ldm.valueInLdm, loadSpace.maxLdm.valueInLdm));
     }
     return ok(undefined);
   }

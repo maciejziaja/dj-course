@@ -13,8 +13,9 @@ export class LdmCalculator {
   public static calculate(units: PalletUnit[], loadSpace: PalletLoadableSpace): LoadingMeters {
     if (units.length === 0) return LoadingMeters.zero();
 
+    // Longest pallets first, so shorter ones fill the gaps in rows already opened.
     const sortedUnits = [...units].sort(
-      (a, b) => b.getSnapshot().spec.length.valueInMm - a.getSnapshot().spec.length.valueInMm
+      (a, b) => Length.compare(b.getSnapshot().spec.length, a.getSnapshot().spec.length)
     );
     const rows: PalletUnit[][] = [[]];
 

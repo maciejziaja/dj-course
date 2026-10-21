@@ -81,4 +81,13 @@ Then('{float} {word} should not exceed the length', function (this: LengthWorld,
   assert(!candidate.exceeds(this.length!), `Expected ${candidate} not to exceed ${this.length}`);
 });
 
+Then('sorted from the longest they should be {string}', function (this: LengthWorld, expected: string) {
+  const sorted = [...this.lengths!].sort((a, b) => Length.compare(b, a));
+  const expectedLengths = parseLengths(expected);
+  assert(
+    sorted.length === expectedLengths.length && sorted.every((l, i) => l.equals(expectedLengths[i])),
+    `Expected ${expectedLengths.join(', ')}, got ${sorted.join(', ')}`
+  );
+});
+
 // "it should fail with {string}" reused from cargo-load-plan.steps.ts (shared Cucumber world)

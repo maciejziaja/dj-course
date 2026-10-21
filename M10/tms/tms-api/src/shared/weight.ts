@@ -42,9 +42,19 @@ export class Weight {
     return weights.reduce<Weight>((total, w) => total.plus(w), Weight.from(0, 'KG'));
   }
 
+  /** The lightest of the given weights – the figure every one of them can honour. */
+  static min(weights: readonly Weight[]): Weight {
+    if (weights.length === 0) throw new Error('Cannot pick from an empty set of weights');
+    return weights.reduce((lightest, w) => (lightest.isHeavierThan(w) ? w : lightest));
+  }
+
   /** True when this weight is strictly heavier than `other`. */
   isHeavierThan(other: Weight): boolean {
     return this.valueInKg > other.valueInKg;
+  }
+
+  isZero(): boolean {
+    return this.valueInKg === 0;
   }
 
   toUnit(targetUnit: WeightUnit): Weight {

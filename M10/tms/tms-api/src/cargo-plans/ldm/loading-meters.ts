@@ -39,7 +39,7 @@ export class LoadingMeters {
     return Number(amount.toFixed(2));
   }
 
-  get value(): number {
+  get valueInLdm(): number {
     return this.amount;
   }
 

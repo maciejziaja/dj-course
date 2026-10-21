@@ -1,5 +1,5 @@
 import { pool } from '../../database';
-import type { WeightUnit } from '../../shared/weight';
+import { Weight, type WeightUnit } from '../../shared/weight';
 import type { CargoLoadPlanReadModel } from '../../types/data-contracts';
 import { PalletSpec } from '../pallets/pallet-spec';
 import { Length } from '../../shared/length';
@@ -48,14 +48,15 @@ export class SqlCargoLoadPlanQueries implements CargoLoadPlanQueries {
       version: planRow.version,
       units: unitRows.map(u => {
         const spec = PalletSpec.fromType(u.pallet_type);
+        const weight = Weight.from(parseFloat(u.weight_kg), 'KG');
         return {
           id: u.id,
           palletLabel: spec.label,
           cargoType: u.cargo_type,
           description: u.description ?? null,
-          weightKg: parseFloat(u.weight_kg),
-          tareWeightKg: spec.tareWeight.valueInKg,
-          totalHeightMm: spec.height.plus(Length.from(parseInt(u.cargo_height_mm, 10), 'MM')).valueInMm,
+          weightKg: weight.valueInKg,
+          grossWeightKg: spec.grossWeightOf(weight).valueInKg,
+          totalHeightMm: spec.totalHeightWith(Length.from(parseInt(u.cargo_height_mm, 10), 'MM')).valueInMm,
           requirements: {
             isTemperatureControlled: u.is_temperature_controlled,
             requiresSideLoading: u.requires_side_loading,
